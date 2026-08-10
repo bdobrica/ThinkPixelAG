@@ -6,7 +6,7 @@ The project implements the governance-plane concepts in the Enterprise Execution
 
 ## Status
 
-The project is in the design and planning phase. Phase 0 contracts are complete. [PLAN.md](PLAN.md) defines the target architecture and delivery phases; [TODO.md](TODO.md) is the ordered, atomic release-candidate checklist.
+The project is in the engineering-foundation phase. Phase 0 contracts and the initial Go module/package boundaries are complete. [PLAN.md](PLAN.md) defines the target architecture and delivery phases; [TODO.md](TODO.md) is the ordered, atomic release-candidate checklist.
 
 The normative architecture, security, domain, policy, API, and operational contracts are indexed in [docs/README.md](docs/README.md). The initial OpenAPI 3.1 description is at [api/openapi/thinkpixelag.yaml](api/openapi/thinkpixelag.yaml).
 
@@ -108,11 +108,11 @@ Child reservations are atomically debited from parent availability. Trusted usag
 - Make every mutation idempotent and every asynchronous consumer replay-safe.
 - Define readiness from actual dependencies and security freshness rather than process liveness alone.
 
-## Repository layout (target)
+## Repository layout
 
 ```text
-cmd/                 API server and migration entry points
-internal/            domain, application, ports, and adapters
+cmd/                 API server and migration entry points (implementations pending)
+internal/            domain, application, ports, and adapter package boundaries
 api/openapi/         OpenAPI contract
 policies/            Rego packages, data schemas, and policy tests
 migrations/          PostgreSQL schema migrations

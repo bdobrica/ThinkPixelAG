@@ -22,7 +22,7 @@ Status notation: `[ ]` pending, `[x]` implemented and verified. Add completion m
 
 ## Phase 1 — Engineering foundation
 
-- [ ] ENG-001 Initialize the Go module, pin the Go/toolchain version, and create `cmd`, `internal`, `api`, `policies`, `migrations`, `deploy`, and `test` package boundaries.
+- [x] ENG-001 Initialize the Go module, pin the Go/toolchain version, and create `cmd`, `internal`, `api`, `policies`, `migrations`, `deploy`, and `test` package boundaries. — completed 2026-08-10, commit `PENDING`, evidence: `go version`; `go mod edit -json`; `go test ./...`; boundary documentation and package compile checks
 - [ ] ENG-002 Add dependency policy, license/source checks, vulnerability scanning configuration, and reproducible tool pinning.
 - [ ] ENG-003 Implement strict typed configuration with defaults, environment/flag loading, startup validation, secret-safe rendering, and unit tests.
 - [ ] ENG-004 Implement structured logging with request/trace correlation and centralized sensitive-field redaction tests.
@@ -167,6 +167,7 @@ Append one entry per completed atomic item or tightly coupled group. Do not dele
 | Date | TODO IDs | Commit | Verification evidence | Notes/deviations |
 |---|---|---|---|---|
 | 2026-08-10 | GOV-001–GOV-013 | `eddf453` | Redocly CLI 2.3.0 lint; `git diff --check`; blueprint coverage review | Exact dependency versions deferred to Phase 1 testing by design |
+| 2026-08-10 | ENG-001 | `PENDING` | `go version`; `go mod edit -json`; `go test ./...`; `git diff --check` | Go 1.26.5 tested; command behavior remains scoped to later Phase 1 items |
 
 ## Active blockers and deviations
 

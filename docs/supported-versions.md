@@ -4,7 +4,7 @@ Phase 0 defines compatibility policy without prematurely pinning releases that i
 
 | Component | RC support baseline | Pinning rule | Support policy |
 |---|---|---|---|
-| Go | `TBD-tested`; current stable major/minor at Phase 1 start | `go.mod`, toolchain directive, builder digest, CI | latest two Go minor releases only after tests pass; patch updates preferred |
+| Go | 1.26.5 | `go.mod`, toolchain directive, builder digest, CI | latest two Go minor releases only after tests pass; patch updates preferred |
 | PostgreSQL | `TBD-tested`; target current supported major, minimum one prior major where CI cost permits | test image digest and deployment docs | no EOL major; upgrade one major at a time with restore/migration rehearsal |
 | OPA | `TBD-tested`; one exact release | binary/image checksum or digest | policy bundle/decision contract versioned independently; patch/minor after conformance tests |
 | Valkey | optional; `TBD-tested` exact major/minor | test image digest | cache is disposable; no correctness migration dependency; support one tested major |
@@ -26,3 +26,8 @@ Phase 0 defines compatibility policy without prematurely pinning releases that i
 ## Upgrade evidence
 
 Every supported-matrix change records the old/new version, upstream notes reviewed, migration/rollback implications, exact verification commands, and artifact digests in the implementing commit or ADR.
+
+Go 1.26.5 was selected on 2026-08-10 as the latest stable patch listed by the
+official Go release history and passed the ENG-001 module and package-boundary
+checks. CI and builder-image evidence remain Phase 1 exit requirements; later
+Phase 1 work may advance this pin through the upgrade policy above.
