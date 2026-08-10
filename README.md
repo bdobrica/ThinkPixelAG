@@ -126,7 +126,7 @@ Makefile              build, lint, test, policy, image, and local-dev targets
 
 ## Development workflow
 
-The exact targets will be introduced during implementation. The intended interface is:
+The repository-root Makefile is the stable local and CI interface:
 
 ```sh
 make tools
@@ -142,7 +142,11 @@ make image
 make verify
 ```
 
-`make verify` is the local release gate and must match CI. Integration tests will start pinned PostgreSQL, Valkey, and OPA dependencies in an isolated environment. No external production service is required for local tests.
+`make verify` is the aggregate non-container release gate and must match CI.
+`make image` becomes mandatory when ENG-011 adds the baseline Dockerfile; until
+then it fails with an explicit prerequisite message. Integration tests will
+start pinned PostgreSQL, Valkey, and OPA dependencies in an isolated environment
+once ENG-009 introduces them. See [development and verification commands](docs/operations/development.md).
 
 Dependency sources, licenses, vulnerability handling, exceptions, and pinned
 build tools follow the [dependency and build-tool policy](docs/security/dependencies.md).

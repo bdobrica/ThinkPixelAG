@@ -23,6 +23,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [Structured logging and redaction](operations/logging.md)
 - [Metrics and tracing](operations/observability.md)
 - [HTTP server and process lifecycle](operations/http-server.md)
+- [Development and verification commands](operations/development.md)
 - [Phase 0 blueprint review](phase-0-review.md)
 
 ## Architecture decisions

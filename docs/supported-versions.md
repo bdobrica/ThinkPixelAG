@@ -20,6 +20,7 @@ Phase 0 defines compatibility policy without prematurely pinning releases that i
 |---|---|---|
 | `govulncheck` | 1.6.0 | reachable Go and standard-library vulnerability scanning |
 | `go-licenses` | 2.0.1 | application/test transitive license classification and enforcement |
+| Redocly CLI | 2.3.0 | OpenAPI 3.1 validation through the exact-version Make invocation |
 
 The isolated `tools/go.mod` and `tools/go.sum` are authoritative for Go tool
 versions and checksums. Tool updates follow the same review and verification

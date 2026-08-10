@@ -159,6 +159,13 @@ Target a supported Go release pinned in `go.mod` and CI. Prefer the standard lib
 - generated OpenAPI server/client types where this does not leak transport concerns into the domain;
 - SQL migrations with forward compatibility and explicit rollback/roll-forward guidance.
 
+The repository-root Makefile is the sole stable developer/CI command surface.
+Its aggregate `verify` target covers generation drift, formatting/static/module
+checks, OpenAPI, unit/race/policy/integration/e2e suites, dependency source,
+vulnerability, license, and binary build gates. Container build remains an
+explicit separate target until ENG-011 supplies the pinned Dockerfile and is
+then required by CI and release verification.
+
 Errors are typed and mapped once at the transport boundary. Context cancellation and deadlines propagate to all I/O. Graceful shutdown stops admission, drains requests/workers within a bound, and closes pools. Dependency calls use timeouts and narrowly scoped retry with jitter; non-idempotent operations are not blindly retried.
 
 ## 5. API and administrative surface
@@ -228,8 +235,8 @@ Status: **Completed 2026-08-10.** Evidence is indexed in `docs/README.md`, the b
 
 Initialize Go, directories, configuration, logging/metrics/tracing, Makefile, CI, development dependencies, baseline Dockerfile, and health endpoints. Exit when `make verify` passes from a clean checkout and a minimal image starts as non-root.
 
-Status: **In progress.** ENG-001 through ENG-007 are implemented; the Make-based
-verification surface, local dependencies, CI, and baseline image remain.
+Status: **In progress.** ENG-001 through ENG-008 are implemented; local
+dependencies, CI, and the baseline image remain.
 
 ### Phase 2 — Authoritative persistence
 

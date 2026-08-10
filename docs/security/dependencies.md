@@ -70,8 +70,10 @@ go tool -modfile=tools/go.mod go-licenses check --include_tests \
   --disallowed_types=forbidden,restricted,reciprocal,unknown ./...
 ```
 
-ENG-008 will expose these operations through Make targets; ENG-010 will run them
-in CI. Network or vulnerability-database errors are failures, not clean results.
+These operations are exposed by `make dependency-check`,
+`make vulnerability-check`, `make license-check`, and their aggregate
+`make security` target. ENG-010 will run the same targets in CI. Network or
+vulnerability-database errors are failures, not clean results.
 
 ## Update and exception workflow
 
