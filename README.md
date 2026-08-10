@@ -149,6 +149,10 @@ versions and authentication, `make dev-down` to preserve database state, and
 [local dependency stack](deploy/README.md) for credentials and port overrides.
 
 `make verify` is the aggregate non-runtime release gate and must match CI.
+GitHub Actions runs the same Make targets as isolated, read-only jobs for
+quality, unit/race/policy/integration tests, security checks, binary build, and
+the OCI-image build. The image job activates automatically when ENG-011 adds
+the baseline `Dockerfile`.
 `make image` becomes mandatory when ENG-011 adds the baseline Dockerfile; until
 then it fails with an explicit prerequisite message. See
 [development and verification commands](docs/operations/development.md).

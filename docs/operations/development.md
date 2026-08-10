@@ -35,6 +35,21 @@ and rejects any resulting unstaged tracked-file difference. CI should invoke the
 same target. The container build remains a separate mandatory CI/release gate
 after ENG-011 because it requires a container daemon and pinned image assets.
 
+## Continuous integration
+
+`.github/workflows/ci.yaml` runs on pull requests and pushes to `main`. Separate
+jobs expose formatting/generation/lint, unit, race, policy, integration,
+dependency security/license, binary, and OCI-image status checks. Jobs call the
+Makefile rather than duplicating its behavior. The workflow grants only
+read-only repository access, does not persist checkout credentials, cancels
+superseded runs, applies timeouts, and pins third-party actions to full commit
+SHAs with their reviewed release tags in comments.
+
+Until ENG-011 adds `Dockerfile`, the image job reports that explicit prerequisite
+and succeeds without pretending to build an image. The same job automatically
+runs `make image` as soon as `Dockerfile` exists; at that point it is a mandatory
+build gate. Configure branch protection to require all eight named CI jobs.
+
 Build outputs live only below ignored `.cache/`. Override `BUILD_DIR`, `VERSION`,
 `REVISION`, or `IMAGE` for controlled builds. `make clean` removes only the fixed
 repository-local `.cache/bin` directory.
