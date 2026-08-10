@@ -119,6 +119,7 @@ migrations/          PostgreSQL schema migrations
 deploy/              Kubernetes manifests or Helm chart
 docs/adr/            durable architecture decision records
 test/                 integration, contract, security, and end-to-end tests
+tools/                isolated, exactly pinned development and security tools
 Dockerfile            production OCI image
 Makefile              build, lint, test, policy, image, and local-dev targets
 ```
@@ -142,6 +143,9 @@ make verify
 ```
 
 `make verify` is the local release gate and must match CI. Integration tests will start pinned PostgreSQL, Valkey, and OPA dependencies in an isolated environment. No external production service is required for local tests.
+
+Dependency sources, licenses, vulnerability handling, exceptions, and pinned
+build tools follow the [dependency and build-tool policy](docs/security/dependencies.md).
 
 ## Configuration and deployment
 

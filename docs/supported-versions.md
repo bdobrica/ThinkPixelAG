@@ -12,6 +12,17 @@ Phase 0 defines compatibility policy without prematurely pinning releases that i
 | OpenAPI | 3.1.x document | schema validation tool pinned | breaking API changes require a new API version; additive changes remain compatible |
 | OCI platforms | `linux/amd64` required; `linux/arm64` target | manifest list and base image digests | both platforms must pass container smoke tests before advertised |
 
+### Build and security tools
+
+| Tool | Pinned version | Purpose |
+|---|---|---|
+| `govulncheck` | 1.6.0 | reachable Go and standard-library vulnerability scanning |
+| `go-licenses` | 2.0.1 | application/test transitive license classification and enforcement |
+
+The isolated `tools/go.mod` and `tools/go.sum` are authoritative for Go tool
+versions and checksums. Tool updates follow the same review and verification
+policy as runtime dependencies.
+
 ## Dependency policy
 
 - Direct Go modules and build tools are pinned; generated output records tool versions.

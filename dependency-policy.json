@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "allowed_module_prefixes": [
+    "github.com/",
+    "go.opentelemetry.io/",
+    "go.uber.org/",
+    "golang.org/",
+    "google.golang.org/",
+    "gopkg.in/"
+  ],
+  "module_exceptions": []
+}
