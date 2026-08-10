@@ -46,6 +46,14 @@ OPA evaluates Rego. The service supplies normalized, bounded input and consumes 
 - RFC 7807 problem details provide consistent errors; request IDs and trace context are returned.
 - Mutation requests accept an `Idempotency-Key`; the stored result is scoped to tenant, principal, route, and normalized request hash.
 
+The baseline HTTP transport binds before reporting startup, validates or creates
+canonical UUIDv7 request IDs, extracts W3C trace context, applies centralized
+panic/error handling, limits headers/bodies/time, and drains on termination.
+`/livez`, `/readyz`, and `/metrics` are intentionally unauthenticated operational
+endpoints; they expose no tenant data and rely on cluster network isolation.
+Initial readiness represents local startup completion and is extended with
+database, policy, and revocation-freshness checks in their owning phases.
+
 ### 3.4 Domain model
 
 Principal entities:
@@ -220,9 +228,8 @@ Status: **Completed 2026-08-10.** Evidence is indexed in `docs/README.md`, the b
 
 Initialize Go, directories, configuration, logging/metrics/tracing, Makefile, CI, development dependencies, baseline Dockerfile, and health endpoints. Exit when `make verify` passes from a clean checkout and a minimal image starts as non-root.
 
-Status: **In progress.** ENG-001 through ENG-006 are implemented; HTTP startup,
-the Make-based verification surface, local dependencies, CI, and baseline image
-remain.
+Status: **In progress.** ENG-001 through ENG-007 are implemented; the Make-based
+verification surface, local dependencies, CI, and baseline image remain.
 
 ### Phase 2 — Authoritative persistence
 

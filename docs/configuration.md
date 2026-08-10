@@ -19,8 +19,11 @@ dependency checks once those adapters exist.
 |---|---|---|---|
 | `THINKPIXELAG_ENVIRONMENT` | `--environment` | `local` | `local`, `test`, or `production` |
 | `THINKPIXELAG_HTTP_ADDRESS` | `--http-address` | `:8080` | valid `host:port` |
+| `THINKPIXELAG_HTTP_MAX_HEADER_BYTES` | `--http-max-header-bytes` | `1048576` | 1 KiB through 16 MiB |
+| `THINKPIXELAG_HTTP_MAX_BODY_BYTES` | `--http-max-body-bytes` | `1048576` | 1 byte through 64 MiB; handlers may impose smaller endpoint limits |
 | `THINKPIXELAG_HTTP_READ_HEADER_TIMEOUT` | `--http-read-header-timeout` | `5s` | greater than zero, at most `5m` |
 | `THINKPIXELAG_HTTP_READ_TIMEOUT` | `--http-read-timeout` | `15s` | greater than zero, at most `5m` |
+| `THINKPIXELAG_HTTP_HANDLER_TIMEOUT` | `--http-handler-timeout` | `15s` | context deadline; greater than zero, at most `5m` |
 | `THINKPIXELAG_HTTP_WRITE_TIMEOUT` | `--http-write-timeout` | `30s` | greater than zero, at most `5m` |
 | `THINKPIXELAG_HTTP_IDLE_TIMEOUT` | `--http-idle-timeout` | `1m` | greater than zero, at most `5m` |
 | `THINKPIXELAG_HTTP_SHUTDOWN_TIMEOUT` | `--http-shutdown-timeout` | `20s` | greater than zero, at most `5m` |

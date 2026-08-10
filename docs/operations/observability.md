@@ -11,8 +11,8 @@ created in ENG-007 owns provider wiring and shutdown.
 Metrics use a private registry. Enabled mode registers Go runtime, process,
 immutable build information, HTTP request count, and HTTP duration collectors.
 Disabled mode retains the same API but observations are no-ops and the registry
-is empty. ENG-007 will mount the registry handler on the operational metrics
-endpoint; no default HTTP mux is used.
+is empty. The process mounts the registry handler at `GET /metrics`; no default
+HTTP mux is used.
 
 Initial application metrics are:
 

@@ -21,12 +21,13 @@ func TestLoadDefaultsEnvironmentAndFlagPrecedence(t *testing.T) {
 	t.Parallel()
 	environment := validEnvironment()
 	environment["THINKPIXELAG_HTTP_ADDRESS"] = "127.0.0.1:8081"
+	environment["THINKPIXELAG_HTTP_MAX_BODY_BYTES"] = "2048"
 	environment["THINKPIXELAG_OPA_TIMEOUT"] = "3s"
 
 	environment["THINKPIXELAG_LOG_LEVEL"] = "warn"
 	environment["THINKPIXELAG_METRICS_ENABLED"] = "false"
 	environment["THINKPIXELAG_TRACE_SAMPLE_RATIO"] = "0.25"
-	c, err := load([]string{"--http-address=127.0.0.1:9090", "--opa-timeout=4s", "--log-level=error", "--metrics-enabled=true", "--trace-sample-ratio=0.5"}, environment)
+	c, err := load([]string{"--http-address=127.0.0.1:9090", "--http-max-body-bytes=4096", "--http-handler-timeout=10s", "--opa-timeout=4s", "--log-level=error", "--metrics-enabled=true", "--trace-sample-ratio=0.5"}, environment)
 	if err != nil {
 		t.Fatalf("load() error = %v", err)
 	}
@@ -38,6 +39,9 @@ func TestLoadDefaultsEnvironmentAndFlagPrecedence(t *testing.T) {
 	}
 	if c.HTTP.ReadTimeout != 15*time.Second {
 		t.Errorf("HTTP read timeout = %s, want default 15s", c.HTTP.ReadTimeout)
+	}
+	if c.HTTP.MaxBodyBytes != 4096 || c.HTTP.HandlerTimeout != 10*time.Second {
+		t.Errorf("HTTP bounds = %d, %s", c.HTTP.MaxBodyBytes, c.HTTP.HandlerTimeout)
 	}
 	if c.Log.Level != "error" {
 		t.Errorf("log level = %q, want flag value", c.Log.Level)
@@ -63,6 +67,7 @@ func TestLoadRejectsUnknownAndMalformedInput(t *testing.T) {
 		{name: "malformed duration", env: map[string]string{"THINKPIXELAG_OPA_TIMEOUT": "soon"}, wantErr: "must be a Go duration"},
 		{name: "malformed bool", env: map[string]string{"THINKPIXELAG_METRICS_ENABLED": "sometimes"}, wantErr: "must be true or false"},
 		{name: "malformed ratio", env: map[string]string{"THINKPIXELAG_TRACE_SAMPLE_RATIO": "many"}, wantErr: "must be a number"},
+		{name: "malformed bytes", env: map[string]string{"THINKPIXELAG_HTTP_MAX_BODY_BYTES": "many"}, wantErr: "must be an integer"},
 		{name: "unknown flag", args: []string{"--database-url=secret"}, env: validEnvironment(), wantErr: "flag provided but not defined"},
 		{name: "positional argument", args: []string{"serve"}, env: validEnvironment(), wantErr: "unexpected positional"},
 	}

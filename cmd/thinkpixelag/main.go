@@ -1,0 +1,100 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver"
+	"github.com/bdobrica/ThinkPixelAG/internal/config"
+	"github.com/bdobrica/ThinkPixelAG/internal/domain"
+	"github.com/bdobrica/ThinkPixelAG/internal/observability/logging"
+	"github.com/bdobrica/ThinkPixelAG/internal/observability/metrics"
+	"github.com/bdobrica/ThinkPixelAG/internal/observability/tracing"
+)
+
+var (
+	version  = "dev"
+	revision = "unknown"
+)
+
+func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	if err := run(ctx, os.Args[1:]); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "thinkpixelag: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func run(ctx context.Context, args []string) error {
+	settings, err := config.Load(args)
+	if err != nil {
+		return err
+	}
+	logger, err := logging.New(os.Stdout, settings.Log.Level)
+	if err != nil {
+		return fmt.Errorf("initialize logging: %w", err)
+	}
+	metricSet, err := metrics.New(settings.Telemetry.MetricsEnabled, metrics.BuildInfo{Version: version, Revision: revision})
+	if err != nil {
+		return fmt.Errorf("initialize metrics: %w", err)
+	}
+	traceSet, err := tracing.New(ctx, tracing.Config{
+		Mode: settings.Telemetry.TracingMode, ServiceName: settings.Telemetry.ServiceName,
+		Environment: string(settings.Environment), OTLPEndpoint: settings.Telemetry.OTLPEndpoint,
+		SampleRatio: settings.Telemetry.TraceSampleRatio, ExportTimeout: settings.Telemetry.TraceExportTimeout,
+		BatchTimeout: settings.Telemetry.TraceBatchTimeout,
+	})
+	if err != nil {
+		return fmt.Errorf("initialize tracing: %w", err)
+	}
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), settings.HTTP.ShutdownTimeout)
+		defer cancel()
+		if shutdownErr := traceSet.Shutdown(shutdownCtx); shutdownErr != nil {
+			logger.Error("tracing shutdown failed", slog.String("category", "telemetry_shutdown"))
+		}
+	}()
+
+	server, err := httpserver.New(settings.HTTP, httpserver.Dependencies{
+		Logger: logger, Metrics: metricSet, Tracing: traceSet,
+		NewID: func() (string, error) { id, idErr := domain.NewID(); return id.String(), idErr },
+	})
+	if err != nil {
+		return fmt.Errorf("initialize HTTP server: %w", err)
+	}
+	listener, err := server.Listen()
+	if err != nil {
+		return fmt.Errorf("listen HTTP: %w", err)
+	}
+
+	listenResult := make(chan error, 1)
+	go func() { listenResult <- server.Serve(listener) }()
+	logger.Info("HTTP server started", slog.String("address", listener.Addr().String()), slog.String("version", version), slog.String("revision", revision))
+	select {
+	case listenErr := <-listenResult:
+		if listenErr != nil {
+			return fmt.Errorf("serve HTTP: %w", listenErr)
+		}
+		return nil
+	case <-ctx.Done():
+		logger.Info("HTTP server draining")
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), settings.HTTP.ShutdownTimeout)
+	defer cancel()
+	shutdownErr := server.Shutdown(shutdownCtx)
+	listenErr := <-listenResult
+	if shutdownErr != nil {
+		return fmt.Errorf("shutdown HTTP server: %w", shutdownErr)
+	}
+	if listenErr != nil {
+		return fmt.Errorf("serve HTTP: %w", listenErr)
+	}
+	logger.Info("HTTP server stopped")
+	return nil
+}

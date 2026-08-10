@@ -155,6 +155,11 @@ Prometheus metrics use a private registry with bounded labels. OpenTelemetry
 tracing supports no-op and local/production OTLP-over-HTTP modes with explicit
 flush and shutdown ownership. See [metrics and tracing](docs/operations/observability.md).
 
+The runnable `cmd/thinkpixelag` process provides bounded HTTP serving,
+correlated access logs and traces, RFC 7807 failures, graceful signal-driven
+shutdown, and unauthenticated `/livez`, `/readyz`, and `/metrics` operational
+endpoints. See [HTTP server and process lifecycle](docs/operations/http-server.md).
+
 ## Configuration and deployment
 
 Configuration uses strict typed defaults, `THINKPIXELAG_*` environment variables,

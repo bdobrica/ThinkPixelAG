@@ -13,7 +13,7 @@ level, and message fields. Attributes use stable `snake_case` keys and bounded
 values. Do not use tenant, principal, run, agent, request, or error strings as
 attribute names because dynamic keys defeat indexing and redaction review.
 
-HTTP middleware introduced in ENG-007 will attach validated correlation through
+HTTP middleware attaches validated correlation through
 `logging.WithCorrelation`. The handler emits non-empty values as root-level
 `request_id` and `trace_id`. Record or pre-bound attributes cannot override these
 reserved keys, including spelling variants such as `trace-id`. Invalid IDs,

@@ -55,8 +55,11 @@ type Config struct {
 
 type HTTPConfig struct {
 	Address           string
+	MaxHeaderBytes    int
+	MaxBodyBytes      int64
 	ReadHeaderTimeout time.Duration
 	ReadTimeout       time.Duration
+	HandlerTimeout    time.Duration
 	WriteTimeout      time.Duration
 	IdleTimeout       time.Duration
 	ShutdownTimeout   time.Duration
@@ -105,8 +108,11 @@ func Defaults() Config {
 		Environment: EnvironmentLocal,
 		HTTP: HTTPConfig{
 			Address:           ":8080",
+			MaxHeaderBytes:    1 << 20,
+			MaxBodyBytes:      1 << 20,
 			ReadHeaderTimeout: 5 * time.Second,
 			ReadTimeout:       15 * time.Second,
+			HandlerTimeout:    15 * time.Second,
 			WriteTimeout:      30 * time.Second,
 			IdleTimeout:       60 * time.Second,
 			ShutdownTimeout:   20 * time.Second,

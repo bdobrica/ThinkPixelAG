@@ -15,6 +15,8 @@ servers:
 security:
   - bearerAuth: []
 tags:
+  - name: Operations
+    description: Unauthenticated process probes and Prometheus exposition
   - name: Agents
     description: Caller-visible agent discovery and description
   - name: Runs
@@ -30,6 +32,47 @@ tags:
   - name: Gateways
     description: Trusted revocation distribution and authoritative reconciliation
 paths:
+  /livez:
+    get:
+      tags: [Operations]
+      operationId: getLiveness
+      summary: Report whether the process is alive
+      security: []
+      responses:
+        '200':
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /readyz:
+    get:
+      tags: [Operations]
+      operationId: getReadiness
+      summary: Report whether this instance can accept governed traffic
+      security: []
+      responses:
+        '200':
+          description: Instance is ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '503':
+          $ref: '#/components/responses/Problem'
+  /metrics:
+    get:
+      tags: [Operations]
+      operationId: getMetrics
+      summary: Expose Prometheus metrics from the private registry
+      security: []
+      responses:
+        '200':
+          description: Prometheus text exposition
+          content:
+            text/plain:
+              schema:
+                type: string
   /v1/agents:
     get:
       tags: [Agents]
@@ -570,6 +613,14 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
   schemas:
+    Health:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [alive, ready]
     Identifier:
       type: string
       minLength: 1

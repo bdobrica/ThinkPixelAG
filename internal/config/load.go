@@ -16,8 +16,11 @@ const envPrefix = "THINKPIXELAG_"
 var knownEnvironment = map[string]func(*Config, string) error{
 	"THINKPIXELAG_ENVIRONMENT":              setEnvironment,
 	"THINKPIXELAG_HTTP_ADDRESS":             setString(func(c *Config) *string { return &c.HTTP.Address }),
+	"THINKPIXELAG_HTTP_MAX_HEADER_BYTES":    setInt(func(c *Config) *int { return &c.HTTP.MaxHeaderBytes }),
+	"THINKPIXELAG_HTTP_MAX_BODY_BYTES":      setInt64(func(c *Config) *int64 { return &c.HTTP.MaxBodyBytes }),
 	"THINKPIXELAG_HTTP_READ_HEADER_TIMEOUT": setDuration(func(c *Config) *time.Duration { return &c.HTTP.ReadHeaderTimeout }),
 	"THINKPIXELAG_HTTP_READ_TIMEOUT":        setDuration(func(c *Config) *time.Duration { return &c.HTTP.ReadTimeout }),
+	"THINKPIXELAG_HTTP_HANDLER_TIMEOUT":     setDuration(func(c *Config) *time.Duration { return &c.HTTP.HandlerTimeout }),
 	"THINKPIXELAG_HTTP_WRITE_TIMEOUT":       setDuration(func(c *Config) *time.Duration { return &c.HTTP.WriteTimeout }),
 	"THINKPIXELAG_HTTP_IDLE_TIMEOUT":        setDuration(func(c *Config) *time.Duration { return &c.HTTP.IdleTimeout }),
 	"THINKPIXELAG_HTTP_SHUTDOWN_TIMEOUT":    setDuration(func(c *Config) *time.Duration { return &c.HTTP.ShutdownTimeout }),
@@ -99,8 +102,11 @@ func applyFlags(c *Config, args []string) error {
 
 	fs.Var((*environmentValue)(&c.Environment), "environment", "deployment posture: local, test, or production")
 	fs.StringVar(&c.HTTP.Address, "http-address", c.HTTP.Address, "HTTP listen address")
+	fs.IntVar(&c.HTTP.MaxHeaderBytes, "http-max-header-bytes", c.HTTP.MaxHeaderBytes, "maximum HTTP request header bytes")
+	fs.Int64Var(&c.HTTP.MaxBodyBytes, "http-max-body-bytes", c.HTTP.MaxBodyBytes, "maximum HTTP request body bytes")
 	fs.DurationVar(&c.HTTP.ReadHeaderTimeout, "http-read-header-timeout", c.HTTP.ReadHeaderTimeout, "HTTP header read timeout")
 	fs.DurationVar(&c.HTTP.ReadTimeout, "http-read-timeout", c.HTTP.ReadTimeout, "HTTP request read timeout")
+	fs.DurationVar(&c.HTTP.HandlerTimeout, "http-handler-timeout", c.HTTP.HandlerTimeout, "HTTP handler deadline")
 	fs.DurationVar(&c.HTTP.WriteTimeout, "http-write-timeout", c.HTTP.WriteTimeout, "HTTP response write timeout")
 	fs.DurationVar(&c.HTTP.IdleTimeout, "http-idle-timeout", c.HTTP.IdleTimeout, "HTTP idle timeout")
 	fs.DurationVar(&c.HTTP.ShutdownTimeout, "http-shutdown-timeout", c.HTTP.ShutdownTimeout, "graceful shutdown timeout")
@@ -184,6 +190,28 @@ func setFloat64(destination func(*Config) *float64) func(*Config, string) error 
 		parsed, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return errors.New("must be a number")
+		}
+		*destination(c) = parsed
+		return nil
+	}
+}
+
+func setInt(destination func(*Config) *int) func(*Config, string) error {
+	return func(c *Config, value string) error {
+		parsed, err := strconv.Atoi(value)
+		if err != nil {
+			return errors.New("must be an integer")
+		}
+		*destination(c) = parsed
+		return nil
+	}
+}
+
+func setInt64(destination func(*Config) *int64) func(*Config, string) error {
+	return func(c *Config, value string) error {
+		parsed, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return errors.New("must be an integer")
 		}
 		*destination(c) = parsed
 		return nil

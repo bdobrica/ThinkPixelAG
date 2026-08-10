@@ -39,6 +39,7 @@ func (c Config) Validate() error {
 	for name, value := range map[string]time.Duration{
 		"http read header timeout": c.HTTP.ReadHeaderTimeout,
 		"http read timeout":        c.HTTP.ReadTimeout,
+		"http handler timeout":     c.HTTP.HandlerTimeout,
 		"http write timeout":       c.HTTP.WriteTimeout,
 		"http idle timeout":        c.HTTP.IdleTimeout,
 		"http shutdown timeout":    c.HTTP.ShutdownTimeout,
@@ -51,6 +52,12 @@ func (c Config) Validate() error {
 		if value <= 0 || value > maxTimeout {
 			problems = append(problems, fmt.Sprintf("%s must be greater than zero and at most %s", name, maxTimeout))
 		}
+	}
+	if c.HTTP.MaxHeaderBytes < 1024 || c.HTTP.MaxHeaderBytes > 16<<20 {
+		problems = append(problems, "http max header bytes must be from 1024 through 16777216")
+	}
+	if c.HTTP.MaxBodyBytes < 1 || c.HTTP.MaxBodyBytes > 64<<20 {
+		problems = append(problems, "http max body bytes must be from 1 through 67108864")
 	}
 	if !c.Database.URL.IsSet() {
 		problems = append(problems, "database URL is required")
