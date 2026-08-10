@@ -33,7 +33,7 @@ Status notation: `[ ]` pending, `[x]` implemented and verified. Add completion m
 - [x] ENG-009 Add local development orchestration for pinned PostgreSQL, OPA, and optional Valkey with isolated test credentials and health checks. — completed 2026-08-10, commit `610088a`, evidence: immutable Compose image pins and contract tests; healthy full-profile runtime smoke; positive/negative PostgreSQL and Valkey authentication; OPA 1.19.0 endpoint/version check; scoped volume cleanup; `make verify`
 - [x] ENG-010 Add CI for formatting, generation drift, lint, unit/race tests, policy tests, integration tests, build, vulnerability/license checks, and image build. — completed 2026-08-10, commit `47f8519`, evidence: eight least-privilege GitHub Actions jobs; immutable action pins; CI contract tests; `make verify`
 - [x] ENG-011 Add a multi-stage baseline Dockerfile, `.dockerignore`, non-root runtime, build metadata, and container smoke test. — completed 2026-08-10, commit `5869296`, evidence: immutable Go/distroless base pins; allowlisted build context; UID/GID 65532; OCI labels and embedded build metadata; read-only/capability-dropped probe and SIGTERM smoke; `make verify`
-- [ ] ENG-012 Verify a clean checkout passes `make verify`, starts the minimal image as non-root, and commit Phase 1 evidence.
+- [x] ENG-012 Verify a clean checkout passes `make verify`, starts the minimal image as non-root, and commit Phase 1 evidence. — completed 2026-08-10, commit `PENDING`, evidence: `docs/phase-1-evidence.md`; fresh clone of `147cbf4` remained clean after `make verify`; 6.7 MB shell-free image ran as UID/GID 65532 under hardened settings
 
 ## Phase 2 — PostgreSQL, transactions, and delivery primitives
 
@@ -178,6 +178,7 @@ Append one entry per completed atomic item or tightly coupled group. Do not dele
 | 2026-08-10 | ENG-009 | `610088a` | immutable Compose pin/health/isolation contract tests; full PostgreSQL 18.4, OPA 1.19.0, and Valkey 9.1.1 runtime smoke; positive/negative authentication; `make verify` | Host ports are loopback-only; Valkey is opt-in and non-persistent; PostgreSQL state survives `dev-down` and only scoped `dev-reset` removes it; OPA starts policy-empty until Phase 3 |
 | 2026-08-10 | ENG-010 | `47f8519` | CI contract tests; formatting/generation/lint, unit/race/policy/integration, dependency/vulnerability/license, binary and image jobs; `make verify` | Third-party actions use full commit SHAs; ENG-011 subsequently activated the image job as a mandatory build and runtime-smoke gate |
 | 2026-08-10 | ENG-011 | `5869296` | Docker contract tests; pinned multi-stage build; OCI metadata; non-root/read-only/probe/SIGTERM runtime smoke; `make verify` | Distroless runtime intentionally has no shell; Go builder and runtime indexes support both required `linux/amd64` and target `linux/arm64`; multi-architecture publishing remains OPS-001 |
+| 2026-08-10 | ENG-012 | `PENDING` | fresh isolated clone at `147cbf4`; clean before/after `make verify`; image ID/size/metadata; shell-free UID 65532 read-only/probe/SIGTERM smoke | Phase 1 qualified on `linux/amd64`; hosted CI awaits push; `linux/arm64` qualification remains OPS-001 |
 
 ## Active blockers and deviations
 

@@ -235,15 +235,14 @@ Status: **Completed 2026-08-10.** Evidence is indexed in `docs/README.md`, the b
 
 Initialize Go, directories, configuration, logging/metrics/tracing, Makefile, CI, development dependencies, baseline Dockerfile, and health endpoints. Exit when `make verify` passes from a clean checkout and a minimal image starts as non-root.
 
-Status: **In progress.** ENG-001 through ENG-011 are implemented; only the
-clean-checkout phase-exit proof remains. CI runs each Makefile gate in a
-separate least-privilege job with immutable action pins. Its required image job
-builds the immutable-base, distroless non-root image and exercises the hardened
-runtime smoke test. Local
-development uses immutable image-index pins for
-PostgreSQL 18.4, OPA 1.19.0, and opt-in Valkey 9.1.1. Services publish only on
-loopback, use isolated local-only credentials and health gates, and preserve
-only authoritative PostgreSQL state by default. Valkey remains disposable.
+Status: **Completed 2026-08-10.** ENG-001 through ENG-012 are implemented. A
+fresh clone of commit `147cbf4` passed the complete `make verify` gate without
+changing the checkout, and its 6.7 MB distroless image ran as numeric non-root
+UID/GID 65532 with a read-only root filesystem, successful probes, and graceful
+SIGTERM shutdown. CI uses separate least-privilege jobs with immutable action
+pins. Local development uses healthy immutable PostgreSQL 18.4, OPA 1.19.0,
+and opt-in disposable Valkey 9.1.1 dependencies. Full audit evidence is in
+`docs/phase-1-evidence.md`.
 
 ### Phase 2 — Authoritative persistence
 

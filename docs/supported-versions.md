@@ -48,3 +48,8 @@ official Go release history. The module/package checks and pinned builder passed
 on `linux/amd64`; the distroless runtime passed non-root, read-only, health, build
 metadata, and graceful-shutdown smoke tests. Cross-platform publication and
 `linux/arm64` runtime qualification remain Phase 8 work.
+
+The complete Phase 1 matrix and engineering foundation were reverified from a
+clean clone of `147cbf4` on `linux/amd64`; see
+[`phase-1-evidence.md`](phase-1-evidence.md) for the environment, commands,
+artifact identity, and declared later-phase qualifications.

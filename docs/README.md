@@ -25,6 +25,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [HTTP server and process lifecycle](operations/http-server.md)
 - [Development and verification commands](operations/development.md)
 - [Phase 0 blueprint review](phase-0-review.md)
+- [Phase 1 engineering foundation evidence](phase-1-evidence.md)
 
 ## Architecture decisions
 

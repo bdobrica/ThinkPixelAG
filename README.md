@@ -6,7 +6,13 @@ The project implements the governance-plane concepts in the Enterprise Execution
 
 ## Status
 
-The project is in the engineering-foundation phase. Phase 0 contracts and the initial Go module/package boundaries are complete. [PLAN.md](PLAN.md) defines the target architecture and delivery phases; [TODO.md](TODO.md) is the ordered, atomic release-candidate checklist.
+The engineering foundation is complete and the next implementation phase is
+authoritative PostgreSQL persistence. Phase 0 contracts and Phase 1 build,
+verification, CI, local-dependency, observability, HTTP-runtime, and hardened
+image foundations have passed their exit gates. [PLAN.md](PLAN.md) defines the
+target architecture and delivery phases; [TODO.md](TODO.md) is the ordered,
+atomic release-candidate checklist. Phase evidence is indexed in
+[docs/README.md](docs/README.md).
 
 The normative architecture, security, domain, policy, API, and operational contracts are indexed in [docs/README.md](docs/README.md). The initial OpenAPI 3.1 description is at [api/openapi/thinkpixelag.yaml](api/openapi/thinkpixelag.yaml).
 
