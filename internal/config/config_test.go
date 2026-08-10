@@ -23,7 +23,8 @@ func TestLoadDefaultsEnvironmentAndFlagPrecedence(t *testing.T) {
 	environment["THINKPIXELAG_HTTP_ADDRESS"] = "127.0.0.1:8081"
 	environment["THINKPIXELAG_OPA_TIMEOUT"] = "3s"
 
-	c, err := load([]string{"--http-address=127.0.0.1:9090", "--opa-timeout=4s"}, environment)
+	environment["THINKPIXELAG_LOG_LEVEL"] = "warn"
+	c, err := load([]string{"--http-address=127.0.0.1:9090", "--opa-timeout=4s", "--log-level=error"}, environment)
 	if err != nil {
 		t.Fatalf("load() error = %v", err)
 	}
@@ -35,6 +36,9 @@ func TestLoadDefaultsEnvironmentAndFlagPrecedence(t *testing.T) {
 	}
 	if c.HTTP.ReadTimeout != 15*time.Second {
 		t.Errorf("HTTP read timeout = %s, want default 15s", c.HTTP.ReadTimeout)
+	}
+	if c.Log.Level != "error" {
+		t.Errorf("log level = %q, want flag value", c.Log.Level)
 	}
 	if got := c.Database.URL.Value(); !strings.Contains(got, "database-secret") {
 		t.Errorf("database secret was not loaded")
@@ -101,6 +105,19 @@ func TestValidateRejectsNamedPort(t *testing.T) {
 
 	if err := c.Validate(); err == nil || !strings.Contains(err.Error(), "port must be a number") {
 		t.Fatalf("Validate() error = %v, want numeric port failure", err)
+	}
+}
+
+func TestValidateRejectsLogLevel(t *testing.T) {
+	t.Parallel()
+	c := Defaults()
+	c.Log.Level = "verbose"
+	c.Database.URL = NewSecret("postgres://db.example/service")
+	c.OIDC.IssuerURL = "https://id.example/issuer"
+	c.OIDC.Audience = "thinkpixelag"
+
+	if err := c.Validate(); err == nil || !strings.Contains(err.Error(), "log level") {
+		t.Fatalf("Validate() error = %v, want log level failure", err)
 	}
 }
 

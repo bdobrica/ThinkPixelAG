@@ -54,6 +54,11 @@ func (c Config) Validate() error {
 	} else if err := validateSecretURL(c.Database.URL, "postgres", "postgresql"); err != nil {
 		problems = append(problems, "database URL: "+err.Error())
 	}
+	switch c.Log.Level {
+	case "debug", "info", "warn", "error":
+	default:
+		problems = append(problems, "log level must be debug, info, warn, or error")
+	}
 	if err := validateHTTPURL(c.OPA.URL, c.Environment == EnvironmentProduction); err != nil {
 		problems = append(problems, "OPA URL: "+err.Error())
 	}

@@ -26,6 +26,7 @@ dependency checks once those adapters exist.
 | `THINKPIXELAG_HTTP_SHUTDOWN_TIMEOUT` | `--http-shutdown-timeout` | `20s` | greater than zero, at most `5m` |
 | `THINKPIXELAG_DATABASE_URL` | none | none | required; `postgres://` or `postgresql://` |
 | `THINKPIXELAG_DATABASE_CONNECT_TIMEOUT` | `--database-connect-timeout` | `5s` | greater than zero, at most `5m` |
+| `THINKPIXELAG_LOG_LEVEL` | `--log-level` | `info` | `debug`, `info`, `warn`, or `error` |
 | `THINKPIXELAG_OPA_URL` | `--opa-url` | `http://127.0.0.1:8181` | absolute HTTP(S), no credentials/query/fragment; production requires HTTPS except loopback |
 | `THINKPIXELAG_OPA_DECISION_PATH` | `--opa-decision-path` | `/v1/data/thinkpixelag/decision` | absolute path without query/fragment |
 | `THINKPIXELAG_OPA_TIMEOUT` | `--opa-timeout` | `2s` | greater than zero, at most `5m` |

@@ -22,6 +22,7 @@ var knownEnvironment = map[string]func(*Config, string) error{
 	"THINKPIXELAG_HTTP_SHUTDOWN_TIMEOUT":    setDuration(func(c *Config) *time.Duration { return &c.HTTP.ShutdownTimeout }),
 	"THINKPIXELAG_DATABASE_URL":             setSecret(func(c *Config) *Secret { return &c.Database.URL }),
 	"THINKPIXELAG_DATABASE_CONNECT_TIMEOUT": setDuration(func(c *Config) *time.Duration { return &c.Database.ConnectTimeout }),
+	"THINKPIXELAG_LOG_LEVEL":                setString(func(c *Config) *string { return &c.Log.Level }),
 	"THINKPIXELAG_OPA_URL":                  setString(func(c *Config) *string { return &c.OPA.URL }),
 	"THINKPIXELAG_OPA_DECISION_PATH":        setString(func(c *Config) *string { return &c.OPA.DecisionPath }),
 	"THINKPIXELAG_OPA_TIMEOUT":              setDuration(func(c *Config) *time.Duration { return &c.OPA.Timeout }),
@@ -96,6 +97,7 @@ func applyFlags(c *Config, args []string) error {
 	fs.DurationVar(&c.HTTP.IdleTimeout, "http-idle-timeout", c.HTTP.IdleTimeout, "HTTP idle timeout")
 	fs.DurationVar(&c.HTTP.ShutdownTimeout, "http-shutdown-timeout", c.HTTP.ShutdownTimeout, "graceful shutdown timeout")
 	fs.DurationVar(&c.Database.ConnectTimeout, "database-connect-timeout", c.Database.ConnectTimeout, "database connection timeout")
+	fs.StringVar(&c.Log.Level, "log-level", c.Log.Level, "minimum log level: debug, info, warn, or error")
 	fs.StringVar(&c.OPA.URL, "opa-url", c.OPA.URL, "OPA base URL")
 	fs.StringVar(&c.OPA.DecisionPath, "opa-decision-path", c.OPA.DecisionPath, "OPA decision document path")
 	fs.DurationVar(&c.OPA.Timeout, "opa-timeout", c.OPA.Timeout, "OPA request timeout")

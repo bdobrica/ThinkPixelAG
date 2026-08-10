@@ -46,6 +46,7 @@ type Config struct {
 	Environment Environment
 	HTTP        HTTPConfig
 	Database    DatabaseConfig
+	Log         LogConfig
 	OPA         OPAConfig
 	Valkey      ValkeyConfig
 	OIDC        OIDCConfig
@@ -63,6 +64,10 @@ type HTTPConfig struct {
 type DatabaseConfig struct {
 	URL            Secret
 	ConnectTimeout time.Duration
+}
+
+type LogConfig struct {
+	Level string `json:"level"`
 }
 
 type OPAConfig struct {
@@ -96,6 +101,7 @@ func Defaults() Config {
 			ShutdownTimeout:   20 * time.Second,
 		},
 		Database: DatabaseConfig{ConnectTimeout: 5 * time.Second},
+		Log:      LogConfig{Level: "info"},
 		OPA: OPAConfig{
 			URL:          "http://127.0.0.1:8181",
 			DecisionPath: "/v1/data/thinkpixelag/decision",
@@ -112,6 +118,7 @@ type safeConfig struct {
 		URLConfigured  bool          `json:"url_configured"`
 		ConnectTimeout time.Duration `json:"connect_timeout"`
 	} `json:"database"`
+	Log LogConfig `json:"log"`
 	OPA struct {
 		URL                   string        `json:"url"`
 		DecisionPath          string        `json:"decision_path"`
@@ -131,6 +138,7 @@ func (c Config) safe() safeConfig {
 	out.HTTP = c.HTTP
 	out.Database.URLConfigured = c.Database.URL.IsSet()
 	out.Database.ConnectTimeout = c.Database.ConnectTimeout
+	out.Log = c.Log
 	out.OPA.URL = c.OPA.URL
 	out.OPA.DecisionPath = c.OPA.DecisionPath
 	out.OPA.Timeout = c.OPA.Timeout

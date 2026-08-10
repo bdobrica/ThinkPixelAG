@@ -147,6 +147,10 @@ make verify
 Dependency sources, licenses, vulnerability handling, exceptions, and pinned
 build tools follow the [dependency and build-tool policy](docs/security/dependencies.md).
 
+Runtime logs are structured JSON with context-derived request/trace correlation
+and centralized sensitive-field redaction. The operational contract and safe-use
+rules are documented in [structured logging and redaction](docs/operations/logging.md).
+
 ## Configuration and deployment
 
 Configuration uses strict typed defaults, `THINKPIXELAG_*` environment variables,

@@ -19,6 +19,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [Dependency and build-tool policy](security/dependencies.md)
 - [Supported versions](supported-versions.md)
 - [SLOs and capacity targets](operations/slos.md)
+- [Structured logging and redaction](operations/logging.md)
 - [Phase 0 blueprint review](phase-0-review.md)
 
 ## Architecture decisions
