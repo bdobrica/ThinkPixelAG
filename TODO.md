@@ -26,7 +26,7 @@ Status notation: `[ ]` pending, `[x]` implemented and verified. Add completion m
 - [x] ENG-002 Add dependency policy, license/source checks, vulnerability scanning configuration, and reproducible tool pinning. — completed 2026-08-10, commit `45c422d`, evidence: dependency checker unit/integration tests; pinned `govulncheck` and `go-licenses` gates; `go test ./...`; `git diff --check`
 - [x] ENG-003 Implement strict typed configuration with defaults, environment/flag loading, startup validation, secret-safe rendering, and unit tests. — completed 2026-08-10, commit `be384bc`, evidence: configuration unit/redaction tests; `go test -race ./...`; `go vet ./...`; dependency, vulnerability, and license gates
 - [x] ENG-004 Implement structured logging with request/trace correlation and centralized sensitive-field redaction tests. — completed 2026-08-10, commit `f6c3a9e`, evidence: logging/config unit and recursive leak tests; `go test -race -cover ./...`; `go vet ./...`; source/license/vulnerability gates
-- [ ] ENG-005 Add Prometheus metrics and OpenTelemetry tracing initialization with no-op/local configurations.
+- [x] ENG-005 Add Prometheus metrics and OpenTelemetry tracing initialization with no-op/local configurations. — completed 2026-08-10, commit `PENDING`, evidence: Prometheus exposition/no-op/cardinality tests; OpenTelemetry no-op/OTLP export/propagation/shutdown tests; race/vet/source/license/vulnerability gates
 - [ ] ENG-006 Add ID, UTC clock, decimal/resource quantity, pagination cursor, and typed error primitives with tests/fuzz cases.
 - [ ] ENG-007 Add the HTTP server skeleton, middleware ordering, body/header/time limits, request IDs, RFC 7807 responses, graceful shutdown, `/livez`, and initial `/readyz`.
 - [ ] ENG-008 Create a Makefile with pinned `tools`, `generate`, `fmt`, `lint`, `test`, `test-race`, `test-policy`, `test-integration`, `test-e2e`, `build`, `image`, and aggregate `verify` targets.
@@ -171,7 +171,8 @@ Append one entry per completed atomic item or tightly coupled group. Do not dele
 | 2026-08-10 | ENG-002 | `45c422d` | source-policy audit; `govulncheck -test ./...`; `go-licenses check --include_tests`; root/tools tests; `git diff --check` | No dependency exceptions; Make and CI wiring remain ENG-008/ENG-010 |
 | 2026-08-10 | ENG-003 | `be384bc` | configuration/redaction tests; `go test -race ./...`; `go vet ./...`; source/license/vulnerability gates | Secret values are environment-only; command startup wiring remains ENG-007 |
 | 2026-08-10 | ENG-004 | `f6c3a9e` | structured logging, correlation spoofing, recursive redaction and handler immutability tests; race/vet/source/license/vulnerability gates | Trace population and HTTP request-ID middleware remain ENG-005/ENG-007 |
+| 2026-08-10 | ENG-005 | `PENDING` | metrics and OTLP integration tests; `go test -race -cover ./...`; vet/source/license/vulnerability gates | Eight exact upstream pseudo-version exceptions expire 2027-02-10; metrics endpoint/server wiring remains ENG-007 |
 
 ## Active blockers and deviations
 
-- None recorded at plan creation.
+- ENG-005 inherits eight exact pseudo-version dependencies from the pinned Prometheus/OpenTelemetry graph. Exceptions are version-bound in `dependency-policy.json`, expire 2027-02-10, and must be removed or renewed through review before that date.

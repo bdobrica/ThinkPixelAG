@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"math"
 	"net"
 	"net/url"
 	"sort"
@@ -43,6 +44,8 @@ func (c Config) Validate() error {
 		"http shutdown timeout":    c.HTTP.ShutdownTimeout,
 		"database connect timeout": c.Database.ConnectTimeout,
 		"opa timeout":              c.OPA.Timeout,
+		"trace export timeout":     c.Telemetry.TraceExportTimeout,
+		"trace batch timeout":      c.Telemetry.TraceBatchTimeout,
 		"valkey timeout":           c.Valkey.Timeout,
 	} {
 		if value <= 0 || value > maxTimeout {
@@ -64,6 +67,20 @@ func (c Config) Validate() error {
 	}
 	if !strings.HasPrefix(c.OPA.DecisionPath, "/") || strings.ContainsAny(c.OPA.DecisionPath, "?#") {
 		problems = append(problems, "OPA decision path must be an absolute path without query or fragment")
+	}
+	if c.Telemetry.TracingMode != "noop" && c.Telemetry.TracingMode != "otlp" {
+		problems = append(problems, "tracing mode must be noop or otlp")
+	}
+	if strings.TrimSpace(c.Telemetry.ServiceName) == "" || strings.TrimSpace(c.Telemetry.ServiceName) != c.Telemetry.ServiceName || len(c.Telemetry.ServiceName) > 64 || strings.IndexFunc(c.Telemetry.ServiceName, unicode.IsControl) >= 0 {
+		problems = append(problems, "service name must be 1 through 64 bytes without surrounding whitespace or control characters")
+	}
+	if math.IsNaN(c.Telemetry.TraceSampleRatio) || math.IsInf(c.Telemetry.TraceSampleRatio, 0) || c.Telemetry.TraceSampleRatio < 0 || c.Telemetry.TraceSampleRatio > 1 {
+		problems = append(problems, "trace sample ratio must be a finite number from 0 through 1")
+	}
+	if c.Telemetry.TracingMode == "otlp" {
+		if err := validateHTTPURL(c.Telemetry.OTLPEndpoint, c.Environment == EnvironmentProduction); err != nil {
+			problems = append(problems, "OTLP endpoint: "+err.Error())
+		}
 	}
 	if c.Valkey.URL.IsSet() {
 		if err := validateSecretURL(c.Valkey.URL, "redis", "rediss"); err != nil {

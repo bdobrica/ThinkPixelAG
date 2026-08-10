@@ -24,7 +24,9 @@ func TestLoadDefaultsEnvironmentAndFlagPrecedence(t *testing.T) {
 	environment["THINKPIXELAG_OPA_TIMEOUT"] = "3s"
 
 	environment["THINKPIXELAG_LOG_LEVEL"] = "warn"
-	c, err := load([]string{"--http-address=127.0.0.1:9090", "--opa-timeout=4s", "--log-level=error"}, environment)
+	environment["THINKPIXELAG_METRICS_ENABLED"] = "false"
+	environment["THINKPIXELAG_TRACE_SAMPLE_RATIO"] = "0.25"
+	c, err := load([]string{"--http-address=127.0.0.1:9090", "--opa-timeout=4s", "--log-level=error", "--metrics-enabled=true", "--trace-sample-ratio=0.5"}, environment)
 	if err != nil {
 		t.Fatalf("load() error = %v", err)
 	}
@@ -39,6 +41,9 @@ func TestLoadDefaultsEnvironmentAndFlagPrecedence(t *testing.T) {
 	}
 	if c.Log.Level != "error" {
 		t.Errorf("log level = %q, want flag value", c.Log.Level)
+	}
+	if !c.Telemetry.MetricsEnabled || c.Telemetry.TraceSampleRatio != 0.5 {
+		t.Errorf("telemetry flag precedence failed: %#v", c.Telemetry)
 	}
 	if got := c.Database.URL.Value(); !strings.Contains(got, "database-secret") {
 		t.Errorf("database secret was not loaded")
@@ -56,6 +61,8 @@ func TestLoadRejectsUnknownAndMalformedInput(t *testing.T) {
 	}{
 		{name: "unknown environment", env: map[string]string{"THINKPIXELAG_DATABASE_URl": "typo"}, wantErr: "unknown environment variable"},
 		{name: "malformed duration", env: map[string]string{"THINKPIXELAG_OPA_TIMEOUT": "soon"}, wantErr: "must be a Go duration"},
+		{name: "malformed bool", env: map[string]string{"THINKPIXELAG_METRICS_ENABLED": "sometimes"}, wantErr: "must be true or false"},
+		{name: "malformed ratio", env: map[string]string{"THINKPIXELAG_TRACE_SAMPLE_RATIO": "many"}, wantErr: "must be a number"},
 		{name: "unknown flag", args: []string{"--database-url=secret"}, env: validEnvironment(), wantErr: "flag provided but not defined"},
 		{name: "positional argument", args: []string{"serve"}, env: validEnvironment(), wantErr: "unexpected positional"},
 	}
@@ -118,6 +125,43 @@ func TestValidateRejectsLogLevel(t *testing.T) {
 
 	if err := c.Validate(); err == nil || !strings.Contains(err.Error(), "log level") {
 		t.Fatalf("Validate() error = %v, want log level failure", err)
+	}
+}
+
+func TestValidateRejectsTelemetrySettings(t *testing.T) {
+	t.Parallel()
+	c := Defaults()
+	c.Database.URL = NewSecret("postgres://db.example/service")
+	c.OIDC.IssuerURL = "https://id.example/issuer"
+	c.OIDC.Audience = "thinkpixelag"
+	c.Telemetry.TracingMode = "console"
+	c.Telemetry.ServiceName = " service\t"
+	c.Telemetry.TraceSampleRatio = 2
+	c.Telemetry.TraceExportTimeout = 0
+
+	err := c.Validate()
+	if err == nil {
+		t.Fatal("Validate() error = nil, want telemetry failures")
+	}
+	for _, want := range []string{"tracing mode", "service name", "trace sample ratio", "trace export timeout"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("Validate() error missing %q: %v", want, err)
+		}
+	}
+}
+
+func TestValidateRejectsInsecureProductionOTLP(t *testing.T) {
+	t.Parallel()
+	c := Defaults()
+	c.Environment = EnvironmentProduction
+	c.Database.URL = NewSecret("postgres://db.example/service")
+	c.OIDC.IssuerURL = "https://id.example/issuer"
+	c.OIDC.Audience = "thinkpixelag"
+	c.Telemetry.TracingMode = "otlp"
+	c.Telemetry.OTLPEndpoint = "http://collector.example:4318"
+
+	if err := c.Validate(); err == nil || !strings.Contains(err.Error(), "OTLP endpoint") {
+		t.Fatalf("Validate() error = %v, want insecure OTLP failure", err)
 	}
 }
 

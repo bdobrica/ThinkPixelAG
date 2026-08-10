@@ -48,6 +48,7 @@ type Config struct {
 	Database    DatabaseConfig
 	Log         LogConfig
 	OPA         OPAConfig
+	Telemetry   TelemetryConfig
 	Valkey      ValkeyConfig
 	OIDC        OIDCConfig
 }
@@ -75,6 +76,16 @@ type OPAConfig struct {
 	DecisionPath string
 	Timeout      time.Duration
 	BearerToken  Secret
+}
+
+type TelemetryConfig struct {
+	MetricsEnabled     bool
+	TracingMode        string
+	ServiceName        string
+	OTLPEndpoint       string
+	TraceSampleRatio   float64
+	TraceExportTimeout time.Duration
+	TraceBatchTimeout  time.Duration
 }
 
 type ValkeyConfig struct {
@@ -107,6 +118,15 @@ func Defaults() Config {
 			DecisionPath: "/v1/data/thinkpixelag/decision",
 			Timeout:      2 * time.Second,
 		},
+		Telemetry: TelemetryConfig{
+			MetricsEnabled:     true,
+			TracingMode:        "noop",
+			ServiceName:        "thinkpixelag",
+			OTLPEndpoint:       "http://127.0.0.1:4318",
+			TraceSampleRatio:   1,
+			TraceExportTimeout: 5 * time.Second,
+			TraceBatchTimeout:  5 * time.Second,
+		},
 		Valkey: ValkeyConfig{Timeout: 500 * time.Millisecond},
 	}
 }
@@ -125,7 +145,8 @@ type safeConfig struct {
 		Timeout               time.Duration `json:"timeout"`
 		BearerTokenConfigured bool          `json:"bearer_token_configured"`
 	} `json:"opa"`
-	Valkey struct {
+	Telemetry TelemetryConfig `json:"telemetry"`
+	Valkey    struct {
 		URLConfigured bool          `json:"url_configured"`
 		Timeout       time.Duration `json:"timeout"`
 	} `json:"valkey"`
@@ -143,6 +164,7 @@ func (c Config) safe() safeConfig {
 	out.OPA.DecisionPath = c.OPA.DecisionPath
 	out.OPA.Timeout = c.OPA.Timeout
 	out.OPA.BearerTokenConfigured = c.OPA.BearerToken.IsSet()
+	out.Telemetry = c.Telemetry
 	out.Valkey.URLConfigured = c.Valkey.URL.IsSet()
 	out.Valkey.Timeout = c.Valkey.Timeout
 	out.OIDC = c.OIDC

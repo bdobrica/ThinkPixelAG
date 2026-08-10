@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -27,6 +28,13 @@ var knownEnvironment = map[string]func(*Config, string) error{
 	"THINKPIXELAG_OPA_DECISION_PATH":        setString(func(c *Config) *string { return &c.OPA.DecisionPath }),
 	"THINKPIXELAG_OPA_TIMEOUT":              setDuration(func(c *Config) *time.Duration { return &c.OPA.Timeout }),
 	"THINKPIXELAG_OPA_BEARER_TOKEN":         setSecret(func(c *Config) *Secret { return &c.OPA.BearerToken }),
+	"THINKPIXELAG_METRICS_ENABLED":          setBool(func(c *Config) *bool { return &c.Telemetry.MetricsEnabled }),
+	"THINKPIXELAG_TRACING_MODE":             setString(func(c *Config) *string { return &c.Telemetry.TracingMode }),
+	"THINKPIXELAG_SERVICE_NAME":             setString(func(c *Config) *string { return &c.Telemetry.ServiceName }),
+	"THINKPIXELAG_OTLP_ENDPOINT":            setString(func(c *Config) *string { return &c.Telemetry.OTLPEndpoint }),
+	"THINKPIXELAG_TRACE_SAMPLE_RATIO":       setFloat64(func(c *Config) *float64 { return &c.Telemetry.TraceSampleRatio }),
+	"THINKPIXELAG_TRACE_EXPORT_TIMEOUT":     setDuration(func(c *Config) *time.Duration { return &c.Telemetry.TraceExportTimeout }),
+	"THINKPIXELAG_TRACE_BATCH_TIMEOUT":      setDuration(func(c *Config) *time.Duration { return &c.Telemetry.TraceBatchTimeout }),
 	"THINKPIXELAG_VALKEY_URL":               setSecret(func(c *Config) *Secret { return &c.Valkey.URL }),
 	"THINKPIXELAG_VALKEY_TIMEOUT":           setDuration(func(c *Config) *time.Duration { return &c.Valkey.Timeout }),
 	"THINKPIXELAG_OIDC_ISSUER_URL":          setString(func(c *Config) *string { return &c.OIDC.IssuerURL }),
@@ -101,6 +109,13 @@ func applyFlags(c *Config, args []string) error {
 	fs.StringVar(&c.OPA.URL, "opa-url", c.OPA.URL, "OPA base URL")
 	fs.StringVar(&c.OPA.DecisionPath, "opa-decision-path", c.OPA.DecisionPath, "OPA decision document path")
 	fs.DurationVar(&c.OPA.Timeout, "opa-timeout", c.OPA.Timeout, "OPA request timeout")
+	fs.BoolVar(&c.Telemetry.MetricsEnabled, "metrics-enabled", c.Telemetry.MetricsEnabled, "enable Prometheus metrics")
+	fs.StringVar(&c.Telemetry.TracingMode, "tracing-mode", c.Telemetry.TracingMode, "tracing mode: noop or otlp")
+	fs.StringVar(&c.Telemetry.ServiceName, "service-name", c.Telemetry.ServiceName, "OpenTelemetry service name")
+	fs.StringVar(&c.Telemetry.OTLPEndpoint, "otlp-endpoint", c.Telemetry.OTLPEndpoint, "OTLP/HTTP collector base URL")
+	fs.Float64Var(&c.Telemetry.TraceSampleRatio, "trace-sample-ratio", c.Telemetry.TraceSampleRatio, "root trace sampling ratio from 0 through 1")
+	fs.DurationVar(&c.Telemetry.TraceExportTimeout, "trace-export-timeout", c.Telemetry.TraceExportTimeout, "OTLP export timeout")
+	fs.DurationVar(&c.Telemetry.TraceBatchTimeout, "trace-batch-timeout", c.Telemetry.TraceBatchTimeout, "maximum trace batch delay")
 	fs.DurationVar(&c.Valkey.Timeout, "valkey-timeout", c.Valkey.Timeout, "Valkey request timeout")
 	fs.StringVar(&c.OIDC.IssuerURL, "oidc-issuer-url", c.OIDC.IssuerURL, "trusted OIDC issuer URL")
 	fs.StringVar(&c.OIDC.Audience, "oidc-audience", c.OIDC.Audience, "required OIDC audience")
@@ -147,6 +162,28 @@ func setDuration(destination func(*Config) *time.Duration) func(*Config, string)
 		parsed, err := time.ParseDuration(value)
 		if err != nil {
 			return errors.New("must be a Go duration such as 500ms or 5s")
+		}
+		*destination(c) = parsed
+		return nil
+	}
+}
+
+func setBool(destination func(*Config) *bool) func(*Config, string) error {
+	return func(c *Config, value string) error {
+		parsed, err := strconv.ParseBool(value)
+		if err != nil {
+			return errors.New("must be true or false")
+		}
+		*destination(c) = parsed
+		return nil
+	}
+}
+
+func setFloat64(destination func(*Config) *float64) func(*Config, string) error {
+	return func(c *Config, value string) error {
+		parsed, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return errors.New("must be a number")
 		}
 		*destination(c) = parsed
 		return nil

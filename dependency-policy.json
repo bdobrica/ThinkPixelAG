@@ -1,12 +1,81 @@
 {
   "schema_version": 1,
   "allowed_module_prefixes": [
+    "cel.dev/",
+    "cloud.google.com/",
     "github.com/",
     "go.opentelemetry.io/",
     "go.uber.org/",
+    "go.yaml.in/",
     "golang.org/",
+    "gonum.org/",
     "google.golang.org/",
     "gopkg.in/"
   ],
-  "module_exceptions": []
+  "module_exceptions": [
+    {
+      "path": "github.com/alecthomas/units",
+      "version": "v0.0.0-20240927000941-0f3dac36c52b",
+      "owner": "maintainers",
+      "reason": "transitive Prometheus/OpenTelemetry module graph has no selected tagged version",
+      "approval": "ENG-005",
+      "expires_on": "2027-02-10"
+    },
+    {
+      "path": "github.com/cncf/xds/go",
+      "version": "v0.0.0-20260202195803-dba9d589def2",
+      "owner": "maintainers",
+      "reason": "transitive OTLP module graph is pinned upstream to an exact revision",
+      "approval": "ENG-005",
+      "expires_on": "2027-02-10"
+    },
+    {
+      "path": "github.com/modern-go/concurrent",
+      "version": "v0.0.0-20180306012644-bacd9c7ef1dd",
+      "owner": "maintainers",
+      "reason": "transitive telemetry module graph has no tagged replacement selected",
+      "approval": "ENG-005",
+      "expires_on": "2027-02-10"
+    },
+    {
+      "path": "github.com/munnerz/goautoneg",
+      "version": "v0.0.0-20191010083416-a7dc8b61c822",
+      "owner": "maintainers",
+      "reason": "Prometheus client selects this exact upstream pseudo-version",
+      "approval": "ENG-005",
+      "expires_on": "2027-02-10"
+    },
+    {
+      "path": "github.com/mwitkow/go-conntrack",
+      "version": "v0.0.0-20190716064945-2f068394615f",
+      "owner": "maintainers",
+      "reason": "transitive telemetry module graph has no tagged replacement selected",
+      "approval": "ENG-005",
+      "expires_on": "2027-02-10"
+    },
+    {
+      "path": "google.golang.org/genproto/googleapis/api",
+      "version": "v0.0.0-20260803160001-6ac0973c030d",
+      "owner": "maintainers",
+      "reason": "OTLP/gRPC dependencies select this exact generated API revision",
+      "approval": "ENG-005",
+      "expires_on": "2027-02-10"
+    },
+    {
+      "path": "google.golang.org/genproto/googleapis/rpc",
+      "version": "v0.0.0-20260803160001-6ac0973c030d",
+      "owner": "maintainers",
+      "reason": "OTLP/gRPC dependencies select this exact generated RPC revision",
+      "approval": "ENG-005",
+      "expires_on": "2027-02-10"
+    },
+    {
+      "path": "gopkg.in/check.v1",
+      "version": "v1.0.0-20201130134442-10cb98267c6c",
+      "owner": "maintainers",
+      "reason": "transitive module graph selects an exact upstream test-support revision",
+      "approval": "ENG-005",
+      "expires_on": "2027-02-10"
+    }
+  ]
 }

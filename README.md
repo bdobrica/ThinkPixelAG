@@ -151,6 +151,10 @@ Runtime logs are structured JSON with context-derived request/trace correlation
 and centralized sensitive-field redaction. The operational contract and safe-use
 rules are documented in [structured logging and redaction](docs/operations/logging.md).
 
+Prometheus metrics use a private registry with bounded labels. OpenTelemetry
+tracing supports no-op and local/production OTLP-over-HTTP modes with explicit
+flush and shutdown ownership. See [metrics and tracing](docs/operations/observability.md).
+
 ## Configuration and deployment
 
 Configuration uses strict typed defaults, `THINKPIXELAG_*` environment variables,

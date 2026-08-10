@@ -86,4 +86,18 @@ in CI. Network or vulnerability-database errors are failures, not clean results.
 5. Remove unused modules with `go mod tidy`; never suppress checksum or proxy
    verification to make an update pass.
 
-No exceptions are approved as of 2026-08-10.
+### Active module-version exceptions
+
+ENG-005 introduced eight exact pseudo-version exceptions inherited through the
+pinned Prometheus/OpenTelemetry graph. They are listed in
+`dependency-policy.json`, owned by maintainers, and expire on 2027-02-10. They
+grant only the exact module/version pairs permission to use a pseudo-version;
+they do not permit replacements, retractions, module errors, alternate versions,
+or vulnerability/license findings. Upgrade to tagged upstream versions and
+remove the entries when available; expiry fails the source gate.
+
+The ENG-005 license scan warned about assembly in `xxhash/v2` and `x/sys/unix`.
+For the tested Linux/amd64 build, `go list` reports no Cgo files and only
+`xxhash_amd64.s` and `asm_linux_amd64.s`; no additional native dependency is
+linked. Other advertised target platforms remain subject to their image/build
+and license checks before release.

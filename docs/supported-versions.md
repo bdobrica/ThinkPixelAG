@@ -11,6 +11,8 @@ Phase 0 defines compatibility policy without prematurely pinning releases that i
 | Kubernetes | `TBD-tested`; conform to upstream supported skew | cluster test matrix and API versions | oldest and newest tested minors documented; avoid deprecated APIs |
 | OpenAPI | 3.1.x document | schema validation tool pinned | breaking API changes require a new API version; additive changes remain compatible |
 | OCI platforms | `linux/amd64` required; `linux/arm64` target | manifest list and base image digests | both platforms must pass container smoke tests before advertised |
+| Prometheus Go client | 1.24.1 | `go.mod` and `go.sum` | update after metric compatibility, race, and exposition tests pass |
+| OpenTelemetry Go | 1.45.0 | `go.mod` and `go.sum` | API, SDK, and OTLP exporter remain on one tested release; update after export/propagation tests pass |
 
 ### Build and security tools
 

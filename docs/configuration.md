@@ -31,6 +31,13 @@ dependency checks once those adapters exist.
 | `THINKPIXELAG_OPA_DECISION_PATH` | `--opa-decision-path` | `/v1/data/thinkpixelag/decision` | absolute path without query/fragment |
 | `THINKPIXELAG_OPA_TIMEOUT` | `--opa-timeout` | `2s` | greater than zero, at most `5m` |
 | `THINKPIXELAG_OPA_BEARER_TOKEN` | none | unset | optional secret |
+| `THINKPIXELAG_METRICS_ENABLED` | `--metrics-enabled` | `true` | boolean; disabled mode exposes an empty private registry |
+| `THINKPIXELAG_TRACING_MODE` | `--tracing-mode` | `noop` | `noop` or `otlp` |
+| `THINKPIXELAG_SERVICE_NAME` | `--service-name` | `thinkpixelag` | 1–64 bytes, no surrounding whitespace/control characters |
+| `THINKPIXELAG_OTLP_ENDPOINT` | `--otlp-endpoint` | `http://127.0.0.1:4318` | collector base HTTP(S) URL; production requires HTTPS except loopback |
+| `THINKPIXELAG_TRACE_SAMPLE_RATIO` | `--trace-sample-ratio` | `1` | finite number from `0` through `1` |
+| `THINKPIXELAG_TRACE_EXPORT_TIMEOUT` | `--trace-export-timeout` | `5s` | greater than zero, at most `5m` |
+| `THINKPIXELAG_TRACE_BATCH_TIMEOUT` | `--trace-batch-timeout` | `5s` | greater than zero, at most `5m` |
 | `THINKPIXELAG_VALKEY_URL` | none | unset | optional `redis://` or `rediss://`; production requires TLS except loopback |
 | `THINKPIXELAG_VALKEY_TIMEOUT` | `--valkey-timeout` | `500ms` | greater than zero, at most `5m` |
 | `THINKPIXELAG_OIDC_ISSUER_URL` | `--oidc-issuer-url` | none | required absolute HTTP(S), no credentials/query/fragment; HTTPS except loopback |
