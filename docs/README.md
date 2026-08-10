@@ -7,6 +7,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [System architecture](architecture/system.md)
 - [Domain contracts and state machines](contracts/domain-model.md)
 - [Resource accounting](contracts/resource-accounting.md)
+- [Domain primitive contracts](contracts/primitives.md)
 - [Revocation and freshness](contracts/revocation.md)
 - [Policy decision contract](contracts/policy-decision.md)
 - [OpenAPI contract](../api/openapi/thinkpixelag.yaml)

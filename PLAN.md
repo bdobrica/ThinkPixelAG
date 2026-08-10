@@ -57,7 +57,15 @@ Principal entities:
 - `Revocation`, `RevocationEpoch`, `RevocationLogEntry`, `GatewayCheckpoint`;
 - `IdempotencyRecord`, `AuditEvent`, `OutboxMessage`.
 
-IDs are opaque UUIDv7-compatible values. Timestamps are UTC. Monetary values use fixed-precision decimal/integer minor units, never floating point. Resource quantities use explicit units and checked integer/decimal arithmetic.
+IDs are opaque, canonical RFC 9562 UUIDv7 values generated with cryptographic
+randomness. Timestamps are UTC and enter domain state through an injectable
+clock. Exact numbers use a signed 64-bit coefficient and an explicit scale of
+at most 18, serialize as strings, and never use floating point. Resource
+quantities couple that checked representation to an explicit canonical unit.
+Pagination cursors are versioned and HMAC-SHA-256 authenticated, and typed
+errors expose only a closed machine-code set plus a safe public detail while
+retaining diagnostic causes internally. These contracts and their adapter
+requirements are maintained in `docs/contracts/primitives.md`.
 
 ### 3.5 State machines
 
@@ -211,6 +219,10 @@ Status: **Completed 2026-08-10.** Evidence is indexed in `docs/README.md`, the b
 ### Phase 1 — Engineering foundation
 
 Initialize Go, directories, configuration, logging/metrics/tracing, Makefile, CI, development dependencies, baseline Dockerfile, and health endpoints. Exit when `make verify` passes from a clean checkout and a minimal image starts as non-root.
+
+Status: **In progress.** ENG-001 through ENG-006 are implemented; HTTP startup,
+the Make-based verification surface, local dependencies, CI, and baseline image
+remain.
 
 ### Phase 2 — Authoritative persistence
 
