@@ -6,19 +6,19 @@ Status notation: `[ ]` pending, `[x]` implemented and verified. Add completion m
 
 ## Phase 0 — Decisions, threats, and contracts
 
-- [x] GOV-001 Create `docs/` and an ADR template with status, context, decision, alternatives, consequences, security, operations, and references sections. — completed 2026-08-10, commit pending (Phase 0 milestone), evidence: `docs/adr/README.md`, `docs/adr/template.md`
-- [x] GOV-002 Write the system context, trust-boundary, data-flow, and component diagrams; identify trusted gateways, workers, IdP, OPA, PostgreSQL, Valkey, KMS, and evidence sink. — completed 2026-08-10, commit pending (Phase 0 milestone), evidence: `docs/architecture/system.md`
-- [x] GOV-003 Produce a threat model covering spoofing, tenant confusion, confused deputy/delegation, policy tampering, stale revocation, resource races, replay, evidence tampering, and governance-admin compromise. — completed 2026-08-10, commit pending (Phase 0 milestone), evidence: `docs/security/threat-model.md`
-- [x] GOV-004 Define the data-classification and redaction rules for tokens, objectives, inputs, policy data, decisions, audit events, logs, traces, and metrics. — completed 2026-08-10, commit pending (Phase 0 milestone), evidence: `docs/security/data-classification.md`
-- [x] GOV-005 Record supported Go, PostgreSQL, OPA, Valkey, Kubernetes, OpenAPI, and image-platform versions and the upgrade/support policy. — completed 2026-08-10, commit pending (Phase 0 milestone), evidence: `docs/supported-versions.md`; exact tested pins are a Phase 1 gate
-- [x] GOV-006 Formalize agent/version, run, reservation, settlement, policy, and revocation state machines including allowed actors and illegal transitions. — completed 2026-08-10, commit pending (Phase 0 milestone), evidence: `docs/contracts/domain-model.md`
-- [x] GOV-007 Formalize resource units, numeric bounds, rounding, allocation equations, extension rules, exhaustion semantics, and settlement invariants. — completed 2026-08-10, commit pending (Phase 0 milestone), evidence: `docs/contracts/resource-accounting.md`
-- [x] GOV-008 Define revocation scopes, epoch relationships, ordering, staleness classes, fail-closed rules, reconciliation, and lift semantics. — completed 2026-08-10, commit pending (Phase 0 milestone), evidence: `docs/contracts/revocation.md`
-- [x] GOV-009 Define the typed OPA input/output schema, reason-code registry, constraint-narrowing semantics, decision TTL rules, and failure behavior. — completed 2026-08-10, commit pending (Phase 0 milestone), evidence: `docs/contracts/policy-decision.md`
-- [x] GOV-010 Draft OpenAPI 3.1 paths and schemas for public lifecycle and trusted/admin APIs, including auth, pagination, limits, idempotency, errors, and event resumption. — completed 2026-08-10, commit pending (Phase 0 milestone), evidence: `api/openapi/thinkpixelag.yaml`
-- [x] GOV-011 Define SLOs and capacity targets for API latency/availability, admission, policy evaluation, revocation propagation/freshness, outbox lag, and allocation contention. — completed 2026-08-10, commit pending (Phase 0 milestone), evidence: `docs/operations/slos.md`
-- [x] GOV-012 Review Phase 0 artifacts against the source blueprint and close all ambiguous trust sources and invariants. — completed 2026-08-10, commit pending (Phase 0 milestone), evidence: `docs/phase-0-review.md`
-- [x] GOV-013 Run documentation/schema validation and commit Phase 0 with updated plan/checklist evidence. — completed 2026-08-10, commit pending (Phase 0 milestone), evidence: Redocly CLI 2.3.0 lint passed; `git diff --check` passed
+- [x] GOV-001 Create `docs/` and an ADR template with status, context, decision, alternatives, consequences, security, operations, and references sections. — completed 2026-08-10, commit `eddf453`, evidence: `docs/adr/README.md`, `docs/adr/template.md`
+- [x] GOV-002 Write the system context, trust-boundary, data-flow, and component diagrams; identify trusted gateways, workers, IdP, OPA, PostgreSQL, Valkey, KMS, and evidence sink. — completed 2026-08-10, commit `eddf453`, evidence: `docs/architecture/system.md`
+- [x] GOV-003 Produce a threat model covering spoofing, tenant confusion, confused deputy/delegation, policy tampering, stale revocation, resource races, replay, evidence tampering, and governance-admin compromise. — completed 2026-08-10, commit `eddf453`, evidence: `docs/security/threat-model.md`
+- [x] GOV-004 Define the data-classification and redaction rules for tokens, objectives, inputs, policy data, decisions, audit events, logs, traces, and metrics. — completed 2026-08-10, commit `eddf453`, evidence: `docs/security/data-classification.md`
+- [x] GOV-005 Record supported Go, PostgreSQL, OPA, Valkey, Kubernetes, OpenAPI, and image-platform versions and the upgrade/support policy. — completed 2026-08-10, commit `eddf453`, evidence: `docs/supported-versions.md`; exact tested pins are a Phase 1 gate
+- [x] GOV-006 Formalize agent/version, run, reservation, settlement, policy, and revocation state machines including allowed actors and illegal transitions. — completed 2026-08-10, commit `eddf453`, evidence: `docs/contracts/domain-model.md`
+- [x] GOV-007 Formalize resource units, numeric bounds, rounding, allocation equations, extension rules, exhaustion semantics, and settlement invariants. — completed 2026-08-10, commit `eddf453`, evidence: `docs/contracts/resource-accounting.md`
+- [x] GOV-008 Define revocation scopes, epoch relationships, ordering, staleness classes, fail-closed rules, reconciliation, and lift semantics. — completed 2026-08-10, commit `eddf453`, evidence: `docs/contracts/revocation.md`
+- [x] GOV-009 Define the typed OPA input/output schema, reason-code registry, constraint-narrowing semantics, decision TTL rules, and failure behavior. — completed 2026-08-10, commit `eddf453`, evidence: `docs/contracts/policy-decision.md`
+- [x] GOV-010 Draft OpenAPI 3.1 paths and schemas for public lifecycle and trusted/admin APIs, including auth, pagination, limits, idempotency, errors, and event resumption. — completed 2026-08-10, commit `eddf453`, evidence: `api/openapi/thinkpixelag.yaml`
+- [x] GOV-011 Define SLOs and capacity targets for API latency/availability, admission, policy evaluation, revocation propagation/freshness, outbox lag, and allocation contention. — completed 2026-08-10, commit `eddf453`, evidence: `docs/operations/slos.md`
+- [x] GOV-012 Review Phase 0 artifacts against the source blueprint and close all ambiguous trust sources and invariants. — completed 2026-08-10, commit `eddf453`, evidence: `docs/phase-0-review.md`
+- [x] GOV-013 Run documentation/schema validation and commit Phase 0 with updated plan/checklist evidence. — completed 2026-08-10, commit `eddf453`, evidence: Redocly CLI 2.3.0 lint passed; `git diff --check` passed
 
 ## Phase 1 — Engineering foundation
 
@@ -166,7 +166,7 @@ Append one entry per completed atomic item or tightly coupled group. Do not dele
 
 | Date | TODO IDs | Commit | Verification evidence | Notes/deviations |
 |---|---|---|---|---|
-| 2026-08-10 | GOV-001–GOV-013 | pending (Phase 0 milestone) | Redocly CLI 2.3.0 lint; `git diff --check`; blueprint coverage review | Exact dependency versions deferred to Phase 1 testing by design |
+| 2026-08-10 | GOV-001–GOV-013 | `eddf453` | Redocly CLI 2.3.0 lint; `git diff --check`; blueprint coverage review | Exact dependency versions deferred to Phase 1 testing by design |
 
 ## Active blockers and deviations
 
