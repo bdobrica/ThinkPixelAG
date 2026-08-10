@@ -6,7 +6,9 @@ The project implements the governance-plane concepts in the Enterprise Execution
 
 ## Status
 
-The project is in the design and planning phase. [PLAN.md](PLAN.md) defines the target architecture and delivery phases; [TODO.md](TODO.md) is the ordered, atomic release-candidate checklist.
+The project is in the design and planning phase. Phase 0 contracts are complete. [PLAN.md](PLAN.md) defines the target architecture and delivery phases; [TODO.md](TODO.md) is the ordered, atomic release-candidate checklist.
+
+The normative architecture, security, domain, policy, API, and operational contracts are indexed in [docs/README.md](docs/README.md). The initial OpenAPI 3.1 description is at [api/openapi/thinkpixelag.yaml](api/openapi/thinkpixelag.yaml).
 
 ## Goals
 

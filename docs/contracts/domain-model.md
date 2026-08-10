@@ -1,0 +1,117 @@
+# Domain Contracts and State Machines
+
+## Common rules
+
+- IDs are opaque UUIDv7-compatible strings; clients MUST NOT infer ordering or tenancy from them.
+- Timestamps are RFC 3339 UTC with database precision documented by implementation.
+- Every tenant-owned record contains immutable `tenant_id`; application repositories scope all reads/writes to it.
+- State changes require an authenticated actor, OPA authorization, expected state/version where applicable, an append-only domain event, audit record, and outbox record in the same transaction.
+- Duplicate commands with the same valid idempotency scope return the original result. Reuse with a different normalized request hash returns `409 idempotency_key_reused`.
+- Illegal transitions return `409 invalid_state_transition`; hidden/cross-tenant resources use enumeration-safe `404` when policy requires it.
+
+## Actors
+
+| Actor | Typical authority |
+|---|---|
+| Caller | discover/invoke authorized agents; inspect, signal, or cancel owned/authorized runs |
+| Worker | claim/start/heartbeat/report terminal state for a leased run; report usage only with trusted-meter role |
+| Governor | transition on deadline/budget exhaustion and settle/reconcile resources |
+| Operator | register versions, manage approvals/policies/revocations/resources according to role and approval policy |
+| System | timeout, lease recovery, outbox/reconciliation actions under a dedicated workload identity |
+
+## Agent lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> ACTIVE: register agent
+    ACTIVE --> SUSPENDED: operator/policy suspension
+    SUSPENDED --> ACTIVE: authorized restore
+    ACTIVE --> RETIRED: retire
+    SUSPENDED --> RETIRED: retire
+    RETIRED --> [*]
+```
+
+- `ACTIVE` agents can be discovered/invoked if policy permits and an eligible version exists.
+- `SUSPENDED` prevents new admission; existing-run behavior is a separate policy/revocation decision.
+- `RETIRED` is terminal and preserves evidence/history.
+
+## Agent version lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> REGISTERED: immutable manifest stored
+    REGISTERED --> APPROVED: required approval completed
+    REGISTERED --> REJECTED: rejected
+    APPROVED --> DEPRECATED: replacement preferred
+    APPROVED --> REVOKED: security/governance revocation
+    DEPRECATED --> REVOKED: revocation
+    REJECTED --> [*]
+    REVOKED --> [*]
+```
+
+The manifest and content digest are immutable after `REGISTERED`. Approval, deprecation, and revocation are append-only state records. New runs normally select `APPROVED`; a `DEPRECATED` version may be selected only by an explicit rollback policy. `REVOKED` is never eligible. Lifting a revocation creates a new governance event and does not erase history or decrement epochs.
+
+## Run lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: create transaction begins
+    PENDING --> ADMITTED: policy and resources approve
+    PENDING --> REJECTED: admission denied
+    ADMITTED --> RUNNING: fenced worker starts
+    ADMITTED --> CANCELLED: authorized cancellation
+    ADMITTED --> TIMED_OUT: deadline
+    RUNNING --> COMPLETED: worker succeeds
+    RUNNING --> FAILED: worker fails
+    RUNNING --> CANCELLED: authorized cancellation
+    RUNNING --> TIMED_OUT: deadline
+    RUNNING --> BUDGET_EXHAUSTED: consumable ceiling
+    BUDGET_EXHAUSTED --> PAUSED_FOR_BUDGET: extension permitted
+    BUDGET_EXHAUSTED --> FAILED_BUDGET: extension prohibited/expired
+    PAUSED_FOR_BUDGET --> RUNNING: authorized allocation added
+    PAUSED_FOR_BUDGET --> CANCELLED: cancel
+    PAUSED_FOR_BUDGET --> TIMED_OUT: deadline
+```
+
+Terminal states are `REJECTED`, `COMPLETED`, `FAILED`, `CANCELLED`, `TIMED_OUT`, and `FAILED_BUDGET`. Terminal states cannot transition. Repeating the same terminal command returns the established state without a second settlement or event. A stale worker fencing token cannot change state.
+
+| From | To | Allowed initiator | Required conditions |
+|---|---|---|---|
+| PENDING | ADMITTED | admission use case | identity/policy/version/freshness valid; root/parent resources committed |
+| PENDING | REJECTED | admission use case | explicit denial/failure before admission; no open reservation |
+| ADMITTED | RUNNING | leased worker | valid unexpired lease and latest fencing token |
+| ADMITTED/RUNNING/PAUSED_FOR_BUDGET | CANCELLED | authorized caller/operator/system | current version; settlement exactly once |
+| ADMITTED/RUNNING/PAUSED_FOR_BUDGET | TIMED_OUT | governor/system | authoritative deadline reached; settlement exactly once |
+| RUNNING | COMPLETED/FAILED | leased worker | valid fencing token; trusted terminal usage accepted; settlement exactly once |
+| RUNNING | BUDGET_EXHAUSTED | governor/system | authoritative consumption reaches ceiling |
+| BUDGET_EXHAUSTED | PAUSED_FOR_BUDGET | governor | policy permits extension workflow; work remains stopped |
+| BUDGET_EXHAUSTED | FAILED_BUDGET | governor/system | no extension permitted or approval window elapsed |
+| PAUSED_FOR_BUDGET | RUNNING | governor | additive extension committed and new envelope version issued |
+
+## Worker lease state
+
+A run claim issues a lease ID, expiry, and monotonically increasing fencing token. Heartbeats may extend expiry but never lower the token. Reclaim after expiry increments the token. All worker mutations compare the active lease and fence inside the run transaction.
+
+## Policy activation lifecycle
+
+```text
+UPLOADED -> VALIDATED -> APPROVED -> ACTIVE -> SUPERSEDED
+    |            |          |
+    +----------> REJECTED <-+
+```
+
+Only a digest/signature-verified, schema-compatible, tested `APPROVED` artifact can become `ACTIVE`. Activation serializes per policy channel and increments policy version/epoch. Rollback is activation of a previously approved artifact as a new activation event; history and epochs remain monotonic.
+
+## Revocation lifecycle
+
+A revocation is append-only and becomes `ACTIVE` at its effective time. It becomes `EXPIRED` by authoritative time or `LIFTED` through an authorized new change. Creating, expiring, or lifting advances applicable epoch(s); no operation deletes history or decreases an epoch.
+
+## Reservation and settlement lifecycle
+
+```text
+PROPOSED -> OPEN -> SETTLED
+              |  -> EXPIRED_SETTLED
+              +  -> CANCELLED_SETTLED
+```
+
+`PROPOSED` exists only within a transaction and is not externally visible. `OPEN` means budget is allocated to a child. All terminal variants are closed exactly once and carry final trusted consumption plus returned unused capacity. See `resource-accounting.md`.

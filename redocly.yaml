@@ -1,0 +1,7 @@
+extends:
+  - recommended
+
+rules:
+  # Every operation defines an RFC 7807 `default` response so all authentication,
+  # authorization, validation, and dependency failures share one stable schema.
+  operation-4xx-response: off

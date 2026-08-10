@@ -206,6 +206,8 @@ Tests must be deterministic, parallel-safe, and runnable through Make targets. R
 
 Define threat model, glossary, supported versions, architecture boundaries, API contract, domain state machines, policy schema, and migration strategy. Exit when reviews leave no ambiguous trust source or resource/revocation invariant.
 
+Status: **Completed 2026-08-10.** Evidence is indexed in `docs/README.md`, the blueprint reconciliation is in `docs/phase-0-review.md`, and the OpenAPI contract validates with Redocly CLI 2.3.0. Exact dependency versions intentionally remain a Phase 1 evidence-based decision as specified in `docs/supported-versions.md`.
+
 ### Phase 1 — Engineering foundation
 
 Initialize Go, directories, configuration, logging/metrics/tracing, Makefile, CI, development dependencies, baseline Dockerfile, and health endpoints. Exit when `make verify` passes from a clean checkout and a minimal image starts as non-root.

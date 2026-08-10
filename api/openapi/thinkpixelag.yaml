@@ -1,0 +1,1210 @@
+openapi: 3.1.0
+info:
+  title: ThinkPixelAG Governance API
+  version: 0.1.0-phase0
+  summary: Harness-independent agent governance and run lifecycle API
+  license:
+    name: Apache License 2.0
+    identifier: Apache-2.0
+  description: |
+    Phase 0 contract. All protected operations authenticate a bearer principal or
+    workload and authorize the action through policy. Tenant context is derived
+    from verified identity and is never accepted from an ordinary request body.
+servers:
+  - url: https://governance.example.corp
+security:
+  - bearerAuth: []
+tags:
+  - name: Agents
+    description: Caller-visible agent discovery and description
+  - name: Runs
+    description: Harness-independent run lifecycle operations
+  - name: Registry administration
+    description: Privileged agent and immutable version management
+  - name: Policy administration
+    description: Privileged signed policy artifact management and activation
+  - name: Resources
+    description: Trusted metering, settlement, and authorized resource extension
+  - name: Revocations
+    description: Privileged scoped revocation management
+  - name: Gateways
+    description: Trusted revocation distribution and authoritative reconciliation
+paths:
+  /v1/agents:
+    get:
+      tags: [Agents]
+      operationId: listAgents
+      summary: List agents visible and invocable by the caller
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Visible agents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentPage'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/agents/{agent_id}:
+    parameters:
+      - $ref: '#/components/parameters/AgentId'
+    get:
+      tags: [Agents]
+      operationId: describeAgent
+      summary: Describe an agent visible to the caller
+      responses:
+        '200':
+          description: Agent description
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/agents/{agent_id}/runs:
+    parameters:
+      - $ref: '#/components/parameters/AgentId'
+    post:
+      tags: [Runs]
+      operationId: createRun
+      summary: Admit a run using a policy-resolved approved agent version
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRunRequest'
+      responses:
+        '201':
+          description: Run admitted
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Canonical run URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '409':
+          description: Idempotency conflict, invalid state, or insufficient resources
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/runs/{run_id}:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [Runs]
+      operationId: getRun
+      summary: Get tenant-scoped run status
+      responses:
+        '200':
+          description: Run
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/runs/{run_id}/signals:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Runs]
+      operationId: signalRun
+      summary: Append a validated signal to a run
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignalRunRequest'
+      responses:
+        '202':
+          description: Signal accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunEvent'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/runs/{run_id}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Runs]
+      operationId: cancelRun
+      summary: Cancel a run idempotently
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelRunRequest'
+      responses:
+        '200':
+          description: Cancelled or already in the established terminal state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/runs/{run_id}/events:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [Runs]
+      operationId: streamRunEvents
+      summary: Stream ordered resumable run events
+      parameters:
+        - name: after
+          in: query
+          description: Opaque event cursor; Last-Event-ID may be used on reconnect
+          schema:
+            type: string
+            maxLength: 512
+      responses:
+        '200':
+          description: Server-sent event stream; event data uses RunEvent JSON
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: Always no-cache
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '410':
+          description: Cursor is outside retention; authoritative refetch required
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/admin/agents:
+    post:
+      tags: [Registry administration]
+      operationId: createAgent
+      summary: Register an agent
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAgentRequest'
+      responses:
+        '201':
+          description: Agent registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/admin/agents/{agent_id}/versions:
+    parameters:
+      - $ref: '#/components/parameters/AgentId'
+    post:
+      tags: [Registry administration]
+      operationId: registerAgentVersion
+      summary: Register an immutable content-addressed agent version
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterAgentVersionRequest'
+      responses:
+        '201':
+          description: Version registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentVersion'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/admin/agents/{agent_id}/versions/{version_digest}/approvals:
+    parameters:
+      - $ref: '#/components/parameters/AgentId'
+      - $ref: '#/components/parameters/VersionDigest'
+    post:
+      tags: [Registry administration]
+      operationId: decideAgentVersionApproval
+      summary: Approve or reject an agent version
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalRequest'
+      responses:
+        '201':
+          description: Approval decision recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/admin/policies:
+    post:
+      tags: [Policy administration]
+      operationId: uploadPolicy
+      summary: Upload a content-addressed signed policy artifact for validation
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyUploadRequest'
+      responses:
+        '201':
+          description: Policy artifact stored or existing digest returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyBundle'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/admin/policies/{policy_digest}/activations:
+    parameters:
+      - $ref: '#/components/parameters/PolicyDigest'
+    post:
+      tags: [Policy administration]
+      operationId: activatePolicy
+      summary: Activate an approved policy as a new monotonic activation
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyActivationRequest'
+      responses:
+        '201':
+          description: Activation recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyActivation'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/trusted/runs/{run_id}/usage:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Resources]
+      operationId: recordTrustedUsage
+      summary: Record a trusted idempotent metering event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsageEvent'
+      responses:
+        '202':
+          description: Usage accepted or identical event replayed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageReceipt'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/trusted/reservations/{reservation_id}/settle:
+    parameters:
+      - $ref: '#/components/parameters/ReservationId'
+    post:
+      tags: [Resources]
+      operationId: settleReservation
+      summary: Settle a child reservation exactly once
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettlementRequest'
+      responses:
+        '200':
+          description: Established settlement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settlement'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/admin/runs/{run_id}/resource-extensions:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Resources]
+      operationId: extendRunResources
+      summary: Add an authorized resource or deadline extension
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceExtensionRequest'
+      responses:
+        '201':
+          description: Extension committed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceEnvelope'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/admin/revocations:
+    get:
+      tags: [Revocations]
+      operationId: listRevocations
+      summary: List revocations visible to the authorized administrator
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Revocations visible to administrator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevocationPage'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Revocations]
+      operationId: createRevocation
+      summary: Create a scoped revocation and increment applicable epochs
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRevocationRequest'
+      responses:
+        '201':
+          description: Revocation committed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Revocation'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/admin/revocations/{revocation_id}/lift:
+    parameters:
+      - $ref: '#/components/parameters/RevocationId'
+    post:
+      tags: [Revocations]
+      operationId: liftRevocation
+      summary: Lift a revocation through a new monotonic change
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LiftRevocationRequest'
+      responses:
+        '200':
+          description: Revocation is lifted and epochs advanced
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Revocation'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/trusted/revocations/events:
+    get:
+      tags: [Gateways]
+      operationId: streamRevocations
+      summary: Stream authenticated ordered revocation changes
+      parameters:
+        - name: after_sequence
+          in: query
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+      responses:
+        '200':
+          description: SSE stream; data contains RevocationLogEntry JSON
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '410':
+          description: Cursor outside retention; reconciliation required
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /v1/trusted/revocations/reconcile:
+    post:
+      tags: [Gateways]
+      operationId: reconcileRevocations
+      summary: Reconcile gateway sequence and epochs with authoritative state
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReconcileRequest'
+      responses:
+        '200':
+          description: Ordered delta or snapshot reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReconcileResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT or workload assertion
+  parameters:
+    AgentId:
+      name: agent_id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Identifier'
+    RunId:
+      name: run_id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Identifier'
+    ReservationId:
+      name: reservation_id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Identifier'
+    RevocationId:
+      name: revocation_id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Identifier'
+    VersionDigest:
+      name: version_digest
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Digest'
+    PolicyDigest:
+      name: policy_digest
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Digest'
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Unique within tenant, principal, route, and normalized request hash
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+        pattern: '^[A-Za-z0-9._:-]+$'
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+        maxLength: 512
+    PageSize:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+  responses:
+    Problem:
+      description: RFC 7807 problem response; hidden resources may map to 404
+      headers:
+        X-Request-ID:
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    Identifier:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]*$'
+    Digest:
+      type: string
+      pattern: '^sha256:[a-f0-9]{64}$'
+    Timestamp:
+      type: string
+      format: date-time
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, request_id]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+          maxLength: 256
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+          maxLength: 1024
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          type: string
+          pattern: '^[a-z][a-z0-9_.]*$'
+        request_id:
+          type: string
+        retry_after_seconds:
+          type: integer
+          minimum: 0
+    Agent:
+      type: object
+      additionalProperties: false
+      required: [id, owner, sponsor, risk_class, state, created_at]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        owner:
+          $ref: '#/components/schemas/Identifier'
+        sponsor:
+          $ref: '#/components/schemas/Identifier'
+        risk_class:
+          type: string
+          enum: [low, medium, high, critical]
+        state:
+          type: string
+          enum: [ACTIVE, SUSPENDED, RETIRED]
+        description:
+          type: string
+          maxLength: 2048
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+    AgentPage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 200
+          items:
+            $ref: '#/components/schemas/Agent'
+        next_cursor:
+          type: string
+          maxLength: 512
+    CreateAgentRequest:
+      type: object
+      additionalProperties: false
+      required: [id, owner, sponsor, risk_class]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        owner:
+          $ref: '#/components/schemas/Identifier'
+        sponsor:
+          $ref: '#/components/schemas/Identifier'
+        risk_class:
+          type: string
+          enum: [low, medium, high, critical]
+        description:
+          type: string
+          maxLength: 2048
+    AgentVersion:
+      type: object
+      additionalProperties: false
+      required: [agent_id, digest, image, state, models, tools, skills, subagents, limits, created_at]
+      properties:
+        agent_id:
+          $ref: '#/components/schemas/Identifier'
+        digest:
+          $ref: '#/components/schemas/Digest'
+        image:
+          type: string
+          maxLength: 1024
+          pattern: '^.+@sha256:[a-f0-9]{64}$'
+        state:
+          type: string
+          enum: [REGISTERED, APPROVED, REJECTED, DEPRECATED, REVOKED]
+        models:
+          $ref: '#/components/schemas/IdentifierList'
+        tools:
+          $ref: '#/components/schemas/IdentifierList'
+        skills:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: string
+            maxLength: 1024
+        subagents:
+          $ref: '#/components/schemas/IdentifierList'
+        limits:
+          $ref: '#/components/schemas/RequestedConstraints'
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+    RegisterAgentVersionRequest:
+      type: object
+      additionalProperties: false
+      required: [digest, image, models, tools, skills, subagents, limits]
+      properties:
+        digest:
+          $ref: '#/components/schemas/Digest'
+        image:
+          type: string
+          maxLength: 1024
+          pattern: '^.+@sha256:[a-f0-9]{64}$'
+        models:
+          $ref: '#/components/schemas/IdentifierList'
+        tools:
+          $ref: '#/components/schemas/IdentifierList'
+        skills:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: string
+            maxLength: 1024
+        subagents:
+          $ref: '#/components/schemas/IdentifierList'
+        limits:
+          $ref: '#/components/schemas/RequestedConstraints'
+    IdentifierList:
+      type: array
+      maxItems: 100
+      uniqueItems: true
+      items:
+        $ref: '#/components/schemas/Identifier'
+    ApprovalRequest:
+      type: object
+      additionalProperties: false
+      required: [decision, reason_code]
+      properties:
+        decision:
+          type: string
+          enum: [approve, reject]
+        reason_code:
+          $ref: '#/components/schemas/Identifier'
+        approval_reference:
+          type: string
+          maxLength: 256
+    Approval:
+      type: object
+      additionalProperties: false
+      required: [id, decision, actor_id, created_at]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        decision:
+          type: string
+          enum: [approve, reject]
+        actor_id:
+          $ref: '#/components/schemas/Identifier'
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+    CreateRunRequest:
+      type: object
+      additionalProperties: false
+      required: [objective]
+      properties:
+        objective:
+          type: string
+          minLength: 1
+          maxLength: 16384
+          description: Restricted data; never logged or placed in policy input
+        input:
+          type: object
+          maxProperties: 100
+          description: Restricted bounded agent input; tenant/delegation token fields have no authority
+        constraints:
+          $ref: '#/components/schemas/RequestedConstraints'
+        requested_version_digest:
+          allOf:
+            - $ref: '#/components/schemas/Digest'
+          description: Honored only when a privileged controlled-pin policy permits it
+    RequestedConstraints:
+      type: object
+      additionalProperties: false
+      properties:
+        max_execution_time_seconds:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 604800
+        max_budget_usd_microunits:
+          type: integer
+          format: int64
+          minimum: 0
+        max_llm_tokens:
+          type: integer
+          format: int64
+          minimum: 0
+        max_tool_calls:
+          type: integer
+          format: int64
+          minimum: 0
+        max_tool_calls_per_minute:
+          type: integer
+          minimum: 0
+        max_active_children:
+          type: integer
+          minimum: 0
+        max_total_children:
+          type: integer
+          minimum: 0
+        max_delegation_depth:
+          type: integer
+          minimum: 0
+    RunState:
+      type: string
+      enum: [PENDING, ADMITTED, RUNNING, BUDGET_EXHAUSTED, PAUSED_FOR_BUDGET, REJECTED, COMPLETED, FAILED, CANCELLED, TIMED_OUT, FAILED_BUDGET]
+    Run:
+      type: object
+      additionalProperties: false
+      required: [id, agent_id, version_digest, state, state_version, envelope, created_at, updated_at]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        agent_id:
+          $ref: '#/components/schemas/Identifier'
+        version_digest:
+          $ref: '#/components/schemas/Digest'
+        parent_run_id:
+          $ref: '#/components/schemas/Identifier'
+        state:
+          $ref: '#/components/schemas/RunState'
+        state_version:
+          type: integer
+          format: int64
+          minimum: 1
+        envelope:
+          $ref: '#/components/schemas/ResourceEnvelope'
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        updated_at:
+          $ref: '#/components/schemas/Timestamp'
+    SignalRunRequest:
+      type: object
+      additionalProperties: false
+      required: [type, payload]
+      properties:
+        type:
+          $ref: '#/components/schemas/Identifier'
+        payload:
+          type: object
+          maxProperties: 100
+          description: Restricted, schema-validated per signal type, maximum encoded size 64 KiB
+        expected_state_version:
+          type: integer
+          format: int64
+          minimum: 1
+    CancelRunRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason_code:
+          $ref: '#/components/schemas/Identifier'
+        expected_state_version:
+          type: integer
+          format: int64
+          minimum: 1
+    RunEvent:
+      type: object
+      additionalProperties: false
+      required: [id, run_id, sequence, type, occurred_at]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        run_id:
+          $ref: '#/components/schemas/Identifier'
+        sequence:
+          type: integer
+          format: int64
+          minimum: 1
+        type:
+          $ref: '#/components/schemas/Identifier'
+        data:
+          type: object
+          description: Event-type-specific sanitized data
+        occurred_at:
+          $ref: '#/components/schemas/Timestamp'
+    ResourceAmount:
+      type: object
+      additionalProperties: false
+      required: [name, class, unit, quantity]
+      properties:
+        name:
+          $ref: '#/components/schemas/Identifier'
+        class:
+          type: string
+          enum: [consumable, structural]
+        unit:
+          $ref: '#/components/schemas/Identifier'
+        quantity:
+          type: integer
+          format: int64
+          minimum: 0
+    ResourceEnvelope:
+      type: object
+      additionalProperties: false
+      required: [version, resources, run_deadline]
+      properties:
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+        resources:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ResourceAmount'
+        run_deadline:
+          $ref: '#/components/schemas/Timestamp'
+    UsageEvent:
+      type: object
+      additionalProperties: false
+      required: [producer_id, source_event_id, resource_name, unit, quantity, observed_at]
+      properties:
+        producer_id:
+          $ref: '#/components/schemas/Identifier'
+        source_event_id:
+          $ref: '#/components/schemas/Identifier'
+        resource_name:
+          $ref: '#/components/schemas/Identifier'
+        unit:
+          $ref: '#/components/schemas/Identifier'
+        quantity:
+          type: integer
+          format: int64
+          minimum: 0
+        observed_at:
+          $ref: '#/components/schemas/Timestamp'
+    UsageReceipt:
+      type: object
+      additionalProperties: false
+      required: [usage_id, duplicate, accepted_at]
+      properties:
+        usage_id:
+          $ref: '#/components/schemas/Identifier'
+        duplicate:
+          type: boolean
+        accepted_at:
+          $ref: '#/components/schemas/Timestamp'
+    SettlementRequest:
+      type: object
+      additionalProperties: false
+      required: [terminal_run_state]
+      properties:
+        terminal_run_state:
+          type: string
+          enum: [COMPLETED, FAILED, CANCELLED, TIMED_OUT, FAILED_BUDGET]
+        final_usage_event_ids:
+          type: array
+          maxItems: 10000
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Identifier'
+    Settlement:
+      type: object
+      additionalProperties: false
+      required: [id, reservation_id, consumed, returned, settled_at]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        reservation_id:
+          $ref: '#/components/schemas/Identifier'
+        consumed:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceAmount'
+        returned:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceAmount'
+        settled_at:
+          $ref: '#/components/schemas/Timestamp'
+    ResourceExtensionRequest:
+      type: object
+      additionalProperties: false
+      required: [additions, reason_code, approval_reference]
+      properties:
+        additions:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ResourceAmount'
+        deadline_extension_seconds:
+          type: integer
+          format: int64
+          minimum: 1
+        reason_code:
+          $ref: '#/components/schemas/Identifier'
+        approval_reference:
+          type: string
+          minLength: 1
+          maxLength: 256
+    PolicyUploadRequest:
+      type: object
+      additionalProperties: false
+      required: [digest, contract_version, artifact, signature, signing_key_id]
+      properties:
+        digest:
+          $ref: '#/components/schemas/Digest'
+        contract_version:
+          type: string
+          const: thinkpixelag.authorization/v1alpha1
+        artifact:
+          type: string
+          contentEncoding: base64
+          maxLength: 1398104
+        signature:
+          type: string
+          maxLength: 4096
+        signing_key_id:
+          $ref: '#/components/schemas/Identifier'
+    PolicyBundle:
+      type: object
+      additionalProperties: false
+      required: [digest, contract_version, state, created_at]
+      properties:
+        digest:
+          $ref: '#/components/schemas/Digest'
+        contract_version:
+          type: string
+        state:
+          type: string
+          enum: [UPLOADED, VALIDATED, APPROVED, ACTIVE, SUPERSEDED, REJECTED]
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+    PolicyActivationRequest:
+      type: object
+      additionalProperties: false
+      required: [channel, reason_code, approval_reference]
+      properties:
+        channel:
+          $ref: '#/components/schemas/Identifier'
+        reason_code:
+          $ref: '#/components/schemas/Identifier'
+        approval_reference:
+          type: string
+          minLength: 1
+          maxLength: 256
+    PolicyActivation:
+      type: object
+      additionalProperties: false
+      required: [id, policy_digest, channel, policy_epoch, activated_at]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        policy_digest:
+          $ref: '#/components/schemas/Digest'
+        channel:
+          $ref: '#/components/schemas/Identifier'
+        policy_epoch:
+          type: integer
+          format: int64
+          minimum: 1
+        activated_at:
+          $ref: '#/components/schemas/Timestamp'
+    RevocationScope:
+      type: string
+      enum: [run_id, agent_id, agent_version, skill_digest, principal_id, tenant_id, tool_id, policy_version, global]
+    CreateRevocationRequest:
+      type: object
+      additionalProperties: false
+      required: [scope, target, reason_code, effective_at]
+      properties:
+        scope:
+          $ref: '#/components/schemas/RevocationScope'
+        target:
+          type: string
+          minLength: 1
+          maxLength: 1024
+        reason_code:
+          $ref: '#/components/schemas/Identifier'
+        effective_at:
+          $ref: '#/components/schemas/Timestamp'
+        expires_at:
+          $ref: '#/components/schemas/Timestamp'
+        approval_reference:
+          type: string
+          maxLength: 256
+    LiftRevocationRequest:
+      type: object
+      additionalProperties: false
+      required: [reason_code, approval_reference]
+      properties:
+        reason_code:
+          $ref: '#/components/schemas/Identifier'
+        approval_reference:
+          type: string
+          minLength: 1
+          maxLength: 256
+    EpochVector:
+      type: object
+      additionalProperties: false
+      required: [security_epoch]
+      properties:
+        security_epoch:
+          type: integer
+          format: int64
+          minimum: 0
+        tenant_policy_epoch:
+          type: integer
+          format: int64
+          minimum: 0
+        agent_revocation_epoch:
+          type: integer
+          format: int64
+          minimum: 0
+    Revocation:
+      type: object
+      additionalProperties: false
+      required: [id, scope, target, state, reason_code, epochs, effective_at, created_at]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        scope:
+          $ref: '#/components/schemas/RevocationScope'
+        target:
+          type: string
+        state:
+          type: string
+          enum: [ACTIVE, LIFTED, EXPIRED]
+        reason_code:
+          $ref: '#/components/schemas/Identifier'
+        epochs:
+          $ref: '#/components/schemas/EpochVector'
+        effective_at:
+          $ref: '#/components/schemas/Timestamp'
+        expires_at:
+          $ref: '#/components/schemas/Timestamp'
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+    RevocationPage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 200
+          items:
+            $ref: '#/components/schemas/Revocation'
+        next_cursor:
+          type: string
+          maxLength: 512
+    RevocationLogEntry:
+      type: object
+      additionalProperties: false
+      required: [event_id, sequence, change, revocation, epochs, occurred_at]
+      properties:
+        event_id:
+          $ref: '#/components/schemas/Identifier'
+        sequence:
+          type: integer
+          format: int64
+          minimum: 1
+        change:
+          type: string
+          enum: [CREATED, LIFTED, EXPIRED]
+        revocation:
+          $ref: '#/components/schemas/Revocation'
+        epochs:
+          $ref: '#/components/schemas/EpochVector'
+        occurred_at:
+          $ref: '#/components/schemas/Timestamp'
+    ReconcileRequest:
+      type: object
+      additionalProperties: false
+      required: [gateway_id, last_sequence, epochs]
+      properties:
+        gateway_id:
+          $ref: '#/components/schemas/Identifier'
+        last_sequence:
+          type: integer
+          format: int64
+          minimum: 0
+        epochs:
+          $ref: '#/components/schemas/EpochVector'
+    ReconcileResponse:
+      type: object
+      additionalProperties: false
+      required: [mode, authoritative_sequence, epochs, reconciled_at]
+      properties:
+        mode:
+          type: string
+          enum: [delta, snapshot]
+        authoritative_sequence:
+          type: integer
+          format: int64
+          minimum: 0
+        epochs:
+          $ref: '#/components/schemas/EpochVector'
+        changes:
+          type: array
+          maxItems: 10000
+          items:
+            $ref: '#/components/schemas/RevocationLogEntry'
+        snapshot_digest:
+          $ref: '#/components/schemas/Digest'
+        snapshot:
+          type: array
+          maxItems: 100000
+          items:
+            $ref: '#/components/schemas/Revocation'
+        reconciled_at:
+          $ref: '#/components/schemas/Timestamp'
