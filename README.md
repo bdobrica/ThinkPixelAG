@@ -151,10 +151,9 @@ versions and authentication, `make dev-down` to preserve database state, and
 `make verify` is the aggregate non-runtime release gate and must match CI.
 GitHub Actions runs the same Make targets as isolated, read-only jobs for
 quality, unit/race/policy/integration tests, security checks, binary build, and
-the OCI-image build. The image job activates automatically when ENG-011 adds
-the baseline `Dockerfile`.
-`make image` becomes mandatory when ENG-011 adds the baseline Dockerfile; until
-then it fails with an explicit prerequisite message. See
+the OCI-image build and hardened runtime smoke test. `make image` builds the
+pinned multi-stage distroless image; `make container-smoke` proves its non-root,
+read-only, probe, metadata, and graceful-shutdown behavior. See
 [development and verification commands](docs/operations/development.md).
 
 Dependency sources, licenses, vulnerability handling, exceptions, and pinned

@@ -19,7 +19,7 @@ func TestCIExposesRequiredGates(t *testing.T) {
 			t.Errorf("CI job %q is missing", job)
 		}
 	}
-	for _, target := range []string{"fmt-check", "generate-check", "lint", "test", "test-race", "test-policy", "compose-check", "test-integration", "dependency-check", "vulnerability-check", "license-check", "build", "image"} {
+	for _, target := range []string{"fmt-check", "generate-check", "lint", "test", "test-race", "test-policy", "compose-check", "test-integration", "dependency-check", "vulnerability-check", "license-check", "build", "container-smoke"} {
 		if !strings.Contains(workflow, "make "+target) {
 			t.Errorf("CI does not invoke make target %q", target)
 		}
@@ -46,16 +46,14 @@ func TestCIPinsActionsAndLimitsAuthority(t *testing.T) {
 	}
 }
 
-func TestCIImageGateTransitionsAtDockerfile(t *testing.T) {
+func TestCIRequiresImageSmokeTest(t *testing.T) {
 	t.Parallel()
 	data, err := os.ReadFile("../.github/workflows/ci.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
 	workflow := string(data)
-	for _, contract := range []string{"hashFiles('Dockerfile') == ''", "hashFiles('Dockerfile') != ''", "make image"} {
-		if !strings.Contains(workflow, contract) {
-			t.Errorf("image transition contract %q is missing", contract)
-		}
+	if !strings.Contains(workflow, "make container-smoke") {
+		t.Error("CI image job must build and smoke-test the image")
 	}
 }

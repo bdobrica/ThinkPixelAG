@@ -18,7 +18,7 @@ IMAGE ?= thinkpixelag:dev
 GO_FILES := $(shell git ls-files '*.go')
 .PHONY: help tools generate generate-check fmt fmt-check lint test test-race \
 	test-policy test-integration test-e2e dependency-check vulnerability-check \
-	license-check security build image verify clean compose-check dev-up \
+	license-check security build image container-smoke verify clean compose-check dev-up \
 	dev-up-valkey dev-status dev-smoke dev-down dev-reset
 
 help: ## Show the stable development targets.
@@ -120,11 +120,13 @@ build: ## Build the static governance-plane binary with version metadata.
 		-ldflags '-s -w -X main.version=$(VERSION) -X main.revision=$(REVISION)' \
 		-o $(BUILD_DIR)/thinkpixelag ./cmd/thinkpixelag
 
-image: ## Build the OCI image once ENG-011 provides the Dockerfile.
-	@test -f Dockerfile || { printf 'image: Dockerfile is not implemented yet; complete ENG-011 first\n' >&2; exit 2; }
+image: ## Build the pinned, minimal, non-root OCI image.
 	$(DOCKER) build --build-arg VERSION=$(VERSION) --build-arg REVISION=$(REVISION) -t $(IMAGE) .
 
-verify: generate-check lint test test-race test-policy test-integration test-e2e compose-check security build ## Run the complete non-runtime clean-checkout gate.
+container-smoke: image ## Exercise the hardened image runtime and graceful shutdown.
+	VERSION=$(VERSION) REVISION=$(REVISION) IMAGE=$(IMAGE) DOCKER=$(DOCKER) bash test/container_smoke.sh
+
+verify: generate-check lint test test-race test-policy test-integration test-e2e compose-check security build container-smoke ## Run the complete clean-checkout gate.
 
 clean: ## Remove repository-local build outputs.
 	rm -rf .cache/bin
