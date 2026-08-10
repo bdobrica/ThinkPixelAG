@@ -142,11 +142,16 @@ make image
 make verify
 ```
 
-`make verify` is the aggregate non-container release gate and must match CI.
+Start the pinned local dependencies with `make dev-up` (PostgreSQL and OPA), or
+`make dev-up-valkey` to include the optional cache. Use `make dev-smoke` to check
+versions and authentication, `make dev-down` to preserve database state, and
+`make dev-reset` to delete only this Compose project's local volumes. See the
+[local dependency stack](deploy/README.md) for credentials and port overrides.
+
+`make verify` is the aggregate non-runtime release gate and must match CI.
 `make image` becomes mandatory when ENG-011 adds the baseline Dockerfile; until
-then it fails with an explicit prerequisite message. Integration tests will
-start pinned PostgreSQL, Valkey, and OPA dependencies in an isolated environment
-once ENG-009 introduces them. See [development and verification commands](docs/operations/development.md).
+then it fails with an explicit prerequisite message. See
+[development and verification commands](docs/operations/development.md).
 
 Dependency sources, licenses, vulnerability handling, exceptions, and pinned
 build tools follow the [dependency and build-tool policy](docs/security/dependencies.md).

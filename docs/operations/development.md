@@ -16,12 +16,19 @@ clean results.
 | `make lint` | require formatting, vet both Go modules, verify checksums/read-only package loading, and validate OpenAPI with Redocly CLI 2.3.0 |
 | `make test` | test the service and nested tools module with coverage |
 | `make test-race` | race-test both Go modules |
-| `make test-policy` | run `opa test policies` once tracked Rego sources exist; until ENG-009/Phase 3 it reports their absence explicitly |
+| `make test-policy` | run `opa test policies` once tracked Rego sources exist; until Phase 3 it reports their absence explicitly |
 | `make test-integration` | compile and run the repository with the `integration` build tag; later phases add real-dependency suites |
 | `make test-e2e` | compile and run the repository with the `e2e` build tag; later phases add workflow suites |
 | `make build` | create a static, trimmed `.cache/bin/thinkpixelag` with version/revision metadata |
 | `make image` | build `IMAGE` with Docker; fails clearly until ENG-011 provides `Dockerfile` |
-| `make verify` | run generation drift, lint, unit/race/policy/integration/e2e, dependency source, vulnerability, license, and binary build gates |
+| `make compose-check` | validate and fully resolve the pinned Compose definition without starting dependencies |
+| `make dev-up` | start pinned PostgreSQL and OPA and wait for healthy state |
+| `make dev-up-valkey` | start PostgreSQL, OPA, and the optional Valkey profile and wait for healthy state |
+| `make dev-status` | show dependency container and health state |
+| `make dev-smoke` | check versions, endpoints, and successful plus deliberately rejected database/cache credentials |
+| `make dev-down` | stop the local stack while preserving PostgreSQL state |
+| `make dev-reset` | stop the stack and irreversibly remove this Compose project's local volumes |
+| `make verify` | run generation drift, lint, unit/race/policy/integration/e2e, Compose validation, dependency source, vulnerability, license, and binary build gates |
 
 `make verify` is intended for a clean checkout. `generate-check` runs generators
 and rejects any resulting unstaged tracked-file difference. CI should invoke the
@@ -43,4 +50,13 @@ repository-local `.cache/bin` directory.
 
 These targets consume `tools/go.mod`; they never install an unversioned global
 Go tool. Redocly is invoked by exact npm package version. OPA remains external
-until ENG-009 pins the supported binary/container version.
+to the Go module; local orchestration pins OPA 1.19.0 by immutable image digest.
+
+## Local dependencies
+
+Docker Engine and Docker Compose v2 are required. `make dev-up` starts only
+PostgreSQL and OPA; Valkey is opt-in because correctness must not depend on it.
+All host ports bind to loopback. The ignored root `.env` may override values
+listed in `deploy/local.env.example`, which is useful when default ports are in
+use. Complete credentials, lifecycle behavior, and the reset warning are in
+[`deploy/README.md`](../../deploy/README.md).

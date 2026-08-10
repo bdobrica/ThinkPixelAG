@@ -37,7 +37,7 @@ func TestVerifyIncludesRequiredNonContainerGates(t *testing.T) {
 		t.Fatal("verify target dependencies are missing")
 	}
 	dependencies := strings.Fields(match[1])
-	for _, required := range []string{"generate-check", "lint", "test", "test-race", "test-policy", "test-integration", "test-e2e", "security", "build"} {
+	for _, required := range []string{"generate-check", "lint", "test", "test-race", "test-policy", "test-integration", "test-e2e", "compose-check", "security", "build"} {
 		found := false
 		for _, dependency := range dependencies {
 			if dependency == required {

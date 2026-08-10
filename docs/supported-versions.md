@@ -1,13 +1,15 @@
 # Supported Versions and Upgrade Policy
 
-Phase 0 defines compatibility policy without prematurely pinning releases that implementation has not tested. Phase 1 MUST replace each `TBD-tested` entry with an exact version/digest and CI evidence before code is declared supported.
+This matrix distinguishes locally tested dependency pins from later CI and
+production-platform qualification. Phase 1 must replace each remaining
+`TBD-tested` entry before that component is declared supported for an RC.
 
 | Component | RC support baseline | Pinning rule | Support policy |
 |---|---|---|---|
 | Go | 1.26.5 | `go.mod`, toolchain directive, builder digest, CI | latest two Go minor releases only after tests pass; patch updates preferred |
-| PostgreSQL | `TBD-tested`; target current supported major, minimum one prior major where CI cost permits | test image digest and deployment docs | no EOL major; upgrade one major at a time with restore/migration rehearsal |
-| OPA | `TBD-tested`; one exact release | binary/image checksum or digest | policy bundle/decision contract versioned independently; patch/minor after conformance tests |
-| Valkey | optional; `TBD-tested` exact major/minor | test image digest | cache is disposable; no correctness migration dependency; support one tested major |
+| PostgreSQL | 18.4 (`postgres:18.4-alpine3.23`), locally tested on `linux/amd64` | Compose image index digest `sha256:996d0920e4ff9df1fc19dacb904492f3c1ec0ec1cc338f0ad7123be7731c5f5e` | no EOL major; upgrade one major at a time with restore/migration rehearsal |
+| OPA | 1.19.0 (`openpolicyagent/opa:1.19.0-debug`), locally tested on `linux/amd64` | Compose image index digest `sha256:ec3c7a29a21ce96d71231cb4befa2561205fe84e5a2dc3cc46ac7bc8bd21b3a4` | policy bundle/decision contract versioned independently; patch/minor after conformance tests |
+| Valkey | optional; 9.1.1 (`valkey/valkey:9.1.1-alpine3.24`), locally tested on `linux/amd64` | Compose image index digest `sha256:ee91f7a174ac4d6a6b0685b3a60e321f0a9dbbb691f9b0e285be2ba1d1be8328` | cache is disposable; no correctness migration dependency; support one tested major |
 | Kubernetes | `TBD-tested`; conform to upstream supported skew | cluster test matrix and API versions | oldest and newest tested minors documented; avoid deprecated APIs |
 | OpenAPI | 3.1.x document | schema validation tool pinned | breaking API changes require a new API version; additive changes remain compatible |
 | OCI platforms | `linux/amd64` required; `linux/arm64` target | manifest list and base image digests | both platforms must pass container smoke tests before advertised |

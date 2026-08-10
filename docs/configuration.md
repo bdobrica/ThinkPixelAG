@@ -68,12 +68,16 @@ treated as entirely secret even when they contain no inline password.
 ## Minimal local example
 
 ```sh
-export THINKPIXELAG_DATABASE_URL='postgresql://thinkpixelag:local-only@127.0.0.1:5432/thinkpixelag?sslmode=disable'
+export THINKPIXELAG_DATABASE_URL='postgresql://thinkpixelag_local:thinkpixelag_local_only_change_me@127.0.0.1:5432/thinkpixelag_local?sslmode=disable'
+export THINKPIXELAG_OPA_URL='http://127.0.0.1:8181'
+# Only after `make dev-up-valkey`:
+export THINKPIXELAG_VALKEY_URL='redis://:thinkpixelag_valkey_local_only_change_me@127.0.0.1:6379/0'
 export THINKPIXELAG_OIDC_ISSUER_URL='http://127.0.0.1:5556/dex'
 export THINKPIXELAG_OIDC_AUDIENCE='thinkpixelag-local'
 ```
 
-These example credentials are for isolated local development only. ENG-009 will
-provide the pinned local dependencies and test credentials. Production identity,
-database, OPA, and optional Valkey configuration must use managed secret delivery
-and encrypted transport as described above.
+These credentials match `compose.yaml` and are for isolated local development
+only. Start them with `make dev-up` or `make dev-up-valkey`. If `.env` overrides
+a published port, update the corresponding URL. Production identity, database,
+OPA, and optional Valkey configuration must use managed secret delivery and
+encrypted transport as described above.

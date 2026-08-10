@@ -8,6 +8,7 @@ OPENAPI_CLI_VERSION := 2.3.0
 OPENAPI_CLI := $(NPM_EXEC) @redocly/cli@$(OPENAPI_CLI_VERSION)
 OPA ?= opa
 DOCKER ?= docker
+COMPOSE ?= $(DOCKER) compose
 
 MODULE := github.com/bdobrica/ThinkPixelAG
 BUILD_DIR ?= .cache/bin
@@ -17,7 +18,8 @@ IMAGE ?= thinkpixelag:dev
 GO_FILES := $(shell git ls-files '*.go')
 .PHONY: help tools generate generate-check fmt fmt-check lint test test-race \
 	test-policy test-integration test-e2e dependency-check vulnerability-check \
-	license-check security build image verify clean
+	license-check security build image verify clean compose-check dev-up \
+	dev-up-valkey dev-status dev-smoke dev-down dev-reset
 
 help: ## Show the stable development targets.
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -63,7 +65,7 @@ test-race: ## Run all Go tests with the race detector.
 
 test-policy: ## Run OPA/Rego tests when policy sources are present.
 	@rego_files="$$(git ls-files 'policies/*.rego' 'policies/**/*.rego')"; \
-	if [[ -z "$$rego_files" ]]; then printf 'test-policy: no Rego sources yet (policy implementation is scheduled after ENG-008)\n'; \
+	if [[ -z "$$rego_files" ]]; then printf 'test-policy: no Rego sources yet (policy implementation is scheduled for Phase 3)\n'; \
 	else command -v "$(OPA)" >/dev/null || { printf 'test-policy: %s is required\n' "$(OPA)" >&2; exit 1; }; "$(OPA)" test policies; fi
 
 test-integration: ## Run integration-tagged Go tests (suite grows in later phases).
@@ -71,6 +73,33 @@ test-integration: ## Run integration-tagged Go tests (suite grows in later phase
 
 test-e2e: ## Run end-to-end-tagged Go tests (suite grows in later phases).
 	$(GO) test -tags=e2e ./...
+
+compose-check: ## Validate the pinned local dependency stack definition.
+	$(COMPOSE) -f compose.yaml config --quiet
+
+dev-up: compose-check ## Start healthy PostgreSQL and OPA local dependencies.
+	$(COMPOSE) -f compose.yaml up --detach --wait postgres opa
+
+dev-up-valkey: compose-check ## Start healthy PostgreSQL, OPA, and optional Valkey.
+	$(COMPOSE) -f compose.yaml --profile valkey up --detach --wait postgres opa valkey
+
+dev-status: ## Show local dependency container and health state.
+	$(COMPOSE) -f compose.yaml --profile valkey ps
+
+dev-smoke: ## Verify running dependency versions, health, auth, and isolation basics.
+	$(COMPOSE) -f compose.yaml run --rm --no-deps postgres sh -eu -c 'PGPASSWORD="$$POSTGRES_PASSWORD" psql -h postgres -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -Atqc "select current_setting('"'"'server_version'"'"'), current_user, current_database()"'
+	@$(COMPOSE) -f compose.yaml run --rm --no-deps postgres sh -eu -c '! PGPASSWORD=definitely-wrong psql -h postgres -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -Atqc "select 1" >/dev/null 2>&1'
+	@opa_address="$$( $(COMPOSE) -f compose.yaml port opa 8181 )"; curl --fail --silent --show-error "http://$$opa_address/health" >/dev/null
+	$(COMPOSE) -f compose.yaml exec -T opa /opa version
+	@if $(COMPOSE) -f compose.yaml --profile valkey ps --status running --services | grep -qx valkey; then \
+		$(COMPOSE) -f compose.yaml exec -T valkey sh -eu -c 'test "$$(VALKEYCLI_AUTH="$$VALKEY_PASSWORD" valkey-cli ping)" = PONG; test "$$(VALKEYCLI_AUTH=definitely-wrong valkey-cli ping 2>/dev/null)" != PONG; printf "PONG\n"'; \
+	else printf 'dev-smoke: optional Valkey profile is not running\n'; fi
+
+dev-down: ## Stop local dependencies while preserving PostgreSQL state.
+	$(COMPOSE) -f compose.yaml --profile valkey down --remove-orphans
+
+dev-reset: ## Stop dependencies and delete only this Compose project's local volumes.
+	$(COMPOSE) -f compose.yaml --profile valkey down --volumes --remove-orphans
 
 dependency-check: ## Enforce reviewed module sources and exact-version policy.
 	cd tools && $(GO) run ./cmd/dependencycheck -module-dir .. -policy ../dependency-policy.json
@@ -95,7 +124,7 @@ image: ## Build the OCI image once ENG-011 provides the Dockerfile.
 	@test -f Dockerfile || { printf 'image: Dockerfile is not implemented yet; complete ENG-011 first\n' >&2; exit 2; }
 	$(DOCKER) build --build-arg VERSION=$(VERSION) --build-arg REVISION=$(REVISION) -t $(IMAGE) .
 
-verify: generate-check lint test test-race test-policy test-integration test-e2e security build ## Run the complete non-container clean-checkout gate.
+verify: generate-check lint test test-race test-policy test-integration test-e2e compose-check security build ## Run the complete non-runtime clean-checkout gate.
 
 clean: ## Remove repository-local build outputs.
 	rm -rf .cache/bin

@@ -1,0 +1,94 @@
+name: ${COMPOSE_PROJECT_NAME:-thinkpixelag-dev}
+
+services:
+  postgres:
+    image: postgres:18.4-alpine3.23@sha256:996d0920e4ff9df1fc19dacb904492f3c1ec0ec1cc338f0ad7123be7731c5f5e
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-thinkpixelag_local}
+      POSTGRES_USER: ${POSTGRES_USER:-thinkpixelag_local}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-thinkpixelag_local_only_change_me}
+    ports:
+      - name: postgres
+        target: 5432
+        published: "${POSTGRES_PORT:-5432}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 20s
+
+  opa:
+    image: openpolicyagent/opa:1.19.0-debug@sha256:ec3c7a29a21ce96d71231cb4befa2561205fe84e5a2dc3cc46ac7bc8bd21b3a4
+    command:
+      - run
+      - --server
+      - --addr=0.0.0.0:8181
+      - --log-format=json
+      - --log-level=info
+    ports:
+      - name: opa
+        target: 8181
+        published: "${OPA_PORT:-8181}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+    healthcheck:
+      test: ["CMD", "/opa", "eval", "--fail", "http.send({\"method\":\"get\",\"url\":\"http://127.0.0.1:8181/health\"}).status_code == 200"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+      start_period: 2s
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 10s
+
+  valkey:
+    image: valkey/valkey:9.1.1-alpine3.24@sha256:ee91f7a174ac4d6a6b0685b3a60e321f0a9dbbb691f9b0e285be2ba1d1be8328
+    profiles: [valkey]
+    environment:
+      VALKEY_PASSWORD: ${VALKEY_PASSWORD:-thinkpixelag_valkey_local_only_change_me}
+    command:
+      - valkey-server
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+      - --requirepass
+      - ${VALKEY_PASSWORD:-thinkpixelag_valkey_local_only_change_me}
+    user: "999:1000"
+    ports:
+      - name: valkey
+        target: 6379
+        published: "${VALKEY_PORT:-6379}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+    healthcheck:
+      test: ["CMD-SHELL", "VALKEYCLI_AUTH=\"$${VALKEY_PASSWORD}\" valkey-cli ping | grep -qx PONG"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+      start_period: 2s
+    read_only: true
+    tmpfs:
+      - /data:size=64m,mode=0700,uid=999,gid=1000
+      - /tmp:size=16m,mode=1777,uid=999,gid=1000
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 10s
+
+volumes:
+  postgres-data:
