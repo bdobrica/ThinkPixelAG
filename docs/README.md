@@ -10,6 +10,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [Revocation and freshness](contracts/revocation.md)
 - [Policy decision contract](contracts/policy-decision.md)
 - [OpenAPI contract](../api/openapi/thinkpixelag.yaml)
+- [Configuration reference](configuration.md)
 
 ## Security and operations
 

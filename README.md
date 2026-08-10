@@ -149,7 +149,15 @@ build tools follow the [dependency and build-tool policy](docs/security/dependen
 
 ## Configuration and deployment
 
-Configuration is supplied through flags and environment variables, validated at startup, and documented as the code is introduced. Secrets are referenced through Kubernetes and never committed. Production deployment must use TLS at ingress, authenticated service-to-service traffic, NetworkPolicies, non-root containers, a read-only root filesystem, resource limits, PodDisruptionBudget, anti-affinity/topology spreading, and a migration job executed before rollout.
+Configuration uses strict typed defaults, `THINKPIXELAG_*` environment variables,
+and non-secret flags, and is validated before startup. Secret-bearing database,
+Valkey, and OPA credentials are environment-only and redact under normal and JSON
+formatting. See the [configuration reference](docs/configuration.md) for precedence,
+settings, and validation rules. Secrets are referenced through Kubernetes and
+never committed. Production deployment must use TLS at ingress, authenticated
+service-to-service traffic, NetworkPolicies, non-root containers, a read-only
+root filesystem, resource limits, PodDisruptionBudget, anti-affinity/topology
+spreading, and a migration job executed before rollout.
 
 ## Release-candidate definition
 

@@ -24,7 +24,7 @@ Status notation: `[ ]` pending, `[x]` implemented and verified. Add completion m
 
 - [x] ENG-001 Initialize the Go module, pin the Go/toolchain version, and create `cmd`, `internal`, `api`, `policies`, `migrations`, `deploy`, and `test` package boundaries. — completed 2026-08-10, commit `5287791`, evidence: `go version`; `go mod edit -json`; `go test ./...`; boundary documentation and package compile checks
 - [x] ENG-002 Add dependency policy, license/source checks, vulnerability scanning configuration, and reproducible tool pinning. — completed 2026-08-10, commit `45c422d`, evidence: dependency checker unit/integration tests; pinned `govulncheck` and `go-licenses` gates; `go test ./...`; `git diff --check`
-- [ ] ENG-003 Implement strict typed configuration with defaults, environment/flag loading, startup validation, secret-safe rendering, and unit tests.
+- [x] ENG-003 Implement strict typed configuration with defaults, environment/flag loading, startup validation, secret-safe rendering, and unit tests. — completed 2026-08-10, commit `PENDING`, evidence: configuration unit/redaction tests; `go test -race ./...`; `go vet ./...`; dependency, vulnerability, and license gates
 - [ ] ENG-004 Implement structured logging with request/trace correlation and centralized sensitive-field redaction tests.
 - [ ] ENG-005 Add Prometheus metrics and OpenTelemetry tracing initialization with no-op/local configurations.
 - [ ] ENG-006 Add ID, UTC clock, decimal/resource quantity, pagination cursor, and typed error primitives with tests/fuzz cases.
@@ -169,6 +169,7 @@ Append one entry per completed atomic item or tightly coupled group. Do not dele
 | 2026-08-10 | GOV-001–GOV-013 | `eddf453` | Redocly CLI 2.3.0 lint; `git diff --check`; blueprint coverage review | Exact dependency versions deferred to Phase 1 testing by design |
 | 2026-08-10 | ENG-001 | `5287791` | `go version`; `go mod edit -json`; `go test ./...`; `git diff --check` | Go 1.26.5 tested; command behavior remains scoped to later Phase 1 items |
 | 2026-08-10 | ENG-002 | `45c422d` | source-policy audit; `govulncheck -test ./...`; `go-licenses check --include_tests`; root/tools tests; `git diff --check` | No dependency exceptions; Make and CI wiring remain ENG-008/ENG-010 |
+| 2026-08-10 | ENG-003 | `PENDING` | configuration/redaction tests; `go test -race ./...`; `go vet ./...`; source/license/vulnerability gates | Secret values are environment-only; command startup wiring remains ENG-007 |
 
 ## Active blockers and deviations
 
