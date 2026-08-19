@@ -9,6 +9,7 @@ OPENAPI_CLI := $(NPM_EXEC) @redocly/cli@$(OPENAPI_CLI_VERSION)
 OPA ?= opa
 DOCKER ?= docker
 COMPOSE ?= $(DOCKER) compose
+TEST_DATABASE_URL ?= postgresql://thinkpixelag_local:thinkpixelag_local_only_change_me@127.0.0.1:5432/thinkpixelag_local
 
 MODULE := github.com/bdobrica/ThinkPixelAG
 BUILD_DIR ?= .cache/bin
@@ -68,8 +69,8 @@ test-policy: ## Run OPA/Rego tests when policy sources are present.
 	if [[ -z "$$rego_files" ]]; then printf 'test-policy: no Rego sources yet (policy implementation is scheduled for Phase 3)\n'; \
 	else command -v "$(OPA)" >/dev/null || { printf 'test-policy: %s is required\n' "$(OPA)" >&2; exit 1; }; "$(OPA)" test policies; fi
 
-test-integration: ## Run integration-tagged Go tests (suite grows in later phases).
-	$(GO) test -tags=integration ./...
+test-integration: ## Run integration-tagged Go tests against real PostgreSQL.
+	THINKPIXELAG_TEST_DATABASE_URL='$(TEST_DATABASE_URL)' $(GO) test -count=1 -tags=integration ./...
 
 test-e2e: ## Run end-to-end-tagged Go tests (suite grows in later phases).
 	$(GO) test -tags=e2e ./...

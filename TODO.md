@@ -49,7 +49,7 @@ Status notation: `[ ]` pending, `[x]` implemented and verified. Add completion m
 - [x] DATA-010 Implement transactional audit/outbox writes and a replay-safe publisher with bounded retry, jitter, leases/claims, and poison-message handling. — completed 2026-08-19, commit `3a6bb36`, evidence: atomic mutation/audit/outbox rollback and commit; PostgreSQL 18.4 concurrent claim, retry, dead-letter, and race tests; `make verify`
 - [x] DATA-011 Test migrations from empty DB, upgrade from prior fixture, constraints/index access paths, forward recovery after failure, and compatibility rules. — completed 2026-08-19, commit `981c856`, evidence: immutable migration checksum manifest; PostgreSQL 18.4 empty install, seeded prior-version upgrade, constraint/index-plan, and transactional failure/recovery integration tests; `make verify`
 - [x] DATA-012 Evaluate PostgreSQL row-level security as defense in depth; implement it or record why repository enforcement is used for RC. — completed 2026-08-19, commit `73588b6`, evidence: ADR-0002 threat/role/pooling evaluation; tenant repository unit/race tests; PostgreSQL 18.4 cross-tenant isolation test; `make verify`
-- [ ] DATA-013 Run real-PostgreSQL integration/concurrency tests and commit Phase 2 evidence.
+- [x] DATA-013 Run real-PostgreSQL integration/concurrency tests and commit Phase 2 evidence. — completed 2026-08-19, commit `DATA013_COMMIT`, evidence: pinned PostgreSQL 18.4 adapter race/concurrency suite; mandatory real-database `make test-integration`; `make verify`; `docs/phase-2-evidence.md`
 
 ## Phase 3 — Identity, OPA policy, and agent registry
 
@@ -187,6 +187,7 @@ Append one entry per completed atomic item or tightly coupled group. Do not dele
 | 2026-08-19 | DATA-010 | `3a6bb36` | deterministic audit hashing and validation; atomic mutation/audit/outbox rollback and commit; PostgreSQL 18.4 competing `SKIP LOCKED` claims, fenced publication, bounded jittered retry, permanent poison dead-lettering, unit/integration/race tests; `make verify` | Delivery is at least once; sinks deduplicate by stable message UUID. Dead letters remain durable for operator inspection/replay |
 | 2026-08-19 | DATA-011 | `981c856` | immutable migration checksum manifest; PostgreSQL 18.4 empty install, seeded prior-version upgrade, check/unique/foreign-key constraints, tenant/outbox index plans, transactional failure rollback and forward recovery; `make verify` | Compatibility follows expand/migrate/contract; released migrations are checksum-locked and corrections use new forward migrations |
 | 2026-08-19 | DATA-012 | `73588b6` | ADR-0002 threat/role/pooling evaluation; tenant repository unit/race tests; PostgreSQL 18.4 cross-tenant isolation; `make verify` | RC retains explicit repository enforcement because current pooled non-transactional access, owner-role bypass, and global workers make partial RLS ineffective; reevaluation criteria require separated roles and transaction-bound tenant context |
+| 2026-08-19 | DATA-013 | `DATA013_COMMIT` | PostgreSQL 18.4 adapter race/concurrency suite; mandatory real-database integration target and CI service; full `make verify`; `docs/phase-2-evidence.md` | Phase 2 exit gate passed with no required PostgreSQL skips; integration now fails when its real database is unavailable |
 
 ## Active blockers and deviations
 

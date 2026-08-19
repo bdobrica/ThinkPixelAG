@@ -6,10 +6,10 @@ The project implements the governance-plane concepts in the Enterprise Execution
 
 ## Status
 
-The engineering foundation is complete and authoritative PostgreSQL persistence
-is in progress. Phase 0 contracts and Phase 1 build,
-verification, CI, local-dependency, observability, HTTP-runtime, and hardened
-image foundations have passed their exit gates. [PLAN.md](PLAN.md) defines the
+The engineering foundation and authoritative PostgreSQL persistence are
+complete. Phase 0 contracts, Phase 1 engineering foundations, and Phase 2
+migrations, repositories, idempotency, audit/outbox delivery, and real-database
+verification have passed their exit gates. [PLAN.md](PLAN.md) defines the
 target architecture and delivery phases; [TODO.md](TODO.md) is the ordered,
 atomic release-candidate checklist. Phase evidence is indexed in
 [docs/README.md](docs/README.md).
@@ -147,6 +147,11 @@ make build
 make image
 make verify
 ```
+
+`make test-integration` and `make verify` require PostgreSQL. By default they
+use the loopback-only development database started by `make dev-up`; set
+`TEST_DATABASE_URL` to use another disposable PostgreSQL database. Integration
+tests create and remove isolated databases and must never target production.
 
 Start the pinned local dependencies with `make dev-up` (PostgreSQL and OPA), or
 `make dev-up-valkey` to include the optional cache. Use `make dev-smoke` to check

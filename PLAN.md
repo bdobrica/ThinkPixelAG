@@ -248,6 +248,12 @@ and opt-in disposable Valkey 9.1.1 dependencies. Full audit evidence is in
 
 Add migrations, transaction manager, repositories, idempotency, outbox, and integration-test infrastructure. Exit when schema and repositories pass isolation, rollback, migration, and replay tests on real PostgreSQL.
 
+Status: **Completed 2026-08-19.** The pinned PostgreSQL 18.4 integration gate
+qualified empty installation and upgrade recovery, schema constraints and
+access paths, tenant isolation and rollback, concurrent idempotency ownership,
+and replay-safe outbox claiming/retry/dead-letter behavior. Full environment,
+command, and result evidence is recorded in `docs/phase-2-evidence.md`.
+
 ### Phase 3 — Identity, policy, and registry
 
 Implement OIDC authentication, claim-to-tenant mapping, OPA client/contract, policy lifecycle, agent/version registration, approvals, and version resolution. Exit when deny-by-default, tenant isolation, policy freshness, and immutable-version tests pass.

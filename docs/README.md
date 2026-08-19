@@ -27,6 +27,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [Development and verification commands](operations/development.md)
 - [Phase 0 blueprint review](phase-0-review.md)
 - [Phase 1 engineering foundation evidence](phase-1-evidence.md)
+- [Phase 2 authoritative persistence evidence](phase-2-evidence.md)
 
 ## Architecture decisions
 
