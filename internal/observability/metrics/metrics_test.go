@@ -15,6 +15,8 @@ func TestEnabledMetrics(t *testing.T) {
 		t.Fatalf("New() error = %v", err)
 	}
 	metrics.ObserveHTTP("/v1/runs/{run_id}", "get", 200, 25*time.Millisecond)
+	metrics.ObserveDatabase("query", "ok", 10*time.Millisecond)
+	metrics.SetDatabaseHealthy(true)
 
 	request := httptest.NewRequest("GET", "/metrics", nil)
 	response := httptest.NewRecorder()
@@ -27,6 +29,9 @@ func TestEnabledMetrics(t *testing.T) {
 		`thinkpixelag_build_info{revision="abc123",version="v0.1.0"} 1`,
 		`thinkpixelag_http_requests_total{method="GET",route="/v1/runs/{run_id}",status_class="2xx"} 1`,
 		`thinkpixelag_http_request_duration_seconds_count{method="GET",route="/v1/runs/{run_id}"} 1`,
+		`thinkpixelag_database_operations_total{operation="query",outcome="ok"} 1`,
+		`thinkpixelag_database_operation_duration_seconds_count{operation="query"} 1`,
+		`thinkpixelag_database_healthy 1`,
 		"go_goroutines",
 		"process_cpu_seconds",
 	} {

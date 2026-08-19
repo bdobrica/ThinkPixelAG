@@ -14,34 +14,41 @@ import (
 const envPrefix = "THINKPIXELAG_"
 
 var knownEnvironment = map[string]func(*Config, string) error{
-	"THINKPIXELAG_ENVIRONMENT":              setEnvironment,
-	"THINKPIXELAG_HTTP_ADDRESS":             setString(func(c *Config) *string { return &c.HTTP.Address }),
-	"THINKPIXELAG_HTTP_MAX_HEADER_BYTES":    setInt(func(c *Config) *int { return &c.HTTP.MaxHeaderBytes }),
-	"THINKPIXELAG_HTTP_MAX_BODY_BYTES":      setInt64(func(c *Config) *int64 { return &c.HTTP.MaxBodyBytes }),
-	"THINKPIXELAG_HTTP_READ_HEADER_TIMEOUT": setDuration(func(c *Config) *time.Duration { return &c.HTTP.ReadHeaderTimeout }),
-	"THINKPIXELAG_HTTP_READ_TIMEOUT":        setDuration(func(c *Config) *time.Duration { return &c.HTTP.ReadTimeout }),
-	"THINKPIXELAG_HTTP_HANDLER_TIMEOUT":     setDuration(func(c *Config) *time.Duration { return &c.HTTP.HandlerTimeout }),
-	"THINKPIXELAG_HTTP_WRITE_TIMEOUT":       setDuration(func(c *Config) *time.Duration { return &c.HTTP.WriteTimeout }),
-	"THINKPIXELAG_HTTP_IDLE_TIMEOUT":        setDuration(func(c *Config) *time.Duration { return &c.HTTP.IdleTimeout }),
-	"THINKPIXELAG_HTTP_SHUTDOWN_TIMEOUT":    setDuration(func(c *Config) *time.Duration { return &c.HTTP.ShutdownTimeout }),
-	"THINKPIXELAG_DATABASE_URL":             setSecret(func(c *Config) *Secret { return &c.Database.URL }),
-	"THINKPIXELAG_DATABASE_CONNECT_TIMEOUT": setDuration(func(c *Config) *time.Duration { return &c.Database.ConnectTimeout }),
-	"THINKPIXELAG_LOG_LEVEL":                setString(func(c *Config) *string { return &c.Log.Level }),
-	"THINKPIXELAG_OPA_URL":                  setString(func(c *Config) *string { return &c.OPA.URL }),
-	"THINKPIXELAG_OPA_DECISION_PATH":        setString(func(c *Config) *string { return &c.OPA.DecisionPath }),
-	"THINKPIXELAG_OPA_TIMEOUT":              setDuration(func(c *Config) *time.Duration { return &c.OPA.Timeout }),
-	"THINKPIXELAG_OPA_BEARER_TOKEN":         setSecret(func(c *Config) *Secret { return &c.OPA.BearerToken }),
-	"THINKPIXELAG_METRICS_ENABLED":          setBool(func(c *Config) *bool { return &c.Telemetry.MetricsEnabled }),
-	"THINKPIXELAG_TRACING_MODE":             setString(func(c *Config) *string { return &c.Telemetry.TracingMode }),
-	"THINKPIXELAG_SERVICE_NAME":             setString(func(c *Config) *string { return &c.Telemetry.ServiceName }),
-	"THINKPIXELAG_OTLP_ENDPOINT":            setString(func(c *Config) *string { return &c.Telemetry.OTLPEndpoint }),
-	"THINKPIXELAG_TRACE_SAMPLE_RATIO":       setFloat64(func(c *Config) *float64 { return &c.Telemetry.TraceSampleRatio }),
-	"THINKPIXELAG_TRACE_EXPORT_TIMEOUT":     setDuration(func(c *Config) *time.Duration { return &c.Telemetry.TraceExportTimeout }),
-	"THINKPIXELAG_TRACE_BATCH_TIMEOUT":      setDuration(func(c *Config) *time.Duration { return &c.Telemetry.TraceBatchTimeout }),
-	"THINKPIXELAG_VALKEY_URL":               setSecret(func(c *Config) *Secret { return &c.Valkey.URL }),
-	"THINKPIXELAG_VALKEY_TIMEOUT":           setDuration(func(c *Config) *time.Duration { return &c.Valkey.Timeout }),
-	"THINKPIXELAG_OIDC_ISSUER_URL":          setString(func(c *Config) *string { return &c.OIDC.IssuerURL }),
-	"THINKPIXELAG_OIDC_AUDIENCE":            setString(func(c *Config) *string { return &c.OIDC.Audience }),
+	"THINKPIXELAG_ENVIRONMENT":                       setEnvironment,
+	"THINKPIXELAG_HTTP_ADDRESS":                      setString(func(c *Config) *string { return &c.HTTP.Address }),
+	"THINKPIXELAG_HTTP_MAX_HEADER_BYTES":             setInt(func(c *Config) *int { return &c.HTTP.MaxHeaderBytes }),
+	"THINKPIXELAG_HTTP_MAX_BODY_BYTES":               setInt64(func(c *Config) *int64 { return &c.HTTP.MaxBodyBytes }),
+	"THINKPIXELAG_HTTP_READ_HEADER_TIMEOUT":          setDuration(func(c *Config) *time.Duration { return &c.HTTP.ReadHeaderTimeout }),
+	"THINKPIXELAG_HTTP_READ_TIMEOUT":                 setDuration(func(c *Config) *time.Duration { return &c.HTTP.ReadTimeout }),
+	"THINKPIXELAG_HTTP_HANDLER_TIMEOUT":              setDuration(func(c *Config) *time.Duration { return &c.HTTP.HandlerTimeout }),
+	"THINKPIXELAG_HTTP_WRITE_TIMEOUT":                setDuration(func(c *Config) *time.Duration { return &c.HTTP.WriteTimeout }),
+	"THINKPIXELAG_HTTP_IDLE_TIMEOUT":                 setDuration(func(c *Config) *time.Duration { return &c.HTTP.IdleTimeout }),
+	"THINKPIXELAG_HTTP_SHUTDOWN_TIMEOUT":             setDuration(func(c *Config) *time.Duration { return &c.HTTP.ShutdownTimeout }),
+	"THINKPIXELAG_DATABASE_URL":                      setSecret(func(c *Config) *Secret { return &c.Database.URL }),
+	"THINKPIXELAG_DATABASE_CONNECT_TIMEOUT":          setDuration(func(c *Config) *time.Duration { return &c.Database.ConnectTimeout }),
+	"THINKPIXELAG_DATABASE_HEALTH_TIMEOUT":           setDuration(func(c *Config) *time.Duration { return &c.Database.HealthTimeout }),
+	"THINKPIXELAG_DATABASE_STATEMENT_TIMEOUT":        setDuration(func(c *Config) *time.Duration { return &c.Database.StatementTimeout }),
+	"THINKPIXELAG_DATABASE_LOCK_TIMEOUT":             setDuration(func(c *Config) *time.Duration { return &c.Database.LockTimeout }),
+	"THINKPIXELAG_DATABASE_MAX_CONNECTION_LIFETIME":  setDuration(func(c *Config) *time.Duration { return &c.Database.MaxConnectionLifetime }),
+	"THINKPIXELAG_DATABASE_MAX_CONNECTION_IDLE_TIME": setDuration(func(c *Config) *time.Duration { return &c.Database.MaxConnectionIdleTime }),
+	"THINKPIXELAG_DATABASE_MIN_CONNECTIONS":          setInt32(func(c *Config) *int32 { return &c.Database.MinConnections }),
+	"THINKPIXELAG_DATABASE_MAX_CONNECTIONS":          setInt32(func(c *Config) *int32 { return &c.Database.MaxConnections }),
+	"THINKPIXELAG_LOG_LEVEL":                         setString(func(c *Config) *string { return &c.Log.Level }),
+	"THINKPIXELAG_OPA_URL":                           setString(func(c *Config) *string { return &c.OPA.URL }),
+	"THINKPIXELAG_OPA_DECISION_PATH":                 setString(func(c *Config) *string { return &c.OPA.DecisionPath }),
+	"THINKPIXELAG_OPA_TIMEOUT":                       setDuration(func(c *Config) *time.Duration { return &c.OPA.Timeout }),
+	"THINKPIXELAG_OPA_BEARER_TOKEN":                  setSecret(func(c *Config) *Secret { return &c.OPA.BearerToken }),
+	"THINKPIXELAG_METRICS_ENABLED":                   setBool(func(c *Config) *bool { return &c.Telemetry.MetricsEnabled }),
+	"THINKPIXELAG_TRACING_MODE":                      setString(func(c *Config) *string { return &c.Telemetry.TracingMode }),
+	"THINKPIXELAG_SERVICE_NAME":                      setString(func(c *Config) *string { return &c.Telemetry.ServiceName }),
+	"THINKPIXELAG_OTLP_ENDPOINT":                     setString(func(c *Config) *string { return &c.Telemetry.OTLPEndpoint }),
+	"THINKPIXELAG_TRACE_SAMPLE_RATIO":                setFloat64(func(c *Config) *float64 { return &c.Telemetry.TraceSampleRatio }),
+	"THINKPIXELAG_TRACE_EXPORT_TIMEOUT":              setDuration(func(c *Config) *time.Duration { return &c.Telemetry.TraceExportTimeout }),
+	"THINKPIXELAG_TRACE_BATCH_TIMEOUT":               setDuration(func(c *Config) *time.Duration { return &c.Telemetry.TraceBatchTimeout }),
+	"THINKPIXELAG_VALKEY_URL":                        setSecret(func(c *Config) *Secret { return &c.Valkey.URL }),
+	"THINKPIXELAG_VALKEY_TIMEOUT":                    setDuration(func(c *Config) *time.Duration { return &c.Valkey.Timeout }),
+	"THINKPIXELAG_OIDC_ISSUER_URL":                   setString(func(c *Config) *string { return &c.OIDC.IssuerURL }),
+	"THINKPIXELAG_OIDC_AUDIENCE":                     setString(func(c *Config) *string { return &c.OIDC.Audience }),
 }
 
 // Load reads process environment and command-line arguments, then validates the
@@ -111,6 +118,13 @@ func applyFlags(c *Config, args []string) error {
 	fs.DurationVar(&c.HTTP.IdleTimeout, "http-idle-timeout", c.HTTP.IdleTimeout, "HTTP idle timeout")
 	fs.DurationVar(&c.HTTP.ShutdownTimeout, "http-shutdown-timeout", c.HTTP.ShutdownTimeout, "graceful shutdown timeout")
 	fs.DurationVar(&c.Database.ConnectTimeout, "database-connect-timeout", c.Database.ConnectTimeout, "database connection timeout")
+	fs.DurationVar(&c.Database.HealthTimeout, "database-health-timeout", c.Database.HealthTimeout, "database health-check timeout")
+	fs.DurationVar(&c.Database.StatementTimeout, "database-statement-timeout", c.Database.StatementTimeout, "database statement timeout")
+	fs.DurationVar(&c.Database.LockTimeout, "database-lock-timeout", c.Database.LockTimeout, "database lock timeout")
+	fs.DurationVar(&c.Database.MaxConnectionLifetime, "database-max-connection-lifetime", c.Database.MaxConnectionLifetime, "maximum database connection lifetime")
+	fs.DurationVar(&c.Database.MaxConnectionIdleTime, "database-max-connection-idle-time", c.Database.MaxConnectionIdleTime, "maximum database connection idle time")
+	fs.Var(newInt32Value(&c.Database.MinConnections), "database-min-connections", "minimum database pool connections")
+	fs.Var(newInt32Value(&c.Database.MaxConnections), "database-max-connections", "maximum database pool connections")
 	fs.StringVar(&c.Log.Level, "log-level", c.Log.Level, "minimum log level: debug, info, warn, or error")
 	fs.StringVar(&c.OPA.URL, "opa-url", c.OPA.URL, "OPA base URL")
 	fs.StringVar(&c.OPA.DecisionPath, "opa-decision-path", c.OPA.DecisionPath, "OPA decision document path")
@@ -133,6 +147,23 @@ func applyFlags(c *Config, args []string) error {
 		return fmt.Errorf("unexpected positional arguments: %s", strings.Join(fs.Args(), " "))
 	}
 	return nil
+}
+
+type int32Value int32
+
+func newInt32Value(target *int32) *int32Value { return (*int32Value)(target) }
+func (v *int32Value) String() string          { return strconv.FormatInt(int64(*v), 10) }
+func (v *int32Value) Set(value string) error {
+	parsed, err := strconv.ParseInt(value, 10, 32)
+	if err != nil {
+		return fmt.Errorf("must be a 32-bit integer")
+	}
+	*v = int32Value(parsed)
+	return nil
+}
+
+func setInt32(field func(*Config) *int32) func(*Config, string) error {
+	return func(c *Config, value string) error { return newInt32Value(field(c)).Set(value) }
 }
 
 type environmentValue Environment

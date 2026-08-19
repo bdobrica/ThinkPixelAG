@@ -37,21 +37,32 @@ func (c Config) Validate() error {
 		problems = append(problems, "http address: "+err.Error())
 	}
 	for name, value := range map[string]time.Duration{
-		"http read header timeout": c.HTTP.ReadHeaderTimeout,
-		"http read timeout":        c.HTTP.ReadTimeout,
-		"http handler timeout":     c.HTTP.HandlerTimeout,
-		"http write timeout":       c.HTTP.WriteTimeout,
-		"http idle timeout":        c.HTTP.IdleTimeout,
-		"http shutdown timeout":    c.HTTP.ShutdownTimeout,
-		"database connect timeout": c.Database.ConnectTimeout,
-		"opa timeout":              c.OPA.Timeout,
-		"trace export timeout":     c.Telemetry.TraceExportTimeout,
-		"trace batch timeout":      c.Telemetry.TraceBatchTimeout,
-		"valkey timeout":           c.Valkey.Timeout,
+		"http read header timeout":   c.HTTP.ReadHeaderTimeout,
+		"http read timeout":          c.HTTP.ReadTimeout,
+		"http handler timeout":       c.HTTP.HandlerTimeout,
+		"http write timeout":         c.HTTP.WriteTimeout,
+		"http idle timeout":          c.HTTP.IdleTimeout,
+		"http shutdown timeout":      c.HTTP.ShutdownTimeout,
+		"database connect timeout":   c.Database.ConnectTimeout,
+		"database health timeout":    c.Database.HealthTimeout,
+		"database statement timeout": c.Database.StatementTimeout,
+		"database lock timeout":      c.Database.LockTimeout,
+		"opa timeout":                c.OPA.Timeout,
+		"trace export timeout":       c.Telemetry.TraceExportTimeout,
+		"trace batch timeout":        c.Telemetry.TraceBatchTimeout,
+		"valkey timeout":             c.Valkey.Timeout,
 	} {
 		if value <= 0 || value > maxTimeout {
 			problems = append(problems, fmt.Sprintf("%s must be greater than zero and at most %s", name, maxTimeout))
 		}
+	}
+	for name, value := range map[string]time.Duration{"database max connection lifetime": c.Database.MaxConnectionLifetime, "database max connection idle time": c.Database.MaxConnectionIdleTime} {
+		if value <= 0 || value > 24*time.Hour {
+			problems = append(problems, fmt.Sprintf("%s must be greater than zero and at most 24h0m0s", name))
+		}
+	}
+	if c.Database.MinConnections < 0 || c.Database.MaxConnections < 1 || c.Database.MaxConnections > 1000 || c.Database.MinConnections > c.Database.MaxConnections {
+		problems = append(problems, "database connections must satisfy 0 <= min <= max <= 1000")
 	}
 	if c.HTTP.MaxHeaderBytes < 1024 || c.HTTP.MaxHeaderBytes > 16<<20 {
 		problems = append(problems, "http max header bytes must be from 1024 through 16777216")

@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver"
+	postgresadapter "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres"
 	"github.com/bdobrica/ThinkPixelAG/internal/config"
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
 	"github.com/bdobrica/ThinkPixelAG/internal/observability/logging"
@@ -52,6 +53,21 @@ func run(ctx context.Context, args []string) error {
 	if err != nil {
 		return fmt.Errorf("initialize tracing: %w", err)
 	}
+	databasePool, err := postgresadapter.Open(ctx, postgresadapter.PoolConfig{
+		URL: settings.Database.URL.Value(), ConnectTimeout: settings.Database.ConnectTimeout,
+		HealthTimeout: settings.Database.HealthTimeout, StatementTimeout: settings.Database.StatementTimeout,
+		LockTimeout: settings.Database.LockTimeout, MaxConnectionLifetime: settings.Database.MaxConnectionLifetime,
+		MaxConnectionIdleTime: settings.Database.MaxConnectionIdleTime, MinConnections: settings.Database.MinConnections,
+		MaxConnections: settings.Database.MaxConnections,
+	}, metricSet, traceSet.Tracer())
+	if err != nil {
+		return fmt.Errorf("initialize database: %w", err)
+	}
+	defer databasePool.Close()
+	databaseReadiness, err := postgresadapter.NewReadiness(databasePool, settings.Database.HealthTimeout, metricSet)
+	if err != nil {
+		return fmt.Errorf("initialize database readiness: %w", err)
+	}
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), settings.HTTP.ShutdownTimeout)
 		defer cancel()
@@ -61,7 +77,7 @@ func run(ctx context.Context, args []string) error {
 	}()
 
 	server, err := httpserver.New(settings.HTTP, httpserver.Dependencies{
-		Logger: logger, Metrics: metricSet, Tracing: traceSet,
+		Logger: logger, Metrics: metricSet, Tracing: traceSet, Readiness: databaseReadiness,
 		NewID: func() (string, error) { id, idErr := domain.NewID(); return id.String(), idErr },
 	})
 	if err != nil {

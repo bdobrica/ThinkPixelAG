@@ -36,8 +36,7 @@ fi
 
 address=$("$docker_bin" port "$container" 8080/tcp)
 for _ in {1..50}; do
-    if curl --fail --silent --show-error "http://$address/livez" >/dev/null && \
-       curl --fail --silent --show-error "http://$address/readyz" >/dev/null; then
+    if curl --fail --silent --show-error "http://$address/livez" >/dev/null; then
         break
     fi
     running=$("$docker_bin" inspect --format '{{.State.Running}}' "$container")
@@ -48,7 +47,8 @@ for _ in {1..50}; do
     sleep 0.1
 done
 curl --fail --silent --show-error "http://$address/livez" >/dev/null
-curl --fail --silent --show-error "http://$address/readyz" >/dev/null
+readiness_status=$(curl --silent --output /dev/null --write-out '%{http_code}' "http://$address/readyz")
+test "$readiness_status" = "503"
 
 running_uid=$("$docker_bin" top "$container" | awk 'NR == 2 {print $1}')
 test "$running_uid" = "65532"
@@ -58,4 +58,4 @@ test "$read_only" = "true"
 "$docker_bin" stop --time 5 "$container" >/dev/null
 exit_code=$("$docker_bin" inspect --format '{{.State.ExitCode}}' "$container")
 test "$exit_code" = "0"
-printf 'container-smoke: shell-free non-root image, read-only runtime, probes, metadata, and SIGTERM verified\n'
+printf 'container-smoke: shell-free non-root image, read-only runtime, liveness/fail-closed readiness, metadata, and SIGTERM verified\n'

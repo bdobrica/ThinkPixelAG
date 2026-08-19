@@ -28,6 +28,9 @@ type Metrics struct {
 	registry            *prometheus.Registry
 	httpRequests        *prometheus.CounterVec
 	httpRequestDuration *prometheus.HistogramVec
+	databaseOperations  *prometheus.CounterVec
+	databaseDuration    *prometheus.HistogramVec
+	databaseHealth      prometheus.Gauge
 }
 
 // New creates an isolated registry. It never registers collectors globally.
@@ -51,6 +54,9 @@ func New(enabled bool, build BuildInfo) (*Metrics, error) {
 		Help:      "HTTP request duration by bounded route and method.",
 		Buckets:   []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10},
 	}, []string{"route", "method"})
+	metrics.databaseOperations = prometheus.NewCounterVec(prometheus.CounterOpts{Namespace: namespace, Subsystem: "database", Name: "operations_total", Help: "Total PostgreSQL operations by bounded operation and outcome."}, []string{"operation", "outcome"})
+	metrics.databaseDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{Namespace: namespace, Subsystem: "database", Name: "operation_duration_seconds", Help: "PostgreSQL operation duration by bounded operation.", Buckets: []float64{.001, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10}}, []string{"operation"})
+	metrics.databaseHealth = prometheus.NewGauge(prometheus.GaugeOpts{Namespace: namespace, Subsystem: "database", Name: "healthy", Help: "Whether the most recent PostgreSQL health check succeeded."})
 	buildInfo := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "build_info",
@@ -70,10 +76,52 @@ func New(enabled bool, build BuildInfo) (*Metrics, error) {
 	if err := registry.Register(metrics.httpRequestDuration); err != nil {
 		return nil, err
 	}
+	if err := registry.Register(metrics.databaseOperations); err != nil {
+		return nil, err
+	}
+	if err := registry.Register(metrics.databaseDuration); err != nil {
+		return nil, err
+	}
+	if err := registry.Register(metrics.databaseHealth); err != nil {
+		return nil, err
+	}
 	if err := registry.Register(buildInfo); err != nil {
 		return nil, err
 	}
 	return metrics, nil
+}
+
+// ObserveDatabase records bounded adapter telemetry; callers must never pass SQL text.
+func (m *Metrics) ObserveDatabase(operation, outcome string, duration time.Duration) {
+	if !m.enabled {
+		return
+	}
+	switch operation {
+	case "query", "exec", "batch", "copy", "connect", "health":
+	default:
+		operation = "other"
+	}
+	switch outcome {
+	case "ok", "canceled", "timeout", "constraint", "conflict", "unavailable", "error":
+	default:
+		outcome = "error"
+	}
+	if duration < 0 {
+		duration = 0
+	}
+	m.databaseOperations.WithLabelValues(operation, outcome).Inc()
+	m.databaseDuration.WithLabelValues(operation).Observe(duration.Seconds())
+}
+
+func (m *Metrics) SetDatabaseHealthy(healthy bool) {
+	if !m.enabled {
+		return
+	}
+	if healthy {
+		m.databaseHealth.Set(1)
+	} else {
+		m.databaseHealth.Set(0)
+	}
 }
 
 // Enabled reports whether application and runtime metrics are collected.

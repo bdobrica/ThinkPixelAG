@@ -27,7 +27,8 @@ func TestLoadDefaultsEnvironmentAndFlagPrecedence(t *testing.T) {
 	environment["THINKPIXELAG_LOG_LEVEL"] = "warn"
 	environment["THINKPIXELAG_METRICS_ENABLED"] = "false"
 	environment["THINKPIXELAG_TRACE_SAMPLE_RATIO"] = "0.25"
-	c, err := load([]string{"--http-address=127.0.0.1:9090", "--http-max-body-bytes=4096", "--http-handler-timeout=10s", "--opa-timeout=4s", "--log-level=error", "--metrics-enabled=true", "--trace-sample-ratio=0.5"}, environment)
+	environment["THINKPIXELAG_DATABASE_MIN_CONNECTIONS"] = "2"
+	c, err := load([]string{"--http-address=127.0.0.1:9090", "--http-max-body-bytes=4096", "--http-handler-timeout=10s", "--opa-timeout=4s", "--log-level=error", "--metrics-enabled=true", "--trace-sample-ratio=0.5", "--database-max-connections=24"}, environment)
 	if err != nil {
 		t.Fatalf("load() error = %v", err)
 	}
@@ -52,6 +53,9 @@ func TestLoadDefaultsEnvironmentAndFlagPrecedence(t *testing.T) {
 	if got := c.Database.URL.Value(); !strings.Contains(got, "database-secret") {
 		t.Errorf("database secret was not loaded")
 	}
+	if c.Database.MinConnections != 2 || c.Database.MaxConnections != 24 || c.Database.StatementTimeout != 10*time.Second {
+		t.Errorf("database pool policy was not loaded: %#v", c.Database)
+	}
 }
 
 func TestLoadRejectsUnknownAndMalformedInput(t *testing.T) {
@@ -68,6 +72,7 @@ func TestLoadRejectsUnknownAndMalformedInput(t *testing.T) {
 		{name: "malformed bool", env: map[string]string{"THINKPIXELAG_METRICS_ENABLED": "sometimes"}, wantErr: "must be true or false"},
 		{name: "malformed ratio", env: map[string]string{"THINKPIXELAG_TRACE_SAMPLE_RATIO": "many"}, wantErr: "must be a number"},
 		{name: "malformed bytes", env: map[string]string{"THINKPIXELAG_HTTP_MAX_BODY_BYTES": "many"}, wantErr: "must be an integer"},
+		{name: "malformed connections", env: map[string]string{"THINKPIXELAG_DATABASE_MAX_CONNECTIONS": "many"}, wantErr: "32-bit integer"},
 		{name: "unknown flag", args: []string{"--database-url=secret"}, env: validEnvironment(), wantErr: "flag provided but not defined"},
 		{name: "positional argument", args: []string{"serve"}, env: validEnvironment(), wantErr: "unexpected positional"},
 	}
@@ -80,6 +85,21 @@ func TestLoadRejectsUnknownAndMalformedInput(t *testing.T) {
 				t.Fatalf("load() error = %v, want containing %q", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestValidateRejectsDatabasePoolBounds(t *testing.T) {
+	t.Parallel()
+	c := Defaults()
+	c.Database.URL = NewSecret("postgres://db.example/service")
+	c.Database.MinConnections = 5
+	c.Database.MaxConnections = 4
+	c.Database.StatementTimeout = 0
+	c.OIDC.IssuerURL = "https://id.example/issuer"
+	c.OIDC.Audience = "thinkpixelag"
+	err := c.Validate()
+	if err == nil || !strings.Contains(err.Error(), "database connections") || !strings.Contains(err.Error(), "database statement timeout") {
+		t.Fatalf("Validate() error = %v, want database pool failures", err)
 	}
 }
 

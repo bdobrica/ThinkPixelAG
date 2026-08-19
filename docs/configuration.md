@@ -29,6 +29,13 @@ dependency checks once those adapters exist.
 | `THINKPIXELAG_HTTP_SHUTDOWN_TIMEOUT` | `--http-shutdown-timeout` | `20s` | greater than zero, at most `5m` |
 | `THINKPIXELAG_DATABASE_URL` | none | none | required; `postgres://` or `postgresql://` |
 | `THINKPIXELAG_DATABASE_CONNECT_TIMEOUT` | `--database-connect-timeout` | `5s` | greater than zero, at most `5m` |
+| `THINKPIXELAG_DATABASE_HEALTH_TIMEOUT` | `--database-health-timeout` | `2s` | dependency probe deadline |
+| `THINKPIXELAG_DATABASE_STATEMENT_TIMEOUT` | `--database-statement-timeout` | `10s` | server-enforced statement deadline |
+| `THINKPIXELAG_DATABASE_LOCK_TIMEOUT` | `--database-lock-timeout` | `2s` | server-enforced lock wait deadline |
+| `THINKPIXELAG_DATABASE_MAX_CONNECTION_LIFETIME` | `--database-max-connection-lifetime` | `30m` | greater than zero, at most `24h` |
+| `THINKPIXELAG_DATABASE_MAX_CONNECTION_IDLE_TIME` | `--database-max-connection-idle-time` | `5m` | greater than zero, at most `24h` |
+| `THINKPIXELAG_DATABASE_MIN_CONNECTIONS` | `--database-min-connections` | `1` | from zero through max connections |
+| `THINKPIXELAG_DATABASE_MAX_CONNECTIONS` | `--database-max-connections` | `20` | from one through 1000 |
 | `THINKPIXELAG_LOG_LEVEL` | `--log-level` | `info` | `debug`, `info`, `warn`, or `error` |
 | `THINKPIXELAG_OPA_URL` | `--opa-url` | `http://127.0.0.1:8181` | absolute HTTP(S), no credentials/query/fragment; production requires HTTPS except loopback |
 | `THINKPIXELAG_OPA_DECISION_PATH` | `--opa-decision-path` | `/v1/data/thinkpixelag/decision` | absolute path without query/fragment |

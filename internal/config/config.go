@@ -66,8 +66,15 @@ type HTTPConfig struct {
 }
 
 type DatabaseConfig struct {
-	URL            Secret
-	ConnectTimeout time.Duration
+	URL                   Secret
+	ConnectTimeout        time.Duration
+	HealthTimeout         time.Duration
+	StatementTimeout      time.Duration
+	LockTimeout           time.Duration
+	MaxConnectionLifetime time.Duration
+	MaxConnectionIdleTime time.Duration
+	MinConnections        int32
+	MaxConnections        int32
 }
 
 type LogConfig struct {
@@ -117,8 +124,13 @@ func Defaults() Config {
 			IdleTimeout:       60 * time.Second,
 			ShutdownTimeout:   20 * time.Second,
 		},
-		Database: DatabaseConfig{ConnectTimeout: 5 * time.Second},
-		Log:      LogConfig{Level: "info"},
+		Database: DatabaseConfig{
+			ConnectTimeout: 5 * time.Second, HealthTimeout: 2 * time.Second,
+			StatementTimeout: 10 * time.Second, LockTimeout: 2 * time.Second,
+			MaxConnectionLifetime: 30 * time.Minute, MaxConnectionIdleTime: 5 * time.Minute,
+			MinConnections: 1, MaxConnections: 20,
+		},
+		Log: LogConfig{Level: "info"},
 		OPA: OPAConfig{
 			URL:          "http://127.0.0.1:8181",
 			DecisionPath: "/v1/data/thinkpixelag/decision",
@@ -141,8 +153,15 @@ type safeConfig struct {
 	Environment Environment `json:"environment"`
 	HTTP        HTTPConfig  `json:"http"`
 	Database    struct {
-		URLConfigured  bool          `json:"url_configured"`
-		ConnectTimeout time.Duration `json:"connect_timeout"`
+		URLConfigured         bool          `json:"url_configured"`
+		ConnectTimeout        time.Duration `json:"connect_timeout"`
+		HealthTimeout         time.Duration `json:"health_timeout"`
+		StatementTimeout      time.Duration `json:"statement_timeout"`
+		LockTimeout           time.Duration `json:"lock_timeout"`
+		MaxConnectionLifetime time.Duration `json:"max_connection_lifetime"`
+		MaxConnectionIdleTime time.Duration `json:"max_connection_idle_time"`
+		MinConnections        int32         `json:"min_connections"`
+		MaxConnections        int32         `json:"max_connections"`
 	} `json:"database"`
 	Log LogConfig `json:"log"`
 	OPA struct {
@@ -165,6 +184,13 @@ func (c Config) safe() safeConfig {
 	out.HTTP = c.HTTP
 	out.Database.URLConfigured = c.Database.URL.IsSet()
 	out.Database.ConnectTimeout = c.Database.ConnectTimeout
+	out.Database.HealthTimeout = c.Database.HealthTimeout
+	out.Database.StatementTimeout = c.Database.StatementTimeout
+	out.Database.LockTimeout = c.Database.LockTimeout
+	out.Database.MaxConnectionLifetime = c.Database.MaxConnectionLifetime
+	out.Database.MaxConnectionIdleTime = c.Database.MaxConnectionIdleTime
+	out.Database.MinConnections = c.Database.MinConnections
+	out.Database.MaxConnections = c.Database.MaxConnections
 	out.Log = c.Log
 	out.OPA.URL = c.OPA.URL
 	out.OPA.DecisionPath = c.OPA.DecisionPath

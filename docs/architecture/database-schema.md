@@ -15,8 +15,19 @@ for filtered consumption.
 
 Repository queries must still supply an explicit tenant predicate. Database
 roles and the row-level-security decision are intentionally deferred to
-DATA-007 and DATA-012; composite keys are an additional integrity boundary, not
+DATA-008 and DATA-012; composite keys are an additional integrity boundary, not
 a substitute for authorization.
+
+Runtime connections use a bounded pgx pool with configurable minimum/maximum
+connections, lifetime, idle time, and connect deadline. PostgreSQL enforces
+`statement_timeout` and `lock_timeout` on every pooled session. Dependency
+readiness uses its own short deadline and fails closed, while liveness remains
+independent of a database outage. Query telemetry records only bounded operation
+and outcome categories; SQL text, parameters, tenant IDs, and resource IDs are
+excluded from metrics and spans. Driver errors are classified into stable
+constraint, conflict, cancellation, timeout, and availability categories, with
+retry advice limited to transient serialization, deadlock, lock, and connection
+failures.
 
 ## Registry and policy
 
