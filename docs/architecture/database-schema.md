@@ -15,8 +15,20 @@ for filtered consumption.
 
 Repository queries must still supply an explicit tenant predicate. Database
 roles and the row-level-security decision are intentionally deferred to
-DATA-008 and DATA-012; composite keys are an additional integrity boundary, not
-a substitute for authorization.
+deployment hardening and DATA-012; composite keys are an additional integrity
+boundary, not a substitute for authorization.
+
+The Phase 2 repository substrate binds a validated UUIDv7 tenant before any
+lookup and exposes only a closed allowlist of tenant-addressable record kinds.
+Every identity query uses `tenant_id` as its first predicate and maps both a
+missing identifier and another tenant's identifier to the same not-found
+result. Table names cannot be supplied by callers. Aggregate child rows with
+composite keys are reached through their tenant-owned parent aggregate rather
+than exposed as independent identifiers. The repository set can be rebound to
+the restricted `DBTX` passed to a transaction callback, without exposing commit
+or rollback authority. Typed aggregate projections and mutations are added in
+their owning lifecycle phases; this substrate prevents those adapters from
+falling back to unscoped identity lookups.
 
 Runtime connections use a bounded pgx pool with configurable minimum/maximum
 connections, lifetime, idle time, and connect deadline. PostgreSQL enforces
