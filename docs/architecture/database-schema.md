@@ -13,10 +13,22 @@ indexes begin with `tenant_id`. Globally ordered streams (`revocation_log` and
 `audit_events`) use database identity sequences and add tenant/sequence indexes
 for filtered consumption.
 
-Repository queries must still supply an explicit tenant predicate. Database
-roles and the row-level-security decision are intentionally deferred to
-deployment hardening and DATA-012; composite keys are an additional integrity
-boundary, not a substitute for authorization.
+Repository queries must still supply an explicit tenant predicate. ADR-0002
+records the DATA-012 evaluation: the RC deliberately uses repository enforcement
+instead of PostgreSQL row-level security. The current pooled, partly
+non-transactional repository contract cannot safely bind `SET LOCAL` tenant
+context on every operation; ordinary policies would also be bypassed by the
+current table-owning development role, while global workers require deliberate
+cross-tenant access. Enabling RLS in that shape would create false assurance.
+
+RLS remains a future defense-in-depth option only with separate non-owner
+tenant-runtime, global-worker, and migration roles; transaction-scoped trusted
+tenant context; complete policies (including nullable global records); owner
+bypass protection; and adversarial pool-reuse and worker tests. Until those
+conditions are implemented together, explicit tenant-first parameterized SQL,
+closed repository entry points, enumeration-safe errors, tenant-leading indexes,
+and real-PostgreSQL isolation tests are the enforced boundary. Composite keys
+are an additional integrity boundary, not a substitute for authorization.
 
 The Phase 2 repository substrate binds a validated UUIDv7 tenant before any
 lookup and exposes only a closed allowlist of tenant-addressable record kinds.

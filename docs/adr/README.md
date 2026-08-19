@@ -12,4 +12,5 @@ ADRs record consequential decisions that should remain understandable after the 
 
 ## Index
 
-No decisions have been accepted yet. Phase 0 contracts are provisional until implementation evidence makes the choices durable.
+- [ADR-0001: PostgreSQL access and migrations](0001-postgresql-access-and-migrations.md)
+- [ADR-0002: Repository-enforced tenant isolation for the RC](0002-repository-enforced-tenant-isolation.md)
