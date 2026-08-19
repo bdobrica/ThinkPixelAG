@@ -91,8 +91,19 @@ that scope to a normalized SHA-256 request hash. Completion constraints require
 a response status and timestamp. Audit events form globally ordered,
 tenant-filterable evidence with hash-link fields. Outbox messages contain the
 availability, claim owner/token/expiry, attempt, publication, and dead-letter
-state needed for replay-safe bounded delivery. DATA-009 and DATA-010 implement
-the corresponding concurrency protocols.
+state needed for replay-safe bounded delivery.
+
+The idempotency repository acquires a scoped key with one atomic PostgreSQL
+upsert. Exactly one concurrent caller receives an opaque owner token; other
+same-hash callers observe an in-progress result, while a different hash receives
+the enumeration-safe idempotency conflict. Completion is fenced by tenant,
+record ID, owner token, and `IN_PROGRESS` state and stores status, headers, and
+body for byte-stable replay. A failed operation or expired lease can be
+reacquired only with the same hash and a fresh owner token, so a stale worker
+cannot complete after takeover. Once the record TTL expires, the scope may be
+atomically replaced, including by a new request hash. Transport adapters remain
+responsible for producing canonical normalized request bytes before applying
+SHA-256. DATA-010 implements the audit/outbox concurrency protocol.
 
 ## Migration and compatibility rules
 
