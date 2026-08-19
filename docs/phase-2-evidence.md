@@ -2,7 +2,7 @@
 
 Phase 2 exited on 2026-08-19 after real-PostgreSQL qualification of the
 authoritative schema and persistence adapters. The audited implementation tree
-is commit `DATA013_COMMIT`; the follow-up ledger-only commit records its short
+is commit `b79ca07`; the follow-up ledger-only commit records its short
 SHA without changing the qualified implementation.
 
 ## Verification environment
