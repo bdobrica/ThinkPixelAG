@@ -125,6 +125,17 @@ operator inspection/replay rather than blocking later messages.
 
 The files are contiguous Tern migrations and include reverse SQL for local
 development and pre-release rehearsal. Once shared or released, a migration is
-immutable: production correction is a new forward migration. API replicas never
-apply schema changes; an explicit migration job advances the version table
-before replicas that require the new schema become ready.
+immutable: `migrations/checksums.sha256` verifies every released migration
+before database work begins, and production correction is a new forward
+migration. API replicas never apply schema changes; an explicit migration job
+advances the version table before replicas that require the new schema become
+ready.
+
+Schema evolution follows expand/migrate/contract compatibility. An expansion
+must preserve existing rows and the prior application's reads and writes;
+destructive renames, removals, incompatible type changes, and newly mandatory
+fields wait for a later contract release after old replicas have drained.
+Migration qualification creates isolated databases and proves a full empty
+install, a data-preserving upgrade from the preceding fixture, representative
+check/unique/foreign-key constraints, critical tenant and outbox access paths,
+and transactional forward recovery after a deliberately failed migration.

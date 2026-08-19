@@ -9,7 +9,19 @@ migration is intentionally forward-only.
 Migrations are applied by an explicit migration job through the wrapper in
 `internal/adapters/postgres`; API replicas never migrate on startup. Out-of-order
 application is disabled. Once a migration has been shared or released it is
-immutable, and schema corrections are made with a new forward migration.
+immutable, and schema corrections are made with a new forward migration. The
+`checksums.sha256` manifest makes that compatibility rule executable: every SQL
+migration must be listed, and changing a released migration fails before any
+database transaction begins. A new migration and its checksum are reviewed as
+one change.
+
+Each migration must be safe to apply to the immediately preceding released
+schema while preserving existing rows and old application reads/writes during
+the supported expand/migrate/contract window. Destructive renames, column or
+table removal, incompatible type changes, and newly mandatory fields require a
+later contract migration after the compatibility window. Failed migrations are
+transactional: operators correct the failure with a new artifact or forward
+migration and rerun the explicit job; they do not edit a released migration.
 
 The initial schema is split along durable consistency boundaries:
 

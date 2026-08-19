@@ -17,6 +17,22 @@ func TestProjectMigrationSourcesAreValid(t *testing.T) {
 	}
 }
 
+func TestReleasedMigrationChecksumsArePresent(t *testing.T) {
+	t.Parallel()
+	contents, err := os.ReadFile(filepath.Join(projectMigrationsDir(t), migrationChecksumManifest))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, migration := range []string{
+		"001_create_registry_and_policy.sql", "002_create_runs.sql", "003_create_resources.sql",
+		"004_create_revocations.sql", "005_create_delivery_primitives.sql",
+	} {
+		if !strings.Contains(string(contents), migration) {
+			t.Errorf("checksum manifest does not cover %s", migration)
+		}
+	}
+}
+
 func TestPhaseTwoSchemaContracts(t *testing.T) {
 	t.Parallel()
 

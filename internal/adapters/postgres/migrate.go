@@ -1,7 +1,10 @@
 package postgres
 
 import (
+	"bufio"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -13,6 +16,7 @@ import (
 )
 
 const migrationTable = "public.thinkpixelag_schema_version"
+const migrationChecksumManifest = "checksums.sha256"
 
 // Migrator is the narrow, forward-only schema migration surface used by the
 // explicit migration command and migration tests.
@@ -69,6 +73,64 @@ func validateMigrationSources(sources fs.FS) error {
 		if _, ok := valid[entry.Name()]; !ok {
 			return fmt.Errorf("invalid migration filename %q", entry.Name())
 		}
+	}
+	if _, err := fs.Stat(sources, migrationChecksumManifest); err == nil {
+		if err := validateMigrationChecksums(sources, valid); err != nil {
+			return err
+		}
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	return nil
+}
+
+func validateMigrationChecksums(sources fs.FS, migrations map[string]struct{}) error {
+	manifest, err := sources.Open(migrationChecksumManifest)
+	if err != nil {
+		return err
+	}
+	defer manifest.Close()
+
+	remaining := make(map[string]struct{}, len(migrations))
+	for name := range migrations {
+		remaining[name] = struct{}{}
+	}
+	scanner := bufio.NewScanner(manifest)
+	line := 0
+	for scanner.Scan() {
+		line++
+		fields := strings.Fields(scanner.Text())
+		if len(fields) == 0 || strings.HasPrefix(fields[0], "#") {
+			continue
+		}
+		if len(fields) != 2 {
+			return fmt.Errorf("invalid migration checksum manifest line %d", line)
+		}
+		digest, name := fields[0], strings.TrimPrefix(fields[1], "*")
+		if len(digest) != sha256.Size*2 {
+			return fmt.Errorf("invalid checksum for migration %q", name)
+		}
+		if _, err := hex.DecodeString(digest); err != nil {
+			return fmt.Errorf("invalid checksum for migration %q", name)
+		}
+		if _, ok := remaining[name]; !ok {
+			return fmt.Errorf("checksum manifest contains unknown or duplicate migration %q", name)
+		}
+		contents, err := fs.ReadFile(sources, name)
+		if err != nil {
+			return err
+		}
+		actual := fmt.Sprintf("%x", sha256.Sum256(contents))
+		if !strings.EqualFold(actual, digest) {
+			return fmt.Errorf("released migration %q checksum mismatch", name)
+		}
+		delete(remaining, name)
+	}
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	if len(remaining) != 0 {
+		return errors.New("migration checksum manifest does not cover every migration")
 	}
 	return nil
 }

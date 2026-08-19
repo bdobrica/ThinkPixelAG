@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"testing/fstest"
 )
@@ -53,5 +54,21 @@ func TestMigrationSourcesAcceptContiguousSequence(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("validateMigrationSources returned %v", err)
+	}
+}
+
+func TestMigrationChecksumCompatibility(t *testing.T) {
+	t.Parallel()
+
+	valid := fstest.MapFS{
+		"001_first.sql":    {Data: []byte("SELECT 1;")},
+		"checksums.sha256": {Data: []byte("17db4fd369edb9244b9f91d9aeed145c3d04ad8ba6e95d06247f07a63527d11a  001_first.sql\n")},
+	}
+	if err := validateMigrationSources(valid); err != nil {
+		t.Fatalf("valid checksum manifest rejected: %v", err)
+	}
+	valid["001_first.sql"] = &fstest.MapFile{Data: []byte("SELECT 2;")}
+	if err := validateMigrationSources(valid); err == nil || !strings.Contains(err.Error(), "checksum mismatch") {
+		t.Fatalf("changed released migration error = %v", err)
 	}
 }
