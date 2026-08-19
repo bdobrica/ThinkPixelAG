@@ -6,8 +6,8 @@ The project implements the governance-plane concepts in the Enterprise Execution
 
 ## Status
 
-The engineering foundation is complete and the next implementation phase is
-authoritative PostgreSQL persistence. Phase 0 contracts and Phase 1 build,
+The engineering foundation is complete and authoritative PostgreSQL persistence
+is in progress. Phase 0 contracts and Phase 1 build,
 verification, CI, local-dependency, observability, HTTP-runtime, and hardened
 image foundations have passed their exit gates. [PLAN.md](PLAN.md) defines the
 target architecture and delivery phases; [TODO.md](TODO.md) is the ordered,

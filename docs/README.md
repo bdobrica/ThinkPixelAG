@@ -5,6 +5,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 ## Architecture and contracts
 
 - [System architecture](architecture/system.md)
+- [Authoritative PostgreSQL schema](architecture/database-schema.md)
 - [Domain contracts and state machines](contracts/domain-model.md)
 - [Resource accounting](contracts/resource-accounting.md)
 - [Domain primitive contracts](contracts/primitives.md)
