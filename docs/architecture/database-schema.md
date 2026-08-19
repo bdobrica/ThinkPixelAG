@@ -103,7 +103,23 @@ reacquired only with the same hash and a fresh owner token, so a stale worker
 cannot complete after takeover. Once the record TTL expires, the scope may be
 atomically replaced, including by a new request hash. Transport adapters remain
 responsible for producing canonical normalized request bytes before applying
-SHA-256. DATA-010 implements the audit/outbox concurrency protocol.
+SHA-256.
+
+Domain mutations that require evidence use one callback-owned PostgreSQL
+transaction to write the mutation, immutable audit event, and outbox envelope;
+any failure rolls back all three. Audit hashes are derived deterministically
+from the exact validated event representation, and optional previous hashes
+support tamper-evident linking without making application logs authoritative.
+
+Publishers claim a bounded, availability-ordered batch with `FOR UPDATE SKIP
+LOCKED`, increment the attempt count, and issue a fresh UUIDv7 claim token under
+a finite lease. Sink delivery is at least once and the outbox message UUID is
+the receiver's deduplication key. Publication, retry, and dead-letter updates
+compare both message ID and claim token so an expired claimant cannot overwrite
+a takeover. Transient failures use capped exponential retry with bounded
+jitter; permanent failures and exhausted attempts become poison messages with
+a controlled error code and dead-letter timestamp. They remain stored for
+operator inspection/replay rather than blocking later messages.
 
 ## Migration and compatibility rules
 
