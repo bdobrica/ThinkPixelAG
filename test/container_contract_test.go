@@ -14,7 +14,7 @@ func TestDockerfileIsPinnedMinimalAndNonRoot(t *testing.T) {
 	}
 	dockerfile := string(data)
 	for _, required := range []string{
-		"golang:1.26.5-alpine3.23@sha256:",
+		"golang:1.26.6-alpine3.23@sha256:",
 		"gcr.io/distroless/static-debian13:nonroot@sha256:",
 		"CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH",
 		"-trimpath -buildvcs=false",

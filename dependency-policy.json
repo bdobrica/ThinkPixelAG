@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "allowed_module_prefixes": [
+    "dario.cat/",
     "cel.dev/",
     "cloud.google.com/",
     "github.com/",
@@ -13,6 +14,22 @@
     "gopkg.in/"
   ],
   "module_exceptions": [
+    {
+      "path": "github.com/jackc/pgservicefile",
+      "version": "v0.0.0-20240606120523-5a60cdf6a761",
+      "owner": "maintainers",
+      "reason": "pgx v5 selects this exact upstream service-file parser revision and no tagged release exists",
+      "approval": "DATA-001",
+      "expires_on": "2027-02-19"
+    },
+    {
+      "path": "github.com/vaughan0/go-ini",
+      "version": "v0.0.0-20130923145212-a98ad7ee00ec",
+      "owner": "maintainers",
+      "reason": "Tern v2 selects this exact upstream configuration parser revision and no tagged release exists",
+      "approval": "DATA-001",
+      "expires_on": "2027-02-19"
+    },
     {
       "path": "github.com/alecthomas/units",
       "version": "v0.0.0-20240927000941-0f3dac36c52b",

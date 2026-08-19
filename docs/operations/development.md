@@ -52,7 +52,7 @@ protection to require all eight named CI jobs.
 
 ## Container image
 
-The multi-stage `Dockerfile` pins the Go 1.26.5 Alpine builder and the distroless
+The multi-stage `Dockerfile` pins the Go 1.26.6 Alpine builder and the distroless
 Debian 13 `nonroot` runtime by multi-platform index digest. It cross-compiles a
 static binary with the same reproducibility and build-metadata flags as
 `make build`. The final image contains the binary, CA roots, time-zone data, and

@@ -6,7 +6,7 @@ production-platform qualification. Phase 1 must replace each remaining
 
 | Component | RC support baseline | Pinning rule | Support policy |
 |---|---|---|---|
-| Go | 1.26.5; builder `golang:1.26.5-alpine3.23` | `go.mod`, toolchain directive, builder image index `sha256:622e56dbc11a8cfe87cafa2331e9a201877271cbff918af53d3be315f3da88cc`, CI | latest two Go minor releases only after tests pass; patch updates preferred |
+| Go | 1.26.6; builder `golang:1.26.6-alpine3.23` | `go.mod`, toolchain directive, builder image index `sha256:e57c41c1d5864341031181b0db34b9a537bb5773eb6428e4e5bdaea0f9135406`, CI | latest two Go minor releases only after tests pass; patch updates preferred |
 | PostgreSQL | 18.4 (`postgres:18.4-alpine3.23`), locally tested on `linux/amd64` | Compose image index digest `sha256:996d0920e4ff9df1fc19dacb904492f3c1ec0ec1cc338f0ad7123be7731c5f5e` | no EOL major; upgrade one major at a time with restore/migration rehearsal |
 | OPA | 1.19.0 (`openpolicyagent/opa:1.19.0-debug`), locally tested on `linux/amd64` | Compose image index digest `sha256:ec3c7a29a21ce96d71231cb4befa2561205fe84e5a2dc3cc46ac7bc8bd21b3a4` | policy bundle/decision contract versioned independently; patch/minor after conformance tests |
 | Valkey | optional; 9.1.1 (`valkey/valkey:9.1.1-alpine3.24`), locally tested on `linux/amd64` | Compose image index digest `sha256:ee91f7a174ac4d6a6b0685b3a60e321f0a9dbbb691f9b0e285be2ba1d1be8328` | cache is disposable; no correctness migration dependency; support one tested major |
@@ -43,8 +43,10 @@ policy as runtime dependencies.
 
 Every supported-matrix change records the old/new version, upstream notes reviewed, migration/rollback implications, exact verification commands, and artifact digests in the implementing commit or ADR.
 
-Go 1.26.5 was selected on 2026-08-10 as the latest stable patch listed by the
-official Go release history. The module/package checks and pinned builder passed
+Go 1.26.6 superseded the Phase 1 Go 1.26.5 pin on 2026-08-19 after the
+vulnerability gate identified reachable standard-library advisories fixed in
+1.26.6. Go 1.26.5 was originally selected on 2026-08-10 as the latest stable
+patch listed by the official Go release history. The module/package checks and pinned builder passed
 on `linux/amd64`; the distroless runtime passed non-root, read-only, health, build
 metadata, and graceful-shutdown smoke tests. Cross-platform publication and
 `linux/arm64` runtime qualification remain Phase 8 work.

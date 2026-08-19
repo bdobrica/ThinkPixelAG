@@ -37,7 +37,7 @@ Status notation: `[ ]` pending, `[x]` implemented and verified. Add completion m
 
 ## Phase 2 — PostgreSQL, transactions, and delivery primitives
 
-- [ ] DATA-001 Select and wrap the PostgreSQL driver, migration tool, query approach, and transaction abstraction; record the consequential decision.
+- [x] DATA-001 Select and wrap the PostgreSQL driver, migration tool, query approach, and transaction abstraction; record the consequential decision. — completed 2026-08-19, commit pending, evidence: PostgreSQL adapter unit/race tests; dependency/source/license/vulnerability gates; `make verify`; `docs/adr/0001-postgresql-access-and-migrations.md`
 - [ ] DATA-002 Create initial migrations for tenants/principals, agents/versions/capabilities/approvals, policies/activations, and their integrity constraints/indexes.
 - [ ] DATA-003 Add migrations for runs, run version snapshots, state versions, signals, and append-only ordered run events.
 - [ ] DATA-004 Add migrations for resource dimensions, envelopes, balances, reservations, trusted usage ledger, settlements, and uniqueness/check constraints.
@@ -179,7 +179,9 @@ Append one entry per completed atomic item or tightly coupled group. Do not dele
 | 2026-08-10 | ENG-010 | `47f8519` | CI contract tests; formatting/generation/lint, unit/race/policy/integration, dependency/vulnerability/license, binary and image jobs; `make verify` | Third-party actions use full commit SHAs; ENG-011 subsequently activated the image job as a mandatory build and runtime-smoke gate |
 | 2026-08-10 | ENG-011 | `5869296` | Docker contract tests; pinned multi-stage build; OCI metadata; non-root/read-only/probe/SIGTERM runtime smoke; `make verify` | Distroless runtime intentionally has no shell; Go builder and runtime indexes support both required `linux/amd64` and target `linux/arm64`; multi-architecture publishing remains OPS-001 |
 | 2026-08-10 | ENG-012 | `5765834` | fresh isolated clone at `147cbf4`; clean before/after `make verify`; image ID/size/metadata; shell-free UID 65532 read-only/probe/SIGTERM smoke | Phase 1 qualified on `linux/amd64`; hosted CI awaits push; `linux/arm64` qualification remains OPS-001 |
+| 2026-08-19 | DATA-001 | pending | pgx/Tern adapter unit and race tests; dependency/source/license/vulnerability gates; `make verify`; hardened container smoke | Selected pgx v5.10.0, Tern v2.4.1, handwritten SQL, and callback-owned transactions; advanced Go/build pin to 1.26.6 after the gate found fixed standard-library vulnerabilities |
 
 ## Active blockers and deviations
 
 - ENG-005 inherits eight exact pseudo-version dependencies from the pinned Prometheus/OpenTelemetry graph. Exceptions are version-bound in `dependency-policy.json`, expire 2027-02-10, and must be removed or renewed through review before that date.
+- DATA-001 adds exact pseudo-version dependencies for pgx's `pgservicefile` and Tern's `go-ini`. Exceptions are version-bound in `dependency-policy.json`, expire 2027-02-19, and must be removed or renewed through review before that date.
