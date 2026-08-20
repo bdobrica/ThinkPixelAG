@@ -51,6 +51,7 @@ func (c Config) Validate() error {
 		"trace export timeout":       c.Telemetry.TraceExportTimeout,
 		"trace batch timeout":        c.Telemetry.TraceBatchTimeout,
 		"valkey timeout":             c.Valkey.Timeout,
+		"oidc discovery timeout":     c.OIDC.DiscoveryTimeout,
 	} {
 		if value <= 0 || value > maxTimeout {
 			problems = append(problems, fmt.Sprintf("%s must be greater than zero and at most %s", name, maxTimeout))
@@ -117,11 +118,64 @@ func (c Config) Validate() error {
 	if err := validateHTTPURL(c.OIDC.IssuerURL, true); err != nil {
 		problems = append(problems, "OIDC issuer URL: "+err.Error())
 	}
+	if c.OIDC.JWKSMinTTL <= 0 || c.OIDC.JWKSMaxTTL < c.OIDC.JWKSMinTTL || c.OIDC.JWKSStaleTTL < c.OIDC.JWKSMaxTTL {
+		problems = append(problems, "OIDC JWKS TTLs must satisfy 0 < min <= max <= stale")
+	}
+	if c.OIDC.ClockSkew < 0 || c.OIDC.ClockSkew > 5*time.Minute || c.OIDC.MaxTokenAge <= 0 || c.OIDC.MaxTokenAge > 7*24*time.Hour {
+		problems = append(problems, "OIDC time bounds require clock skew from 0 through 5m and max token age from 1ns through 168h")
+	}
+	if !validOIDCAlgorithms(c.OIDC.Algorithms) {
+		problems = append(problems, "OIDC algorithms must be a unique comma-separated subset of RS256,ES256")
+	}
+	if !validClaimName(c.OIDC.TenantClaim) || !validClaimName(c.OIDC.RolesClaim) || c.OIDC.TenantClaim == c.OIDC.RolesClaim {
+		problems = append(problems, "OIDC tenant and roles claims must be distinct safe claim names")
+	}
+	if !validRoleMappings(c.OIDC.RoleMappings) {
+		problems = append(problems, "OIDC role mappings must be unique comma-separated external=internal pairs")
+	}
 
 	if len(problems) != 0 {
 		return newValidationError(problems)
 	}
 	return nil
+}
+
+func validOIDCAlgorithms(value string) bool {
+	seen := map[string]bool{}
+	for _, item := range strings.Split(value, ",") {
+		if (item != "RS256" && item != "ES256") || seen[item] {
+			return false
+		}
+		seen[item] = true
+	}
+	return len(seen) > 0
+}
+
+func validClaimName(value string) bool {
+	if value == "" || len(value) > 64 {
+		return false
+	}
+	for _, r := range value {
+		if !(r == '_' || r == '-' || r == '.' || unicode.IsLetter(r) || unicode.IsDigit(r)) {
+			return false
+		}
+	}
+	return true
+}
+
+func validRoleMappings(value string) bool {
+	if value == "" {
+		return true
+	}
+	seen := map[string]bool{}
+	for _, pair := range strings.Split(value, ",") {
+		left, right, ok := strings.Cut(pair, "=")
+		if !ok || !validClaimName(left) || !validClaimName(right) || seen[left] {
+			return false
+		}
+		seen[left] = true
+	}
+	return true
 }
 
 func validateAddress(address string) error {

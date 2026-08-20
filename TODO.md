@@ -53,9 +53,9 @@ Status notation: `[ ]` pending, `[x]` implemented and verified. Add completion m
 
 ## Phase 3 — Identity, OPA policy, and agent registry
 
-- [ ] AUTH-001 Implement OIDC issuer discovery/JWKS retrieval with pinned issuers/audiences/algorithms, cache bounds, rotation, time validation, and outage behavior.
-- [ ] AUTH-002 Implement bearer-token middleware and verified principal/tenant/role mapping; reject conflicting body/header tenant hints.
-- [ ] AUTH-003 Add authentication tests for bad signature, issuer, audience, algorithm, expiry/not-before, key rotation, missing tenant, and forged forwarding headers.
+- [x] AUTH-001 Implement OIDC issuer discovery/JWKS retrieval with pinned issuers/audiences/algorithms, cache bounds, rotation, time validation, and outage behavior. — completed 2026-08-20, commit `<pending>`, evidence: OIDC adapter configuration/unit/race tests; same-origin discovery, bounded JWKS cache/rotation/outage tests; `make verify`
+- [x] AUTH-002 Implement bearer-token middleware and verified principal/tenant/role mapping; reject conflicting body/header tenant hints. — completed 2026-08-20, commit `<pending>`, evidence: bearer middleware/context mapping tests; configured role allowlist; forged header and tenant-body-hint rejection; `make verify`
+- [x] AUTH-003 Add authentication tests for bad signature, issuer, audience, algorithm, expiry/not-before, key rotation, missing tenant, and forged forwarding headers. — completed 2026-08-20, commit `<pending>`, evidence: adversarial OIDC and HTTP authentication race suite; `make verify`
 - [ ] POL-001 Implement the typed OPA client/embedded boundary with deadlines, response schema validation, reason codes, decision metadata, and fail-closed errors.
 - [ ] POL-002 Implement policy bundle digest/signature verification interfaces, validation/compile testing, persistence, activation, rollback-as-new-activation, and local freshness.
 - [ ] POL-003 Write baseline Rego for agent discovery/invocation, tenant isolation, admin actions, risk/staleness classes, constraint narrowing, and privileged operations.
@@ -188,6 +188,7 @@ Append one entry per completed atomic item or tightly coupled group. Do not dele
 | 2026-08-19 | DATA-011 | `981c856` | immutable migration checksum manifest; PostgreSQL 18.4 empty install, seeded prior-version upgrade, check/unique/foreign-key constraints, tenant/outbox index plans, transactional failure rollback and forward recovery; `make verify` | Compatibility follows expand/migrate/contract; released migrations are checksum-locked and corrections use new forward migrations |
 | 2026-08-19 | DATA-012 | `73588b6` | ADR-0002 threat/role/pooling evaluation; tenant repository unit/race tests; PostgreSQL 18.4 cross-tenant isolation; `make verify` | RC retains explicit repository enforcement because current pooled non-transactional access, owner-role bypass, and global workers make partial RLS ineffective; reevaluation criteria require separated roles and transaction-bound tenant context |
 | 2026-08-19 | DATA-013 | `b79ca07` | PostgreSQL 18.4 adapter race/concurrency suite; mandatory real-database integration target and CI service; full `make verify`; `docs/phase-2-evidence.md` | Phase 2 exit gate passed with no required PostgreSQL skips; integration now fails when its real database is unavailable |
+| 2026-08-20 | AUTH-001–AUTH-003 | `<pending>` | OIDC discovery/JWKS, JWT validation, rotation/outage, claim mapping, bearer middleware, and adversarial race tests; `make verify` | One pinned issuer/audience per process; same-origin JWKS; RS256 default with optional ES256; known keys survive outages only within the configured stale bound; forwarded/body tenant hints fail closed |
 
 ## Active blockers and deviations
 

@@ -52,6 +52,16 @@ dependency checks once those adapters exist.
 | `THINKPIXELAG_VALKEY_TIMEOUT` | `--valkey-timeout` | `500ms` | greater than zero, at most `5m` |
 | `THINKPIXELAG_OIDC_ISSUER_URL` | `--oidc-issuer-url` | none | required absolute HTTP(S), no credentials/query/fragment; HTTPS except loopback |
 | `THINKPIXELAG_OIDC_AUDIENCE` | `--oidc-audience` | none | required, no surrounding whitespace or control characters |
+| `THINKPIXELAG_OIDC_ALGORITHMS` | `--oidc-algorithms` | `RS256` | unique subset of `RS256,ES256`; never inferred from a token |
+| `THINKPIXELAG_OIDC_TENANT_CLAIM` | `--oidc-tenant-claim` | `tenant_id` | safe authoritative tenant claim name |
+| `THINKPIXELAG_OIDC_ROLES_CLAIM` | `--oidc-roles-claim` | `roles` | safe claim name distinct from tenant claim |
+| `THINKPIXELAG_OIDC_ROLE_MAPPINGS` | `--oidc-role-mappings` | empty | comma-separated `external=internal`; unmapped roles are discarded |
+| `THINKPIXELAG_OIDC_DISCOVERY_TIMEOUT` | `--oidc-discovery-timeout` | `5s` | discovery/JWKS deadline; greater than zero, at most `5m` |
+| `THINKPIXELAG_OIDC_JWKS_MIN_TTL` | `--oidc-jwks-min-ttl` | `1m` | lower bound for provider cache advice |
+| `THINKPIXELAG_OIDC_JWKS_MAX_TTL` | `--oidc-jwks-max-ttl` | `1h` | upper bound for provider cache advice |
+| `THINKPIXELAG_OIDC_JWKS_STALE_TTL` | `--oidc-jwks-stale-ttl` | `6h` | final known-key outage bound |
+| `THINKPIXELAG_OIDC_CLOCK_SKEW` | `--oidc-clock-skew` | `30s` | zero through `5m` |
+| `THINKPIXELAG_OIDC_MAX_TOKEN_AGE` | `--oidc-max-token-age` | `24h` | maximum `exp-iat`, at most seven days |
 
 Durations use Go syntax such as `500ms`, `5s`, or `2m`.
 
@@ -88,3 +98,9 @@ only. Start them with `make dev-up` or `make dev-up-valkey`. If `.env` overrides
 a published port, update the corresponding URL. Production identity, database,
 OPA, and optional Valkey configuration must use managed secret delivery and
 encrypted transport as described above.
+
+OIDC discovery is limited to the configured issuer and its `jwks_uri` must use
+the same scheme and authority. HTTPS is mandatory except for numeric loopback
+development endpoints. Protected handlers accept only an Authorization bearer
+token; tenant/principal/role forwarding headers and request tenant fields are
+rejected. See [authentication and tenant mapping](security/authentication.md).

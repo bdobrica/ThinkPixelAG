@@ -104,8 +104,18 @@ type ValkeyConfig struct {
 }
 
 type OIDCConfig struct {
-	IssuerURL string
-	Audience  string
+	IssuerURL        string
+	Audience         string
+	Algorithms       string
+	TenantClaim      string
+	RolesClaim       string
+	RoleMappings     string
+	DiscoveryTimeout time.Duration
+	JWKSMinTTL       time.Duration
+	JWKSMaxTTL       time.Duration
+	JWKSStaleTTL     time.Duration
+	ClockSkew        time.Duration
+	MaxTokenAge      time.Duration
 }
 
 // Defaults returns safe, non-secret defaults. Required trust and persistence
@@ -146,6 +156,12 @@ func Defaults() Config {
 			TraceBatchTimeout:  5 * time.Second,
 		},
 		Valkey: ValkeyConfig{Timeout: 500 * time.Millisecond},
+		OIDC: OIDCConfig{
+			Algorithms: "RS256", TenantClaim: "tenant_id", RolesClaim: "roles",
+			DiscoveryTimeout: 5 * time.Second, JWKSMinTTL: time.Minute,
+			JWKSMaxTTL: time.Hour, JWKSStaleTTL: 6 * time.Hour,
+			ClockSkew: 30 * time.Second, MaxTokenAge: 24 * time.Hour,
+		},
 	}
 }
 

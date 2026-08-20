@@ -58,6 +58,42 @@ func TestLoadDefaultsEnvironmentAndFlagPrecedence(t *testing.T) {
 	}
 }
 
+func TestLoadOIDCTrustBounds(t *testing.T) {
+	t.Parallel()
+	environment := validEnvironment()
+	environment["THINKPIXELAG_OIDC_ALGORITHMS"] = "RS256,ES256"
+	environment["THINKPIXELAG_OIDC_ROLE_MAPPINGS"] = "admins=governance-admin,users=agent-invoker"
+	environment["THINKPIXELAG_OIDC_JWKS_MAX_TTL"] = "30m"
+	c, err := load([]string{"--oidc-clock-skew=15s", "--oidc-tenant-claim=organization_id"}, environment)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.OIDC.Algorithms != "RS256,ES256" || c.OIDC.JWKSMaxTTL != 30*time.Minute || c.OIDC.ClockSkew != 15*time.Second || c.OIDC.TenantClaim != "organization_id" {
+		t.Fatalf("OIDC config = %#v", c.OIDC)
+	}
+}
+
+func TestValidateRejectsUnsafeOIDCTrustConfiguration(t *testing.T) {
+	t.Parallel()
+	c := Defaults()
+	c.Database.URL = NewSecret("postgres://db.example/service")
+	c.OIDC.IssuerURL = "https://id.example"
+	c.OIDC.Audience = "api"
+	c.OIDC.Algorithms = "RS256,none"
+	c.OIDC.TenantClaim = "tenant id"
+	c.OIDC.RoleMappings = "admin"
+	c.OIDC.JWKSStaleTTL = time.Second
+	err := c.Validate()
+	if err == nil {
+		t.Fatal("Validate accepted unsafe OIDC configuration")
+	}
+	for _, want := range []string{"OIDC algorithms", "OIDC tenant and roles claims", "OIDC role mappings", "OIDC JWKS TTLs"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error missing %q: %v", want, err)
+		}
+	}
+}
+
 func TestLoadRejectsUnknownAndMalformedInput(t *testing.T) {
 	t.Parallel()
 

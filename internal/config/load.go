@@ -49,6 +49,16 @@ var knownEnvironment = map[string]func(*Config, string) error{
 	"THINKPIXELAG_VALKEY_TIMEOUT":                    setDuration(func(c *Config) *time.Duration { return &c.Valkey.Timeout }),
 	"THINKPIXELAG_OIDC_ISSUER_URL":                   setString(func(c *Config) *string { return &c.OIDC.IssuerURL }),
 	"THINKPIXELAG_OIDC_AUDIENCE":                     setString(func(c *Config) *string { return &c.OIDC.Audience }),
+	"THINKPIXELAG_OIDC_ALGORITHMS":                   setString(func(c *Config) *string { return &c.OIDC.Algorithms }),
+	"THINKPIXELAG_OIDC_TENANT_CLAIM":                 setString(func(c *Config) *string { return &c.OIDC.TenantClaim }),
+	"THINKPIXELAG_OIDC_ROLES_CLAIM":                  setString(func(c *Config) *string { return &c.OIDC.RolesClaim }),
+	"THINKPIXELAG_OIDC_ROLE_MAPPINGS":                setString(func(c *Config) *string { return &c.OIDC.RoleMappings }),
+	"THINKPIXELAG_OIDC_DISCOVERY_TIMEOUT":            setDuration(func(c *Config) *time.Duration { return &c.OIDC.DiscoveryTimeout }),
+	"THINKPIXELAG_OIDC_JWKS_MIN_TTL":                 setDuration(func(c *Config) *time.Duration { return &c.OIDC.JWKSMinTTL }),
+	"THINKPIXELAG_OIDC_JWKS_MAX_TTL":                 setDuration(func(c *Config) *time.Duration { return &c.OIDC.JWKSMaxTTL }),
+	"THINKPIXELAG_OIDC_JWKS_STALE_TTL":               setDuration(func(c *Config) *time.Duration { return &c.OIDC.JWKSStaleTTL }),
+	"THINKPIXELAG_OIDC_CLOCK_SKEW":                   setDuration(func(c *Config) *time.Duration { return &c.OIDC.ClockSkew }),
+	"THINKPIXELAG_OIDC_MAX_TOKEN_AGE":                setDuration(func(c *Config) *time.Duration { return &c.OIDC.MaxTokenAge }),
 }
 
 // Load reads process environment and command-line arguments, then validates the
@@ -139,6 +149,16 @@ func applyFlags(c *Config, args []string) error {
 	fs.DurationVar(&c.Valkey.Timeout, "valkey-timeout", c.Valkey.Timeout, "Valkey request timeout")
 	fs.StringVar(&c.OIDC.IssuerURL, "oidc-issuer-url", c.OIDC.IssuerURL, "trusted OIDC issuer URL")
 	fs.StringVar(&c.OIDC.Audience, "oidc-audience", c.OIDC.Audience, "required OIDC audience")
+	fs.StringVar(&c.OIDC.Algorithms, "oidc-algorithms", c.OIDC.Algorithms, "comma-separated allowed JWT algorithms")
+	fs.StringVar(&c.OIDC.TenantClaim, "oidc-tenant-claim", c.OIDC.TenantClaim, "verified tenant claim name")
+	fs.StringVar(&c.OIDC.RolesClaim, "oidc-roles-claim", c.OIDC.RolesClaim, "verified roles claim name")
+	fs.StringVar(&c.OIDC.RoleMappings, "oidc-role-mappings", c.OIDC.RoleMappings, "comma-separated external=internal role mappings")
+	fs.DurationVar(&c.OIDC.DiscoveryTimeout, "oidc-discovery-timeout", c.OIDC.DiscoveryTimeout, "OIDC discovery/JWKS timeout")
+	fs.DurationVar(&c.OIDC.JWKSMinTTL, "oidc-jwks-min-ttl", c.OIDC.JWKSMinTTL, "minimum JWKS cache TTL")
+	fs.DurationVar(&c.OIDC.JWKSMaxTTL, "oidc-jwks-max-ttl", c.OIDC.JWKSMaxTTL, "maximum JWKS cache TTL")
+	fs.DurationVar(&c.OIDC.JWKSStaleTTL, "oidc-jwks-stale-ttl", c.OIDC.JWKSStaleTTL, "maximum cached-key outage allowance")
+	fs.DurationVar(&c.OIDC.ClockSkew, "oidc-clock-skew", c.OIDC.ClockSkew, "JWT time validation clock skew")
+	fs.DurationVar(&c.OIDC.MaxTokenAge, "oidc-max-token-age", c.OIDC.MaxTokenAge, "maximum JWT lifetime")
 
 	if err := fs.Parse(args); err != nil {
 		return fmt.Errorf("parse flags: %w", err)
