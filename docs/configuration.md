@@ -38,8 +38,10 @@ dependency checks once those adapters exist.
 | `THINKPIXELAG_DATABASE_MAX_CONNECTIONS` | `--database-max-connections` | `20` | from one through 1000 |
 | `THINKPIXELAG_LOG_LEVEL` | `--log-level` | `info` | `debug`, `info`, `warn`, or `error` |
 | `THINKPIXELAG_OPA_URL` | `--opa-url` | `http://127.0.0.1:8181` | absolute HTTP(S), no credentials/query/fragment; production requires HTTPS except loopback |
-| `THINKPIXELAG_OPA_DECISION_PATH` | `--opa-decision-path` | `/v1/data/thinkpixelag/decision` | absolute path without query/fragment |
+| `THINKPIXELAG_OPA_DECISION_PATH` | `--opa-decision-path` | `/v1/data/thinkpixelag/authorization/decision` | absolute path without query/fragment |
 | `THINKPIXELAG_OPA_TIMEOUT` | `--opa-timeout` | `2s` | greater than zero, at most `5m` |
+| `THINKPIXELAG_OPA_DECISION_MAX_TTL` | `--opa-decision-max-ttl` | `30s` | maximum policy-returned TTL; greater than zero, at most `5m` |
+| `THINKPIXELAG_OPA_BUNDLE_MAX_AGE` | `--opa-bundle-max-age` | `5m` | local activation freshness bound; greater than zero, at most `5m` |
 | `THINKPIXELAG_OPA_BEARER_TOKEN` | none | unset | optional secret |
 | `THINKPIXELAG_METRICS_ENABLED` | `--metrics-enabled` | `true` | boolean; disabled mode exposes an empty private registry |
 | `THINKPIXELAG_TRACING_MODE` | `--tracing-mode` | `noop` | `noop` or `otlp` |

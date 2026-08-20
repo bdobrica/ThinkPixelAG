@@ -23,12 +23,13 @@ func TestLoadDefaultsEnvironmentAndFlagPrecedence(t *testing.T) {
 	environment["THINKPIXELAG_HTTP_ADDRESS"] = "127.0.0.1:8081"
 	environment["THINKPIXELAG_HTTP_MAX_BODY_BYTES"] = "2048"
 	environment["THINKPIXELAG_OPA_TIMEOUT"] = "3s"
+	environment["THINKPIXELAG_OPA_DECISION_MAX_TTL"] = "20s"
 
 	environment["THINKPIXELAG_LOG_LEVEL"] = "warn"
 	environment["THINKPIXELAG_METRICS_ENABLED"] = "false"
 	environment["THINKPIXELAG_TRACE_SAMPLE_RATIO"] = "0.25"
 	environment["THINKPIXELAG_DATABASE_MIN_CONNECTIONS"] = "2"
-	c, err := load([]string{"--http-address=127.0.0.1:9090", "--http-max-body-bytes=4096", "--http-handler-timeout=10s", "--opa-timeout=4s", "--log-level=error", "--metrics-enabled=true", "--trace-sample-ratio=0.5", "--database-max-connections=24"}, environment)
+	c, err := load([]string{"--http-address=127.0.0.1:9090", "--http-max-body-bytes=4096", "--http-handler-timeout=10s", "--opa-timeout=4s", "--opa-bundle-max-age=4m", "--log-level=error", "--metrics-enabled=true", "--trace-sample-ratio=0.5", "--database-max-connections=24"}, environment)
 	if err != nil {
 		t.Fatalf("load() error = %v", err)
 	}
@@ -37,6 +38,9 @@ func TestLoadDefaultsEnvironmentAndFlagPrecedence(t *testing.T) {
 	}
 	if c.OPA.Timeout != 4*time.Second {
 		t.Errorf("OPA timeout = %s, want 4s", c.OPA.Timeout)
+	}
+	if c.OPA.DecisionMaxTTL != 20*time.Second || c.OPA.BundleMaxAge != 4*time.Minute {
+		t.Errorf("OPA policy bounds = %#v", c.OPA)
 	}
 	if c.HTTP.ReadTimeout != 15*time.Second {
 		t.Errorf("HTTP read timeout = %s, want default 15s", c.HTTP.ReadTimeout)

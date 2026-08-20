@@ -7,7 +7,9 @@ The project implements the governance-plane concepts in the Enterprise Execution
 ## Status
 
 The engineering foundation and authoritative PostgreSQL persistence are
-complete, and Phase 3 identity authentication is implemented. Phase 0 contracts, Phase 1 engineering foundations, and Phase 2
+complete, and Phase 3 identity authentication plus its fail-closed OPA policy
+boundary, signed bundle activation lifecycle, and baseline Rego are implemented.
+Phase 0 contracts, Phase 1 engineering foundations, and Phase 2
 migrations, repositories, idempotency, audit/outbox delivery, and real-database
 verification have passed their exit gates. [PLAN.md](PLAN.md) defines the
 target architecture and delivery phases; [TODO.md](TODO.md) is the ordered,

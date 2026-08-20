@@ -19,6 +19,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [Threat model](security/threat-model.md)
 - [Data classification and redaction](security/data-classification.md)
 - [Authentication and tenant mapping](security/authentication.md)
+- [Policy evaluation and lifecycle](security/policy-lifecycle.md)
 - [Dependency and build-tool policy](security/dependencies.md)
 - [Supported versions](supported-versions.md)
 - [SLOs and capacity targets](operations/slos.md)

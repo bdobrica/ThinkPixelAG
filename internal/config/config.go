@@ -82,10 +82,12 @@ type LogConfig struct {
 }
 
 type OPAConfig struct {
-	URL          string
-	DecisionPath string
-	Timeout      time.Duration
-	BearerToken  Secret
+	URL            string
+	DecisionPath   string
+	Timeout        time.Duration
+	DecisionMaxTTL time.Duration
+	BundleMaxAge   time.Duration
+	BearerToken    Secret
 }
 
 type TelemetryConfig struct {
@@ -142,9 +144,11 @@ func Defaults() Config {
 		},
 		Log: LogConfig{Level: "info"},
 		OPA: OPAConfig{
-			URL:          "http://127.0.0.1:8181",
-			DecisionPath: "/v1/data/thinkpixelag/decision",
-			Timeout:      2 * time.Second,
+			URL:            "http://127.0.0.1:8181",
+			DecisionPath:   "/v1/data/thinkpixelag/authorization/decision",
+			Timeout:        2 * time.Second,
+			DecisionMaxTTL: 30 * time.Second,
+			BundleMaxAge:   5 * time.Minute,
 		},
 		Telemetry: TelemetryConfig{
 			MetricsEnabled:     true,
@@ -184,6 +188,8 @@ type safeConfig struct {
 		URL                   string        `json:"url"`
 		DecisionPath          string        `json:"decision_path"`
 		Timeout               time.Duration `json:"timeout"`
+		DecisionMaxTTL        time.Duration `json:"decision_max_ttl"`
+		BundleMaxAge          time.Duration `json:"bundle_max_age"`
 		BearerTokenConfigured bool          `json:"bearer_token_configured"`
 	} `json:"opa"`
 	Telemetry TelemetryConfig `json:"telemetry"`
@@ -211,6 +217,8 @@ func (c Config) safe() safeConfig {
 	out.OPA.URL = c.OPA.URL
 	out.OPA.DecisionPath = c.OPA.DecisionPath
 	out.OPA.Timeout = c.OPA.Timeout
+	out.OPA.DecisionMaxTTL = c.OPA.DecisionMaxTTL
+	out.OPA.BundleMaxAge = c.OPA.BundleMaxAge
 	out.OPA.BearerTokenConfigured = c.OPA.BearerToken.IsSet()
 	out.Telemetry = c.Telemetry
 	out.Valkey.URLConfigured = c.Valkey.URL.IsSet()

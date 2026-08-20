@@ -48,6 +48,8 @@ func (c Config) Validate() error {
 		"database statement timeout": c.Database.StatementTimeout,
 		"database lock timeout":      c.Database.LockTimeout,
 		"opa timeout":                c.OPA.Timeout,
+		"opa decision max TTL":       c.OPA.DecisionMaxTTL,
+		"opa bundle max age":         c.OPA.BundleMaxAge,
 		"trace export timeout":       c.Telemetry.TraceExportTimeout,
 		"trace batch timeout":        c.Telemetry.TraceBatchTimeout,
 		"valkey timeout":             c.Valkey.Timeout,

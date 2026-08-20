@@ -37,6 +37,8 @@ var knownEnvironment = map[string]func(*Config, string) error{
 	"THINKPIXELAG_OPA_URL":                           setString(func(c *Config) *string { return &c.OPA.URL }),
 	"THINKPIXELAG_OPA_DECISION_PATH":                 setString(func(c *Config) *string { return &c.OPA.DecisionPath }),
 	"THINKPIXELAG_OPA_TIMEOUT":                       setDuration(func(c *Config) *time.Duration { return &c.OPA.Timeout }),
+	"THINKPIXELAG_OPA_DECISION_MAX_TTL":              setDuration(func(c *Config) *time.Duration { return &c.OPA.DecisionMaxTTL }),
+	"THINKPIXELAG_OPA_BUNDLE_MAX_AGE":                setDuration(func(c *Config) *time.Duration { return &c.OPA.BundleMaxAge }),
 	"THINKPIXELAG_OPA_BEARER_TOKEN":                  setSecret(func(c *Config) *Secret { return &c.OPA.BearerToken }),
 	"THINKPIXELAG_METRICS_ENABLED":                   setBool(func(c *Config) *bool { return &c.Telemetry.MetricsEnabled }),
 	"THINKPIXELAG_TRACING_MODE":                      setString(func(c *Config) *string { return &c.Telemetry.TracingMode }),
@@ -139,6 +141,8 @@ func applyFlags(c *Config, args []string) error {
 	fs.StringVar(&c.OPA.URL, "opa-url", c.OPA.URL, "OPA base URL")
 	fs.StringVar(&c.OPA.DecisionPath, "opa-decision-path", c.OPA.DecisionPath, "OPA decision document path")
 	fs.DurationVar(&c.OPA.Timeout, "opa-timeout", c.OPA.Timeout, "OPA request timeout")
+	fs.DurationVar(&c.OPA.DecisionMaxTTL, "opa-decision-max-ttl", c.OPA.DecisionMaxTTL, "maximum cacheable policy decision lifetime")
+	fs.DurationVar(&c.OPA.BundleMaxAge, "opa-bundle-max-age", c.OPA.BundleMaxAge, "maximum local active-policy metadata age")
 	fs.BoolVar(&c.Telemetry.MetricsEnabled, "metrics-enabled", c.Telemetry.MetricsEnabled, "enable Prometheus metrics")
 	fs.StringVar(&c.Telemetry.TracingMode, "tracing-mode", c.Telemetry.TracingMode, "tracing mode: noop or otlp")
 	fs.StringVar(&c.Telemetry.ServiceName, "service-name", c.Telemetry.ServiceName, "OpenTelemetry service name")
