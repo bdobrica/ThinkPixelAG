@@ -11,6 +11,9 @@ complete, and Phase 3 identity authentication plus its fail-closed OPA policy
 boundary, signed bundle activation lifecycle, and baseline Rego are implemented.
 The policy boundary includes adversarial golden tests and an optional
 integrity-protected, epoch/version-bound Valkey decision cache.
+The agent registry now provides validated tenant-scoped creation, optimistic
+metadata/lifecycle updates, and list/describe application and persistence
+boundaries; its HTTP discovery surface remains scheduled later in Phase 3.
 Phase 0 contracts, Phase 1 engineering foundations, and Phase 2
 migrations, repositories, idempotency, audit/outbox delivery, and real-database
 verification have passed their exit gates. [PLAN.md](PLAN.md) defines the

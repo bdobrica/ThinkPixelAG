@@ -34,6 +34,11 @@ stateDiagram-v2
 - `ACTIVE` agents can be discovered/invoked if policy permits and an eligible version exists.
 - `SUSPENDED` prevents new admission; existing-run behavior is a separate policy/revocation decision.
 - `RETIRED` is terminal and preserves evidence/history.
+- Agent creation requires distinct, active, same-tenant owner and sponsor
+  principals and a closed `LOW`, `MEDIUM`, `HIGH`, or `CRITICAL` risk class.
+- Name, description, owner, sponsor, risk class, and lifecycle state are mutable
+  with optimistic concurrency; identity, tenant, and creation time are not.
+  Updates cannot restore a retired agent.
 
 ## Agent version lifecycle
 

@@ -664,10 +664,14 @@ components:
     Agent:
       type: object
       additionalProperties: false
-      required: [id, owner, sponsor, risk_class, state, created_at]
+      required: [id, name, owner, sponsor, risk_class, state, created_at]
       properties:
         id:
           $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
         owner:
           $ref: '#/components/schemas/Identifier'
         sponsor:
@@ -699,10 +703,14 @@ components:
     CreateAgentRequest:
       type: object
       additionalProperties: false
-      required: [id, owner, sponsor, risk_class]
+      required: [id, name, owner, sponsor, risk_class]
       properties:
         id:
           $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
         owner:
           $ref: '#/components/schemas/Identifier'
         sponsor:
