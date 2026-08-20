@@ -237,6 +237,7 @@ func TestValidateProductionTransport(t *testing.T) {
 	c.Database.URL = NewSecret("postgres://app:secret@db.example/thinkpixelag")
 	c.OPA.URL = "http://opa.example"
 	c.Valkey.URL = NewSecret("redis://cache.example:6379")
+	c.Valkey.CacheIntegrityKey = NewSecret("0123456789abcdef0123456789abcdef")
 	c.OIDC.IssuerURL = "http://id.example/issuer"
 	c.OIDC.Audience = "thinkpixelag"
 
@@ -257,6 +258,7 @@ func TestSecretSafeRendering(t *testing.T) {
 	c.Database.URL = NewSecret("postgres://user:database-password@db.example/service")
 	c.OPA.BearerToken = NewSecret("opa-bearer-token")
 	c.Valkey.URL = NewSecret("rediss://:valkey-password@cache.example")
+	c.Valkey.CacheIntegrityKey = NewSecret("cache-hmac-secret-0123456789abcdef")
 	c.OIDC.IssuerURL = "https://id.example/issuer"
 	c.OIDC.Audience = "thinkpixelag"
 
@@ -273,7 +275,7 @@ func TestSecretSafeRendering(t *testing.T) {
 		fmt.Sprintf("%v %+v %#v", c.Database.URL, c.OPA.BearerToken, c.Valkey.URL),
 	}
 	for _, rendering := range renderings {
-		for _, secret := range []string{"database-password", "opa-bearer-token", "valkey-password"} {
+		for _, secret := range []string{"database-password", "opa-bearer-token", "valkey-password", "cache-hmac-secret"} {
 			if strings.Contains(rendering, secret) {
 				t.Fatalf("rendering leaked %q: %s", secret, rendering)
 			}
@@ -309,5 +311,22 @@ func TestValidateURLs(t *testing.T) {
 				t.Fatalf("Validate() error = %v, want containing %q", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestValidateValkeyCacheIntegrityKey(t *testing.T) {
+	t.Parallel()
+	c := Defaults()
+	c.Database.URL = NewSecret("postgres://db.example/service")
+	c.OIDC.IssuerURL = "https://id.example/issuer"
+	c.OIDC.Audience = "thinkpixelag"
+	c.Valkey.URL = NewSecret("redis://127.0.0.1:6379")
+	if err := c.Validate(); err == nil || !strings.Contains(err.Error(), "Valkey cache HMAC key") {
+		t.Fatalf("Validate() error = %v, want cache HMAC failure", err)
+	}
+	c.Valkey.URL = Secret{}
+	c.Valkey.CacheIntegrityKey = NewSecret("0123456789abcdef0123456789abcdef")
+	if err := c.Validate(); err == nil || !strings.Contains(err.Error(), "requires a Valkey URL") {
+		t.Fatalf("Validate() error = %v, want orphan cache HMAC failure", err)
 	}
 }

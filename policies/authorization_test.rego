@@ -23,3 +23,69 @@ test_constraints_narrowed if {
     d := authorization.decision with input as object.union(base,{"action":"runs.create","requested_constraints":{"max_tokens":200},"authority_constraints":{"max_tokens":100}})
     d.resolved_constraints.max_tokens == 100
 }
+
+test_constraint_request_is_preserved_below_ceiling if {
+    d := authorization.decision with input as object.union(base,{"action":"runs.create","requested_constraints":{"max_tokens":40},"authority_constraints":{"max_tokens":100}})
+    d.allow
+    d.resolved_constraints.max_tokens == 40
+}
+
+test_gap_denied if {
+    d := authorization.decision with input as object.union(base,{"action":"agents.list","security_state":{"has_gap":true,"age_seconds":1,"authoritative":true}})
+    not d.allow
+    d.reason_codes == ["security_state.gap"]
+}
+
+test_high_risk_requires_authoritative_state if {
+    d := authorization.decision with input as object.union(base,{"action":"runs.create","agent":{"approved":true,"revoked":false,"risk_class":"high"},"security_state":{"has_gap":false,"age_seconds":1,"authoritative":false}})
+    not d.allow
+}
+
+test_high_risk_allow_has_zero_ttl if {
+    d := authorization.decision with input as object.union(base,{"action":"runs.create","agent":{"approved":true,"revoked":false,"risk_class":"high"}})
+    d.allow
+    d.decision_ttl_seconds == 0
+}
+
+test_unapproved_agent_denied if {
+    d := authorization.decision with input as object.union(base,{"action":"runs.create","agent":{"approved":false,"revoked":false,"risk_class":"medium"}})
+    not d.allow
+}
+
+test_revoked_agent_denied if {
+    d := authorization.decision with input as object.union(base,{"action":"runs.create","agent":{"approved":true,"revoked":true,"risk_class":"medium"}})
+    not d.allow
+}
+
+test_governance_admin_allowed if {
+    d := authorization.decision with input as object.union(base,{"action":"policies.activate","subject":{"tenant_id":"t","roles":["governance-admin"]}})
+    d.allow
+    d.decision_ttl_seconds == 0
+}
+
+test_workload_role_cannot_administer if {
+    d := authorization.decision with input as object.union(base,{"action":"policies.activate","subject":{"tenant_id":"t","roles":["trusted-workload"]}})
+    not d.allow
+}
+
+test_trusted_workload_allowed_to_settle if {
+    d := authorization.decision with input as object.union(base,{"action":"resources.settle","subject":{"tenant_id":"t","roles":["trusted-workload"]}})
+    d.allow
+    d.decision_ttl_seconds == 0
+}
+
+test_unknown_action_denied if {
+    d := authorization.decision with input as object.union(base,{"action":"unknown.action"})
+    not d.allow
+    d.reason_codes == ["action.not_permitted"]
+}
+
+test_malformed_input_has_no_allow if {
+    not authorization.decision.allow with input as {"action":"agents.list"}
+}
+
+test_deterministic_equivalent_input if {
+    first := authorization.decision with input as object.union(base,{"action":"agents.list","subject":{"tenant_id":"t","roles":["other","agent-invoker"]}})
+    second := authorization.decision with input as object.union(base,{"action":"agents.list","subject":{"tenant_id":"t","roles":["agent-invoker","other"]}})
+    first == second
+}

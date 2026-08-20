@@ -19,6 +19,11 @@ validated bundles with serializable, monotonically versioned, append-only
 records. Model rollback as another activation and require bounded local active
 metadata freshness before every evaluation.
 
+The optional Valkey decision cache uses versioned, epoch-bound, normalized
+input keys and bounded TTLs. Keys hide identifiers behind SHA-256 and entries
+are authenticated with a dedicated HMAC secret. Cache failures and invalid
+entries bypass to OPA.
+
 ## Alternatives considered
 
 Embedding OPA in the service would enlarge dependency and update coupling.
@@ -31,6 +36,8 @@ invalidation. These alternatives were rejected.
 OPA and PostgreSQL remain separate operational dependencies. Policy unavailability
 denies protected work. Reconciliation must refresh process-local activation
 metadata after restart or a post-commit local update failure.
+Valkey improves repeated-decision latency but adds no availability or authority
+dependency; rotating its HMAC secret safely invalidates all prior entries.
 
 ## Security impact
 

@@ -3,6 +3,7 @@
 package policy
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -79,6 +80,7 @@ type Metadata struct {
 	PolicyVersion int64
 	InputDigest   string
 	Duration      time.Duration
+	CacheStatus   string
 }
 type Result struct {
 	Decision Decision
@@ -196,6 +198,26 @@ func NormalizeStrings(v []string) []string {
 	sort.Strings(out)
 	out = compact(out)
 	return out
+}
+
+// AuthorizationDigest excludes evidence-only request fields while retaining
+// every identity, action, resource, constraint, and security-state field that
+// may affect authorization. Equivalent role/authentication sets hash equally.
+func AuthorizationDigest(in Input) (string, error) {
+	if err := in.Validate(); err != nil {
+		return "", err
+	}
+	in.DecisionID = ""
+	in.RequestTime = time.Time{}
+	in.Context.RequestID = ""
+	in.Subject.Roles = NormalizeStrings(in.Subject.Roles)
+	in.Subject.AuthenticationMethods = NormalizeStrings(in.Subject.AuthenticationMethods)
+	b, err := json.Marshal(in)
+	if err != nil {
+		return "", err
+	}
+	digest := sha256.Sum256(b)
+	return fmt.Sprintf("sha256:%x", digest), nil
 }
 func compact(v []string) []string {
 	n := 0

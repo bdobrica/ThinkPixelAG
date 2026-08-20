@@ -51,6 +51,7 @@ dependency checks once those adapters exist.
 | `THINKPIXELAG_TRACE_EXPORT_TIMEOUT` | `--trace-export-timeout` | `5s` | greater than zero, at most `5m` |
 | `THINKPIXELAG_TRACE_BATCH_TIMEOUT` | `--trace-batch-timeout` | `5s` | greater than zero, at most `5m` |
 | `THINKPIXELAG_VALKEY_URL` | none | unset | optional `redis://` or `rediss://`; production requires TLS except loopback |
+| `THINKPIXELAG_VALKEY_CACHE_HMAC_KEY` | none | unset | required when Valkey is enabled; secret of at least 32 bytes used to authenticate cached decisions |
 | `THINKPIXELAG_VALKEY_TIMEOUT` | `--valkey-timeout` | `500ms` | greater than zero, at most `5m` |
 | `THINKPIXELAG_OIDC_ISSUER_URL` | `--oidc-issuer-url` | none | required absolute HTTP(S), no credentials/query/fragment; HTTPS except loopback |
 | `THINKPIXELAG_OIDC_AUDIENCE` | `--oidc-audience` | none | required, no surrounding whitespace or control characters |
@@ -69,7 +70,7 @@ Durations use Go syntax such as `500ms`, `5s`, or `2m`.
 
 ## Secret handling
 
-Database and Valkey URLs and the OPA bearer token are environment-only. They are
+Database and Valkey URLs, the Valkey cache HMAC key, and the OPA bearer token are environment-only. They are
 not flags because process argument lists are commonly visible to other tooling.
 In Kubernetes, populate these variables through `Secret` references or workload
 identity integrations; never place values in a committed ConfigMap or manifest.

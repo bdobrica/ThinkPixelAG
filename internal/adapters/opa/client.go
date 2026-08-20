@@ -3,7 +3,6 @@ package opa
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -55,8 +54,7 @@ func (c *Client) Decide(ctx context.Context, in policy.Input) (policy.Result, er
 	body, _ := json.Marshal(struct {
 		Input policy.Input `json:"input"`
 	}{in})
-	inputJSON, _ := json.Marshal(in)
-	inputHash := sha256.Sum256(inputJSON)
+	inputDigest, _ := policy.AuthorizationDigest(in)
 	callCtx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 	req, err := http.NewRequestWithContext(callCtx, http.MethodPost, c.endpoint, bytes.NewReader(body))
@@ -93,5 +91,5 @@ func (c *Client) Decide(ctx context.Context, in policy.Input) (policy.Result, er
 	if err := policy.ValidateDecision(envelope.Result, in, c.maxTTL); err != nil {
 		return policy.Result{}, fmt.Errorf("%w: invalid decision", ErrUnavailable)
 	}
-	return policy.Result{Decision: envelope.Result, Metadata: policy.Metadata{PolicyDigest: digest, PolicyVersion: version, InputDigest: fmt.Sprintf("sha256:%x", inputHash), Duration: duration}}, nil
+	return policy.Result{Decision: envelope.Result, Metadata: policy.Metadata{PolicyDigest: digest, PolicyVersion: version, InputDigest: inputDigest, Duration: duration, CacheStatus: "miss"}}, nil
 }

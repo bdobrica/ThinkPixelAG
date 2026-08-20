@@ -110,6 +110,11 @@ func (c Config) Validate() error {
 		if c.Environment == EnvironmentProduction && urlScheme(c.Valkey.URL.Value()) != "rediss" && !isLoopbackURL(c.Valkey.URL.Value()) {
 			problems = append(problems, "Valkey URL must use rediss in production unless it targets loopback")
 		}
+		if len(c.Valkey.CacheIntegrityKey.Value()) < 32 {
+			problems = append(problems, "Valkey cache HMAC key must be at least 32 bytes when Valkey is enabled")
+		}
+	} else if c.Valkey.CacheIntegrityKey.IsSet() {
+		problems = append(problems, "Valkey cache HMAC key requires a Valkey URL")
 	}
 	if strings.TrimSpace(c.OIDC.Audience) == "" {
 		problems = append(problems, "OIDC audience is required")

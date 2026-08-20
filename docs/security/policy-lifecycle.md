@@ -29,3 +29,14 @@ and trusted workload operations, governance administration, tenant equality,
 risk-sensitive authoritative checks, stale/gapped security state, and numeric
 constraint narrowing. `make test-policy` compiles and tests it with the pinned
 OPA version.
+
+When Valkey is configured, the cache key incorporates the contract and active
+policy versions, relevant global/tenant/agent epochs, verified tenant and
+principal, action, resource, and normalized authorization-input digest. The
+external key is SHA-256 hashed, and values are authenticated with a separately
+configured HMAC-SHA-256 secret. Hits are strictly decoded, rebound to the
+current decision ID, and revalidated against current input constraints. TTL is
+the minimum of policy output, deployment maximum, and remaining security-state
+freshness; zero-TTL decisions are never cached. Misses, timeouts, authentication
+failures, malformed or forged values, and write errors bypass Valkey and use
+OPA. Cache failure cannot create an authorization result.

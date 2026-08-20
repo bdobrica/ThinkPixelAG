@@ -101,8 +101,9 @@ type TelemetryConfig struct {
 }
 
 type ValkeyConfig struct {
-	URL     Secret
-	Timeout time.Duration
+	URL               Secret
+	CacheIntegrityKey Secret
+	Timeout           time.Duration
 }
 
 type OIDCConfig struct {
@@ -194,8 +195,9 @@ type safeConfig struct {
 	} `json:"opa"`
 	Telemetry TelemetryConfig `json:"telemetry"`
 	Valkey    struct {
-		URLConfigured bool          `json:"url_configured"`
-		Timeout       time.Duration `json:"timeout"`
+		URLConfigured               bool          `json:"url_configured"`
+		CacheIntegrityKeyConfigured bool          `json:"cache_integrity_key_configured"`
+		Timeout                     time.Duration `json:"timeout"`
 	} `json:"valkey"`
 	OIDC OIDCConfig `json:"oidc"`
 }
@@ -222,6 +224,7 @@ func (c Config) safe() safeConfig {
 	out.OPA.BearerTokenConfigured = c.OPA.BearerToken.IsSet()
 	out.Telemetry = c.Telemetry
 	out.Valkey.URLConfigured = c.Valkey.URL.IsSet()
+	out.Valkey.CacheIntegrityKeyConfigured = c.Valkey.CacheIntegrityKey.IsSet()
 	out.Valkey.Timeout = c.Valkey.Timeout
 	out.OIDC = c.OIDC
 	return out

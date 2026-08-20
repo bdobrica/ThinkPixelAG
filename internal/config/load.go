@@ -48,6 +48,7 @@ var knownEnvironment = map[string]func(*Config, string) error{
 	"THINKPIXELAG_TRACE_EXPORT_TIMEOUT":              setDuration(func(c *Config) *time.Duration { return &c.Telemetry.TraceExportTimeout }),
 	"THINKPIXELAG_TRACE_BATCH_TIMEOUT":               setDuration(func(c *Config) *time.Duration { return &c.Telemetry.TraceBatchTimeout }),
 	"THINKPIXELAG_VALKEY_URL":                        setSecret(func(c *Config) *Secret { return &c.Valkey.URL }),
+	"THINKPIXELAG_VALKEY_CACHE_HMAC_KEY":             setSecret(func(c *Config) *Secret { return &c.Valkey.CacheIntegrityKey }),
 	"THINKPIXELAG_VALKEY_TIMEOUT":                    setDuration(func(c *Config) *time.Duration { return &c.Valkey.Timeout }),
 	"THINKPIXELAG_OIDC_ISSUER_URL":                   setString(func(c *Config) *string { return &c.OIDC.IssuerURL }),
 	"THINKPIXELAG_OIDC_AUDIENCE":                     setString(func(c *Config) *string { return &c.OIDC.Audience }),
