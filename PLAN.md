@@ -258,6 +258,14 @@ command, and result evidence is recorded in `docs/phase-2-evidence.md`.
 
 Implement OIDC authentication, claim-to-tenant mapping, OPA client/contract, policy lifecycle, agent/version registration, approvals, and version resolution. Exit when deny-by-default, tenant isolation, policy freshness, and immutable-version tests pass.
 
+Status: **Completed 2026-08-22.** OIDC verification and claim mapping establish
+tenant authority; the typed OPA boundary, signed activation lifecycle, baseline
+Rego, and optional integrity-protected Valkey cache fail closed; and the
+tenant-scoped registry enforces immutable versions, governed eligibility,
+policy-driven resolution, and authorized discovery. The composed workflow and
+full clean-tree gate passed against pinned PostgreSQL 18.4, OPA 1.19.0, and
+Valkey 9.1.1. Full evidence is recorded in `docs/phase-3-evidence.md`.
+
 ### Phase 4 — Run lifecycle API
 
 Implement run admission, status, events, signals, cancellation, state transitions, and event publication. Exit when OpenAPI contract and end-to-end lifecycle/idempotency tests pass.

@@ -22,19 +22,45 @@ func (r *TenantRepository) RecordAgentVersionDecision(ctx context.Context, appro
 	if approval.TenantID != r.tenantID || auditID.IsZero() || outboxID.IsZero() || len(digest) != 71 {
 		return domain.AgentVersionApproval{}, errors.New("agent version decision does not match repository scope")
 	}
+	if beginner, ok := r.db.(interface {
+		Begin(context.Context) (pgx.Tx, error)
+	}); ok {
+		tx, err := beginner.Begin(ctx)
+		if err != nil {
+			return domain.AgentVersionApproval{}, fmt.Errorf("begin agent version decision: %w", err)
+		}
+		txRepository := &TenantRepository{db: tx, tenantID: r.tenantID}
+		stored, recordErr := txRepository.recordAgentVersionDecision(ctx, approval, digest, auditID, outboxID, requestID)
+		if recordErr != nil {
+			if rollbackErr := tx.Rollback(context.WithoutCancel(ctx)); rollbackErr != nil && !errors.Is(rollbackErr, pgx.ErrTxClosed) {
+				return domain.AgentVersionApproval{}, errors.Join(recordErr, fmt.Errorf("rollback agent version decision: %w", rollbackErr))
+			}
+			return domain.AgentVersionApproval{}, recordErr
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return domain.AgentVersionApproval{}, fmt.Errorf("commit agent version decision: %w", err)
+		}
+		return stored, nil
+	}
+	return r.recordAgentVersionDecision(ctx, approval, digest, auditID, outboxID, requestID)
+}
+
+func (r *TenantRepository) recordAgentVersionDecision(ctx context.Context, approval domain.AgentVersionApproval, digest string, auditID, outboxID domain.ID, requestID *domain.ID) (domain.AgentVersionApproval, error) {
+	var versionID string
+	if err := r.db.QueryRow(ctx, `SELECT id::text FROM agent_versions WHERE tenant_id=$1 AND agent_id=$2 AND content_digest=$3 FOR UPDATE`, r.tenantID.String(), approval.AgentID.String(), digest).Scan(&versionID); errors.Is(err, pgx.ErrNoRows) {
+		return domain.AgentVersionApproval{}, domain.NewError(domain.CodeNotFound, "agent version not found")
+	} else if err != nil {
+		return domain.AgentVersionApproval{}, fmt.Errorf("lock agent version for decision: %w", err)
+	}
 	reasons, _ := json.Marshal([]string{approval.ReasonCode})
 	payload, _ := json.Marshal(map[string]string{"approval_id": approval.ID.String(), "agent_id": approval.AgentID.String(), "version_digest": digest, "decision": string(approval.Decision), "reason_code": approval.ReasonCode})
 	metadata, _ := json.Marshal(map[string]string{"approval_reference": approval.ApprovalReference, "version_digest": digest})
 	hashInput, _ := json.Marshal([]any{approval.ID.String(), approval.TenantID.String(), approval.ActorPrincipalID.String(), approval.Decision, approval.ReasonCode, approval.CreatedAt})
 	hash := sha256.Sum256(hashInput)
 	eventHash := "sha256:" + hex.EncodeToString(hash[:])
-	var versionID string
-	err := r.db.QueryRow(ctx, `WITH locked_version AS (
-  SELECT id FROM agent_versions WHERE tenant_id=$1 AND agent_id=$2 AND content_digest=$3 FOR UPDATE
-), current_state AS (
-  SELECT locked_version.id, COALESCE((SELECT decision FROM agent_version_approvals
-    WHERE tenant_id=$1 AND agent_version_id=locked_version.id ORDER BY created_at DESC,id DESC LIMIT 1),'REGISTERED') AS state
-  FROM locked_version
+	err := r.db.QueryRow(ctx, `WITH current_state AS (
+  SELECT $18::uuid AS id, COALESCE((SELECT decision FROM agent_version_approvals
+    WHERE tenant_id=$1 AND agent_version_id=$18 ORDER BY created_at DESC,id DESC LIMIT 1),'REGISTERED') AS state
 ), inserted_approval AS (
   INSERT INTO agent_version_approvals(id,tenant_id,agent_id,agent_version_id,decision,actor_principal_id,policy_decision_id,reason_code,approval_reference,created_at)
   SELECT $4,$1,$2,id,$5,$6,$7,$8,NULLIF($9,''),$10 FROM current_state
@@ -49,15 +75,8 @@ func (r *TenantRepository) RecordAgentVersionDecision(ctx context.Context, appro
   INSERT INTO outbox_messages(id,tenant_id,aggregate_type,aggregate_id,event_type,schema_version,payload,headers,occurred_at,available_at)
   SELECT $16,$1,'agent_version',$3,'agent.version.' || lower($5),1,$17::jsonb,'{}'::jsonb,$10,$10 FROM inserted_approval
 )
-SELECT agent_version_id::text FROM inserted_approval`, r.tenantID.String(), approval.AgentID.String(), digest, approval.ID.String(), string(approval.Decision), approval.ActorPrincipalID.String(), approval.PolicyDecisionID.String(), approval.ReasonCode, approval.ApprovalReference, approval.CreatedAt, auditID.String(), reasons, optionalDBID(requestID), metadata, eventHash, outboxID.String(), payload).Scan(&versionID)
+SELECT agent_version_id::text FROM inserted_approval`, r.tenantID.String(), approval.AgentID.String(), digest, approval.ID.String(), string(approval.Decision), approval.ActorPrincipalID.String(), approval.PolicyDecisionID.String(), approval.ReasonCode, approval.ApprovalReference, approval.CreatedAt, auditID.String(), reasons, optionalDBID(requestID), metadata, eventHash, outboxID.String(), payload, versionID).Scan(&versionID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		var exists bool
-		if lookupErr := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM agent_versions WHERE tenant_id=$1 AND agent_id=$2 AND content_digest=$3)`, r.tenantID.String(), approval.AgentID.String(), digest).Scan(&exists); lookupErr != nil {
-			return domain.AgentVersionApproval{}, fmt.Errorf("inspect agent version decision conflict: %w", lookupErr)
-		}
-		if !exists {
-			return domain.AgentVersionApproval{}, domain.NewError(domain.CodeNotFound, "agent version not found")
-		}
 		return domain.AgentVersionApproval{}, domain.NewError(domain.CodeConflict, "agent version decision is not allowed from its current state")
 	}
 	if err != nil {

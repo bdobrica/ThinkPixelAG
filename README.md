@@ -6,9 +6,10 @@ The project implements the governance-plane concepts in the Enterprise Execution
 
 ## Status
 
-The engineering foundation and authoritative PostgreSQL persistence are
-complete, and Phase 3 identity authentication plus its fail-closed OPA policy
-boundary, signed bundle activation lifecycle, and baseline Rego are implemented.
+The engineering foundation, authoritative PostgreSQL persistence, and Phase 3
+identity, policy, and registry work are complete. Phase 3 provides OIDC
+authentication plus a fail-closed OPA policy boundary, signed bundle activation
+lifecycle, and baseline Rego.
 The policy boundary includes adversarial golden tests and an optional
 integrity-protected, epoch/version-bound Valkey decision cache.
 The agent registry now provides validated tenant-scoped creation, optimistic
@@ -23,9 +24,8 @@ evidence for historical pins or deprecated rollback, and persists immutable
 per-run evidence snapshots. The public agent list and description endpoints
 authenticate opaque cursors, filter every active/invocable agent through policy,
 and return enumeration-safe detail errors.
-Phase 0 contracts, Phase 1 engineering foundations, and Phase 2
-migrations, repositories, idempotency, audit/outbox delivery, and real-database
-verification have passed their exit gates. [PLAN.md](PLAN.md) defines the
+Phase 0 contracts and the Phase 1, Phase 2, and Phase 3 implementations have
+passed their exit gates. [PLAN.md](PLAN.md) defines the
 target architecture and delivery phases; [TODO.md](TODO.md) is the ordered,
 atomic release-candidate checklist. Phase evidence is indexed in
 [docs/README.md](docs/README.md).
@@ -93,7 +93,7 @@ flowchart TB
 
 Caller identity and tenant context come only from a verified access token and trusted identity configuration. Tenant identity, delegation tokens, policy decisions, usage reports, or resource extensions supplied in ordinary request bodies are not trusted. High-risk writes require current authoritative revocation state. Privileged changes require stronger authorization, separation-of-duty integration points, and independent evidence emission.
 
-## Planned API
+## API contract and implemented Phase 3 surface
 
 The versioned API begins with:
 
@@ -108,6 +108,14 @@ GET  /v1/runs/{run_id}/events
 ```
 
 Administrative APIs for agent/version registration, policy promotion, revocation, resource extensions, and trusted metering will be isolated by authorization policy and documented in OpenAPI. Mutation endpoints use idempotency keys and optimistic or transactional concurrency controls.
+
+Phase 3 implements authenticated public agent list/description handlers and the
+governed version-approval handler, plus application and PostgreSQL boundaries
+for agent/version registration, approval state, discovery, and version
+resolution. The canonical OpenAPI also describes later-phase routes; run
+admission and the remaining lifecycle transport assembly begin in Phase 4. See
+the [Phase 3 evidence](docs/phase-3-evidence.md) for the exact qualified surface
+and security behavior.
 
 ## Run and resource model
 
