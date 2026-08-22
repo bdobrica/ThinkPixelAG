@@ -207,7 +207,16 @@ require `versions.pin`; deprecated rollback still requires `versions.rollback`.
 
 ## Worker lease state
 
-A run claim issues a lease ID, expiry, and monotonically increasing fencing token. Heartbeats may extend expiry but never lower the token. Reclaim after expiry increments the token. All worker mutations compare the active lease and fence inside the run transaction.
+A run claim issues a lease ID, expiry, and monotonically increasing fencing token.
+Claims are tenant-queue scoped, serialize with `FOR UPDATE SKIP LOCKED`, and may
+select only `ADMITTED` or `RUNNING` work whose prior lease is absent or expired.
+Heartbeats may strictly extend an unexpired active lease but never lower its
+token. Reclaim at or after expiry issues a new lease ID and increments the
+token. Start, complete, fail, and trusted timeout operations lock the run and
+compare tenant, run, active lease ID, unexpired lease time, and fence in the
+same transaction as the lifecycle update and ordered event. Terminal changes
+clear the lease; equality with the expiry is expired. Consequently, a delayed
+heartbeat or mutation from any superseded worker cannot alter the run.
 
 ## Policy activation lifecycle
 

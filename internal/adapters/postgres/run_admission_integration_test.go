@@ -287,4 +287,107 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if remaining != 0 {
 		t.Fatalf("failed admission left %d run rows", remaining)
 	}
+
+	// Drain earlier claimable fixtures so lease recovery can be asserted against
+	// one deterministic run in this tenant.
+	workerID := mustNewRepositoryID(t)
+	claimAt := now.Add(10 * time.Second)
+	for {
+		lease, claimErr := repositories.ClaimRun(ctx, tenant, workerID, mustNewRepositoryID(t), claimAt, claimAt.Add(time.Minute))
+		if domain.ErrorCodeOf(claimErr) == domain.CodeNotFound {
+			break
+		}
+		if claimErr != nil {
+			t.Fatal(claimErr)
+		}
+		if _, err := repositories.MutateWorkerRun(ctx, lease, domain.WorkerRunStart, mustNewRepositoryID(t), claimAt.Add(time.Second)); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := repositories.MutateWorkerRun(ctx, lease, domain.WorkerRunComplete, mustNewRepositoryID(t), claimAt.Add(2*time.Second)); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	workerAdmission, workerResolution, workerEvidence := makeAdmission()
+	if err := repository.AdmitRun(ctx, workerAdmission, workerResolution, workerEvidence); err != nil {
+		t.Fatal(err)
+	}
+	firstLease, err := repositories.ClaimRun(ctx, tenant, workerID, mustNewRepositoryID(t), claimAt, claimAt.Add(time.Minute))
+	if err != nil || firstLease.RunID != workerAdmission.RunID || firstLease.FencingToken != 1 {
+		t.Fatalf("first lease=%+v error=%v", firstLease, err)
+	}
+	firstLease, err = repositories.HeartbeatRun(ctx, firstLease, claimAt.Add(30*time.Second), claimAt.Add(90*time.Second))
+	if err != nil || firstLease.ExpiresAt != claimAt.Add(90*time.Second) {
+		t.Fatalf("heartbeat=%+v error=%v", firstLease, err)
+	}
+	secondWorker := mustNewRepositoryID(t)
+	secondLease, err := repositories.ClaimRun(ctx, tenant, secondWorker, mustNewRepositoryID(t), claimAt.Add(91*time.Second), claimAt.Add(3*time.Minute))
+	if err != nil || secondLease.RunID != firstLease.RunID || secondLease.FencingToken != firstLease.FencingToken+1 {
+		t.Fatalf("reclaimed lease=%+v error=%v", secondLease, err)
+	}
+	if _, err := repositories.HeartbeatRun(ctx, firstLease, claimAt.Add(92*time.Second), claimAt.Add(4*time.Minute)); domain.ErrorCodeOf(err) != domain.CodeConflict {
+		t.Fatalf("stale heartbeat error=%v", err)
+	}
+	if _, err := repositories.MutateWorkerRun(ctx, firstLease, domain.WorkerRunStart, mustNewRepositoryID(t), claimAt.Add(92*time.Second)); domain.ErrorCodeOf(err) != domain.CodeConflict {
+		t.Fatalf("stale start error=%v", err)
+	}
+	running, err := repositories.MutateWorkerRun(ctx, secondLease, domain.WorkerRunStart, mustNewRepositoryID(t), claimAt.Add(92*time.Second))
+	if err != nil || running.State != domain.RunRunning || running.StateVersion != 2 {
+		t.Fatalf("running=%+v error=%v", running, err)
+	}
+	completed, err := repositories.MutateWorkerRun(ctx, secondLease, domain.WorkerRunComplete, mustNewRepositoryID(t), claimAt.Add(93*time.Second))
+	if err != nil || completed.State != domain.RunCompleted || completed.StateVersion != 3 {
+		t.Fatalf("completed=%+v error=%v", completed, err)
+	}
+	if _, err := repositories.MutateWorkerRun(ctx, secondLease, domain.WorkerRunFail, mustNewRepositoryID(t), claimAt.Add(94*time.Second)); domain.ErrorCodeOf(err) != domain.CodeConflict {
+		t.Fatalf("post-terminal stale mutation error=%v", err)
+	}
+	var workerEvents, workerDistinctSequences int
+	if err := pool.QueryRow(ctx, `SELECT count(*),count(DISTINCT sequence) FROM run_events WHERE tenant_id=$1 AND run_id=$2`, tenant.String(), workerAdmission.RunID.String()).Scan(&workerEvents, &workerDistinctSequences); err != nil {
+		t.Fatal(err)
+	}
+	if workerEvents != 6 || workerDistinctSequences != workerEvents {
+		t.Fatalf("worker events=%d distinct sequences=%d", workerEvents, workerDistinctSequences)
+	}
+
+	timeoutAdmission, timeoutResolution, timeoutEvidence := makeAdmission()
+	if err := repository.AdmitRun(ctx, timeoutAdmission, timeoutResolution, timeoutEvidence); err != nil {
+		t.Fatal(err)
+	}
+	type claimResult struct {
+		lease domain.RunLease
+		err   error
+	}
+	claimResults := make(chan claimResult, 2)
+	claimStart := make(chan struct{})
+	claimWorkers := []domain.ID{mustNewRepositoryID(t), mustNewRepositoryID(t)}
+	claimLeases := []domain.ID{mustNewRepositoryID(t), mustNewRepositoryID(t)}
+	for index := range 2 {
+		go func(workerID, leaseID domain.ID) {
+			<-claimStart
+			lease, claimErr := repositories.ClaimRun(ctx, tenant, workerID, leaseID, claimAt.Add(4*time.Minute), claimAt.Add(5*time.Minute))
+			claimResults <- claimResult{lease: lease, err: claimErr}
+		}(claimWorkers[index], claimLeases[index])
+	}
+	close(claimStart)
+	var timeoutLease domain.RunLease
+	var successfulClaims, unavailableClaims int
+	for range 2 {
+		result := <-claimResults
+		if result.err == nil {
+			successfulClaims++
+			timeoutLease = result.lease
+		} else if domain.ErrorCodeOf(result.err) == domain.CodeNotFound {
+			unavailableClaims++
+		} else {
+			t.Fatalf("concurrent claim error=%v", result.err)
+		}
+	}
+	if successfulClaims != 1 || unavailableClaims != 1 || timeoutLease.RunID != timeoutAdmission.RunID {
+		t.Fatalf("concurrent claims successful=%d unavailable=%d lease=%+v", successfulClaims, unavailableClaims, timeoutLease)
+	}
+	timedOut, err := repositories.MutateWorkerRun(ctx, timeoutLease, domain.WorkerRunTimeout, mustNewRepositoryID(t), claimAt.Add(4*time.Minute+time.Second))
+	if err != nil || timedOut.State != domain.RunTimedOut || timedOut.StateVersion != 2 {
+		t.Fatalf("timed out=%+v error=%v", timedOut, err)
+	}
 }

@@ -140,6 +140,14 @@ serializes with terminal transitions. A winning cancellation atomically fences
 workers and records its command, ordered event, audit, and outbox evidence;
 when completion, failure, or timeout wins first, the established terminal
 projection is returned without being overwritten.
+
+The trusted worker application boundary can claim tenant-scoped admitted or
+recoverable running work, heartbeat a bounded lease, and start, complete, fail,
+or time out the run. Every claim gets a new opaque lease ID and monotonically
+increasing fencing token. PostgreSQL compares the unexpired lease and fence
+while holding the run lock, so a worker delayed beyond expiry cannot heartbeat
+or mutate after another worker reclaims the run. Worker lifecycle changes emit
+ordered run events; full mutation outbox replay qualification is RUN-009.
 See
 the [Phase 3 evidence](docs/phase-3-evidence.md) for the exact qualified surface
 and security behavior.
