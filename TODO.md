@@ -71,7 +71,7 @@ Status notation: `[ ]` pending, `[x]` implemented and verified. Add completion m
 
 ## Phase 4 — Run lifecycle
 
-- [x] RUN-001 Implement the pure run state machine with actor permissions, terminal-state rules, optimistic versioning, table-driven tests, and fuzz/property tests. — completed 2026-08-22, commit `PENDING`, evidence: domain table/validation/immutability tests; race detector; 5-second lifecycle property fuzz campaign; `make verify`
+- [x] RUN-001 Implement the pure run state machine with actor permissions, terminal-state rules, optimistic versioning, table-driven tests, and fuzz/property tests. — completed 2026-08-22, commit `88f8f25`, evidence: domain table/validation/immutability tests; race detector; 5-second lifecycle property fuzz campaign; `make verify`
 - [ ] RUN-002 Implement run admission transaction: authenticate, authorize, resolve version, narrow constraints, create initial envelope/run/event/audit/outbox records.
 - [ ] RUN-003 Implement `POST /v1/agents/{agent_id}/runs` with request limits, idempotency, server-derived tenant, explicit-version restrictions, and stable errors.
 - [ ] RUN-004 Implement tenant-scoped `GET /v1/runs/{run_id}` with authorization and enumeration-safe not-found behavior.
@@ -198,7 +198,7 @@ Append one entry per completed atomic item or tightly coupled group. Do not dele
 | 2026-08-22 | REG-005 | `e781742` | authenticated public list/describe handler tests; policy filtering, invocability, pagination, tenant-boundary, outage, malformed/tampered cursor, and enumeration-safe error unit/race tests; OpenAPI lint; `make verify` | Discovery authorizes the catalog and each candidate independently; only active agents with an approved version are exposed, and every continuation re-evaluates current policy and eligibility |
 | 2026-08-22 | REG-006 | `c91ed61` | composed HTTP identity, application, policy-cache, and real PostgreSQL workflow; repeated end-to-end test; unit/race, policy, integration, OpenAPI/static gates; `make verify` | End-to-end tests now require real PostgreSQL; policy activation and relevant epoch changes invalidate authorization cache keys; test-created outbox evidence is scoped and cleaned to preserve suite isolation |
 | 2026-08-22 | REG-007 | `d4af502` | Phase 3 API/policy/evidence reconciliation; approval concurrency test repeated 20 times against PostgreSQL 18.4; clean-tree `make verify` | Exit verification found and corrected a `READ COMMITTED` snapshot race by separating version locking from current-state evaluation within one transaction; run admission and remaining lifecycle transport assembly begin in Phase 4 |
-| 2026-08-22 | RUN-001 | `PENDING` | Pure domain transition table, validation, immutability, terminal replay, unit/race tests, and 5-second property fuzz campaign; `make verify` | Authorized same-terminal replays return the established state despite a stale expected version; every actual change requires compare-and-swap and increments the state version exactly once |
+| 2026-08-22 | RUN-001 | `88f8f25` | Pure domain transition table, validation, immutability, terminal replay, unit/race tests, and 5-second property fuzz campaign; `make verify` | Authorized same-terminal replays return the established state despite a stale expected version; every actual change requires compare-and-swap and increments the state version exactly once |
 
 ## Active blockers and deviations
 
