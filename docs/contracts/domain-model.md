@@ -147,6 +147,17 @@ policy, version, freshness, and resource checks.
 | BUDGET_EXHAUSTED | FAILED_BUDGET | governor/system | no extension permitted or approval window elapsed |
 | PAUSED_FOR_BUDGET | RUNNING | governor | additive extension committed and new envelope version issued |
 
+For root admission, `PENDING` is the logical pre-commit state and is never
+published as a partially durable aggregate. After authentication and a
+fail-closed `runs.create` decision narrow the requested constraints, one
+PostgreSQL transaction rechecks version eligibility under lock and creates the
+`ADMITTED` version-1 run, immutable version-resolution snapshot, initial
+resource-envelope header, sequence-1 `run.admitted` event, audit evidence, and
+outbox message. Failure of any insert rolls the transaction back. Restricted
+objective and input payloads are deliberately absent from these governance and
+evidence records. Resource dimension grants and balances are populated by the
+resource-governance work in Phase 5.
+
 ## Worker lease state
 
 A run claim issues a lease ID, expiry, and monotonically increasing fencing token. Heartbeats may extend expiry but never lower the token. Reclaim after expiry increments the token. All worker mutations compare the active lease and fence inside the run transaction.

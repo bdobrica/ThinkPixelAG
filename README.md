@@ -112,8 +112,12 @@ Administrative APIs for agent/version registration, policy promotion, revocation
 Phase 3 implements authenticated public agent list/description handlers and the
 governed version-approval handler, plus application and PostgreSQL boundaries
 for agent/version registration, approval state, discovery, and version
-resolution. The canonical OpenAPI also describes later-phase routes; run
-admission and the remaining lifecycle transport assembly begin in Phase 4. See
+resolution. Phase 4 now includes the run-admission application and PostgreSQL
+transaction: authenticated identity, policy-narrowed constraints, version
+eligibility, the admitted run, resolution snapshot, envelope header, first
+event, audit record, and outbox record commit as one unit. The public admission
+HTTP/idempotency assembly and remaining lifecycle routes follow in RUN-003 and
+later items. See
 the [Phase 3 evidence](docs/phase-3-evidence.md) for the exact qualified surface
 and security behavior.
 
