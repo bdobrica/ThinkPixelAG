@@ -138,6 +138,16 @@ terminal runs, and atomically appends the signal, the next per-run event, audit
 evidence, and an outbox delivery. A scoped idempotency key replays the original
 accepted event and never creates another sequence or delivery.
 
+Cancellation is a dedicated `runs.cancel`-authorized terminal command rather
+than a generic signal. It locks the run before evaluating the optional state
+version and transition, so cancellation and worker/governor terminal mutations
+serialize on one row. If cancellation wins, it increments the state and fencing
+versions, clears any lease, and atomically appends one `CANCEL` command, ordered
+`run.cancelled` event, sanitized audit record, and outbox message. If another
+terminal transition wins, cancellation returns that established terminal
+projection without overwriting it or emitting cancellation evidence. Replays
+return the stable terminal projection and never settle or publish twice.
+
 The pure lifecycle transition boundary uses compare-and-swap semantics: every
 command supplies a positive expected state version, and every state change
 increments that version exactly once. A stale expected version is rejected

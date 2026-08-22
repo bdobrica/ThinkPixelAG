@@ -227,17 +227,30 @@ paths:
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CancelRunRequest'
       responses:
         '200':
-          description: Cancelled or already in the established terminal state
+          description: Cancelled, replayed, or the terminal transition that won the serialization race
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Run'
+        '404':
+          description: Run absent, outside the authenticated tenant, or not visible to the caller
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Expected state version is stale or the current nonterminal state cannot be cancelled
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         default:
           $ref: '#/components/responses/Problem'
   /v1/runs/{run_id}/events:

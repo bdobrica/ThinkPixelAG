@@ -180,6 +180,90 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 		t.Fatalf("ordered signal sequences distinct=%d range=%d..%d", distinctSequences, minimumSequence, maximumSequence)
 	}
 
+	cancelExpected := int64(1)
+	cancelAdmission, cancelResolution, cancelAdmissionEvidence := makeAdmission()
+	if err := repository.AdmitRun(ctx, cancelAdmission, cancelResolution, cancelAdmissionEvidence); err != nil {
+		t.Fatal(err)
+	}
+	cancellation := domain.RunCancellation{TenantID: tenant, RunID: cancelAdmission.RunID, ActorPrincipalID: principal, IdempotencyKey: "cancel:integration-cancel-0001", ReasonCode: "caller.request", ExpectedStateVersion: &cancelExpected, CreatedAt: now.Add(2 * time.Second)}
+	cancellationEvidence := ports.RunCancellationEvidence{SignalID: mustNewRepositoryID(t), EventID: mustNewRepositoryID(t), AuditID: mustNewRepositoryID(t), OutboxID: mustNewRepositoryID(t), RequestID: mustNewRepositoryID(t), PolicyDecisionID: mustNewRepositoryID(t), ReasonCodes: []string{"run.access.allowed"}}
+	cancelled, err := repository.CancelRun(ctx, cancellation, cancellationEvidence)
+	if err != nil || cancelled.State != domain.RunCancelled || cancelled.StateVersion != 2 {
+		t.Fatalf("cancelled run=%+v error=%v", cancelled, err)
+	}
+	replayedCancellation, err := repository.CancelRun(ctx, cancellation, cancellationEvidence)
+	if err != nil || replayedCancellation.State != domain.RunCancelled || replayedCancellation.StateVersion != 2 {
+		t.Fatalf("replayed cancellation=%+v error=%v", replayedCancellation, err)
+	}
+	var cancellationSignals, cancellationEvents, cancellationAudits, cancellationOutbox int
+	for query, target := range map[string]*int{
+		`SELECT count(*) FROM run_signals WHERE tenant_id=$1 AND run_id=$2 AND signal_type='CANCEL'`:                 &cancellationSignals,
+		`SELECT count(*) FROM run_events WHERE tenant_id=$1 AND run_id=$2 AND event_type='run.cancelled'`:            &cancellationEvents,
+		`SELECT count(*) FROM audit_events WHERE tenant_id=$1 AND resource_id=$2 AND action='runs.cancel'`:           &cancellationAudits,
+		`SELECT count(*) FROM outbox_messages WHERE tenant_id=$1 AND aggregate_id=$2 AND event_type='run.cancelled'`: &cancellationOutbox,
+	} {
+		if err := pool.QueryRow(ctx, query, tenant.String(), cancelAdmission.RunID.String()).Scan(target); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if cancellationSignals != 1 || cancellationEvents != 1 || cancellationAudits != 1 || cancellationOutbox != 1 {
+		t.Fatalf("cancellation evidence signals=%d events=%d audits=%d outbox=%d", cancellationSignals, cancellationEvents, cancellationAudits, cancellationOutbox)
+	}
+	if _, err := otherRepository.CancelRun(ctx, cancellation, cancellationEvidence); err == nil {
+		t.Fatal("cross-tenant cancellation unexpectedly succeeded")
+	}
+
+	staleAdmission, staleResolution, staleAdmissionEvidence := makeAdmission()
+	if err := repository.AdmitRun(ctx, staleAdmission, staleResolution, staleAdmissionEvidence); err != nil {
+		t.Fatal(err)
+	}
+	staleExpected := int64(2)
+	staleCancellation := cancellation
+	staleCancellation.RunID, staleCancellation.IdempotencyKey, staleCancellation.ExpectedStateVersion = staleAdmission.RunID, "cancel:integration-cancel-stale", &staleExpected
+	if _, err := repository.CancelRun(ctx, staleCancellation, ports.RunCancellationEvidence{SignalID: mustNewRepositoryID(t), EventID: mustNewRepositoryID(t), AuditID: mustNewRepositoryID(t), OutboxID: mustNewRepositoryID(t), RequestID: mustNewRepositoryID(t), PolicyDecisionID: mustNewRepositoryID(t), ReasonCodes: []string{"run.access.allowed"}}); domain.ErrorCodeOf(err) != domain.CodeConflict {
+		t.Fatalf("stale cancellation error=%v", err)
+	}
+
+	// Race cancellation against a worker terminal transition. Both contenders
+	// lock the same row; exactly one terminal state wins and cancellation never
+	// overwrites an established terminal state.
+	raceAdmission, raceResolution, raceAdmissionEvidence := makeAdmission()
+	if err := repository.AdmitRun(ctx, raceAdmission, raceResolution, raceAdmissionEvidence); err != nil {
+		t.Fatal(err)
+	}
+	raceCancellation := cancellation
+	raceCancellation.RunID, raceCancellation.IdempotencyKey = raceAdmission.RunID, "cancel:integration-cancel-race"
+	raceEvidence := ports.RunCancellationEvidence{SignalID: mustNewRepositoryID(t), EventID: mustNewRepositoryID(t), AuditID: mustNewRepositoryID(t), OutboxID: mustNewRepositoryID(t), RequestID: mustNewRepositoryID(t), PolicyDecisionID: mustNewRepositoryID(t), ReasonCodes: []string{"run.access.allowed"}}
+	startRace := make(chan struct{})
+	raceErrors := make(chan error, 2)
+	go func() {
+		<-startRace
+		_, cancelErr := repository.CancelRun(ctx, raceCancellation, raceEvidence)
+		raceErrors <- cancelErr
+	}()
+	go func() {
+		<-startRace
+		_, workerErr := pool.Exec(ctx, `UPDATE runs SET state='COMPLETED',state_version=state_version+1,updated_at=$3,terminal_at=$3 WHERE tenant_id=$1 AND id=$2 AND state='ADMITTED'`, tenant.String(), raceAdmission.RunID.String(), now.Add(3*time.Second))
+		raceErrors <- workerErr
+	}()
+	close(startRace)
+	for range 2 {
+		if raceErr := <-raceErrors; raceErr != nil {
+			t.Fatalf("terminal race: %v", raceErr)
+		}
+	}
+	raceProjection, err := repository.GetRun(ctx, raceAdmission.RunID)
+	if err != nil || (raceProjection.Run.State != domain.RunCancelled && raceProjection.Run.State != domain.RunCompleted) || raceProjection.Run.StateVersion != 2 {
+		t.Fatalf("terminal race projection=%+v error=%v", raceProjection, err)
+	}
+	var raceCancellationEvents int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM run_events WHERE tenant_id=$1 AND run_id=$2 AND event_type='run.cancelled'`, tenant.String(), raceAdmission.RunID.String()).Scan(&raceCancellationEvents); err != nil {
+		t.Fatal(err)
+	}
+	if raceProjection.Run.State == domain.RunCancelled && raceCancellationEvents != 1 || raceProjection.Run.State == domain.RunCompleted && raceCancellationEvents != 0 {
+		t.Fatalf("terminal race state=%s cancellation_events=%d", raceProjection.Run.State, raceCancellationEvents)
+	}
+
 	failedAdmission, failedResolution, failedEvidence := makeAdmission()
 	failedEvidence.OutboxID = evidence.OutboxID
 	if err := repository.AdmitRun(ctx, failedAdmission, failedResolution, failedEvidence); domain.ErrorCodeOf(err) != domain.CodeConflict {

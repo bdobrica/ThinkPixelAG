@@ -127,6 +127,12 @@ all produce the same enumeration-safe not-found response. `POST
 `CUSTOM` commands after `runs.signal` authorization. It supports optional state
 version preconditions and scoped idempotent replay, and atomically records the
 signal, ordered run event, audit evidence, and at-least-once outbox delivery.
+`POST /v1/runs/{run_id}/cancel` is separately authorized by `runs.cancel`,
+supports scoped idempotency and an optional state-version precondition, and
+serializes with terminal transitions. A winning cancellation atomically fences
+workers and records its command, ordered event, audit, and outbox evidence;
+when completion, failure, or timeout wins first, the established terminal
+projection is returned without being overwritten.
 See
 the [Phase 3 evidence](docs/phase-3-evidence.md) for the exact qualified surface
 and security behavior.
