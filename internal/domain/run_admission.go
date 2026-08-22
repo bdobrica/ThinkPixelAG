@@ -10,6 +10,7 @@ import (
 // governance record.
 type RunAdmission struct {
 	RunID, EnvelopeID, TenantID, AgentID, AgentVersionID ID
+	AgentVersionDigest                                   string
 	RequestedBy, PolicyDecisionID                        ID
 	State                                                RunState
 	StateVersion                                         int64
@@ -21,6 +22,9 @@ type RunAdmission struct {
 func (admission RunAdmission) Validate() error {
 	if admission.RunID.IsZero() || admission.EnvelopeID.IsZero() || admission.TenantID.IsZero() || admission.AgentID.IsZero() || admission.AgentVersionID.IsZero() || admission.RequestedBy.IsZero() || admission.PolicyDecisionID.IsZero() {
 		return errors.New("run admission identifiers must be set")
+	}
+	if !ValidDigest(admission.AgentVersionDigest) {
+		return errors.New("run admission version digest must be canonical")
 	}
 	if admission.State != RunAdmitted || admission.StateVersion != 1 || admission.Constraints == nil {
 		return errors.New("run admission must establish admitted state version one and constraints")

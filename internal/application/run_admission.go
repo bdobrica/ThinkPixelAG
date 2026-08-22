@@ -73,7 +73,7 @@ func (service *RunAdmissionService) Admit(ctx context.Context, command AdmitRun)
 			return domain.RunAdmission{}, domain.WrapError(domain.CodeInternal, "could not generate admission evidence identifier", err)
 		}
 	}
-	admission := domain.RunAdmission{RunID: runID, EnvelopeID: ids[0], TenantID: command.TenantID, AgentID: command.AgentID, AgentVersionID: resolution.AgentVersionID, RequestedBy: command.PrincipalID, PolicyDecisionID: resolution.InvocationDecisionID, State: domain.RunAdmitted, StateVersion: 1, Constraints: resolution.ResolvedConstraints, DeadlineAt: deadline, CreatedAt: now, UpdatedAt: now}
+	admission := domain.RunAdmission{RunID: runID, EnvelopeID: ids[0], TenantID: command.TenantID, AgentID: command.AgentID, AgentVersionID: resolution.AgentVersionID, AgentVersionDigest: resolution.AgentContentDigest, RequestedBy: command.PrincipalID, PolicyDecisionID: resolution.InvocationDecisionID, State: domain.RunAdmitted, StateVersion: 1, Constraints: resolution.ResolvedConstraints, DeadlineAt: deadline, CreatedAt: now, UpdatedAt: now}
 	if err := admission.Validate(); err != nil {
 		return domain.RunAdmission{}, domain.WrapError(domain.CodeInternal, "constructed run admission is invalid", err)
 	}

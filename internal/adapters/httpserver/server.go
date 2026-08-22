@@ -44,6 +44,7 @@ type Dependencies struct {
 	NewID          IDGenerator
 	AgentApprovals http.Handler
 	AgentDiscovery http.Handler
+	RunAdmission   http.Handler
 }
 
 type Server struct {
@@ -122,6 +123,9 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 		mount("HEAD /v1/agents", dependencies.AgentDiscovery)
 		mount("GET /v1/agents/{agent_id}", dependencies.AgentDiscovery)
 		mount("HEAD /v1/agents/{agent_id}", dependencies.AgentDiscovery)
+	}
+	if dependencies.RunAdmission != nil {
+		mount("POST /v1/agents/{agent_id}/runs", dependencies.RunAdmission)
 	}
 	mux.Handle("/", middleware("unknown", httpConfig, dependencies, http.HandlerFunc(notFound)))
 	return mux

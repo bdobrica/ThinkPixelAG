@@ -113,11 +113,13 @@ Phase 3 implements authenticated public agent list/description handlers and the
 governed version-approval handler, plus application and PostgreSQL boundaries
 for agent/version registration, approval state, discovery, and version
 resolution. Phase 4 now includes the run-admission application and PostgreSQL
-transaction: authenticated identity, policy-narrowed constraints, version
+transaction and public admission endpoint: authenticated identity, policy-narrowed constraints, version
 eligibility, the admitted run, resolution snapshot, envelope header, first
-event, audit record, and outbox record commit as one unit. The public admission
-HTTP/idempotency assembly and remaining lifecycle routes follow in RUN-003 and
-later items. See
+event, audit record, and outbox record commit as one unit. `POST
+/v1/agents/{agent_id}/runs` enforces bounded strict JSON, a scoped
+`Idempotency-Key`, server-derived tenant/principal identity, controlled explicit
+version selection, and stable replay/conflict responses. Remaining lifecycle
+routes follow in later Phase 4 items. See
 the [Phase 3 evidence](docs/phase-3-evidence.md) for the exact qualified surface
 and security behavior.
 

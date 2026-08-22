@@ -158,6 +158,18 @@ objective and input payloads are deliberately absent from these governance and
 evidence records. Resource dimension grants and balances are populated by the
 resource-governance work in Phase 5.
 
+The public admission boundary requires one 16–128 character idempotency key,
+scoped by authenticated tenant, authenticated principal, canonical route, and a
+SHA-256 hash of the normalized agent ID and complete request. Equivalent JSON
+member ordering hashes identically. Completed responses replay byte-for-byte;
+key reuse with different normalized content and concurrent in-flight reuse are
+stable conflicts. Tenant and principal are accepted only from verified token
+claims. The objective is bounded to 16 KiB, input to 100 properties, constraint
+names and numeric ranges are closed, and explicit digests must be canonical.
+The objective and input affect only the idempotency hash and never enter policy,
+run governance state, audit, outbox, or logs. Explicit approved pins still
+require `versions.pin`; deprecated rollback still requires `versions.rollback`.
+
 ## Worker lease state
 
 A run claim issues a lease ID, expiry, and monotonically increasing fencing token. Heartbeats may extend expiry but never lower the token. Reclaim after expiry increments the token. All worker mutations compare the active lease and fence inside the run transaction.

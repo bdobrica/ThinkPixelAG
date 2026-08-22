@@ -983,7 +983,7 @@ components:
     ResourceEnvelope:
       type: object
       additionalProperties: false
-      required: [version, resources, run_deadline]
+      required: [version, resources]
       properties:
         version:
           type: integer
@@ -996,6 +996,7 @@ components:
             $ref: '#/components/schemas/ResourceAmount'
         run_deadline:
           $ref: '#/components/schemas/Timestamp'
+          description: Present when admission policy establishes an execution deadline
     UsageEvent:
       type: object
       additionalProperties: false

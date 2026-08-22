@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
+	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -21,34 +22,13 @@ var (
 	requestHashPattern      = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 )
 
-type IdempotencyOutcome string
+type IdempotencyOutcome = ports.IdempotencyOutcome
+type IdempotencyRequest = ports.IdempotencyRequest
+type IdempotencyResponse = ports.IdempotencyResponse
+type IdempotencyAcquisition = ports.IdempotencyAcquisition
 
-const (
-	IdempotencyAcquired IdempotencyOutcome = "acquired"
-	IdempotencyReplay   IdempotencyOutcome = "replay"
-)
-
-type IdempotencyRequest struct {
-	PrincipalID domain.ID
-	Route       string
-	Key         string
-	RequestHash string
-	Lease       time.Duration
-	TTL         time.Duration
-}
-
-type IdempotencyResponse struct {
-	Status  int
-	Headers json.RawMessage
-	Body    []byte
-}
-
-type IdempotencyAcquisition struct {
-	Outcome    IdempotencyOutcome
-	RecordID   domain.ID
-	OwnerToken domain.ID
-	Response   *IdempotencyResponse
-}
+const IdempotencyAcquired = ports.IdempotencyAcquired
+const IdempotencyReplay = ports.IdempotencyReplay
 
 // HashIdempotencyRequest hashes a caller-normalized request representation.
 // Normalization is transport-specific; this helper deliberately hashes bytes

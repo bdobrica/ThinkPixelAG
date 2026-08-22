@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -17,7 +18,7 @@ func TestRunAdmissionValidation(t *testing.T) {
 		}
 	}
 	deadline := now.Add(time.Minute)
-	valid := RunAdmission{RunID: ids[0], EnvelopeID: ids[1], TenantID: ids[2], AgentID: ids[3], AgentVersionID: ids[4], RequestedBy: ids[5], PolicyDecisionID: ids[6], State: RunAdmitted, StateVersion: 1, Constraints: map[string]any{}, DeadlineAt: &deadline, CreatedAt: now, UpdatedAt: now}
+	valid := RunAdmission{RunID: ids[0], EnvelopeID: ids[1], TenantID: ids[2], AgentID: ids[3], AgentVersionID: ids[4], AgentVersionDigest: "sha256:" + strings.Repeat("a", 64), RequestedBy: ids[5], PolicyDecisionID: ids[6], State: RunAdmitted, StateVersion: 1, Constraints: map[string]any{}, DeadlineAt: &deadline, CreatedAt: now, UpdatedAt: now}
 	if err := valid.Validate(); err != nil {
 		t.Fatalf("valid admission: %v", err)
 	}
