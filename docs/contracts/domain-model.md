@@ -129,6 +129,15 @@ stateDiagram-v2
 
 Terminal states are `REJECTED`, `COMPLETED`, `FAILED`, `CANCELLED`, `TIMED_OUT`, and `FAILED_BUDGET`. Terminal states cannot transition. Repeating the same terminal command returns the established state without a second settlement or event. A stale worker fencing token cannot change state.
 
+Caller signals are durable commands, not lifecycle transitions. `PAUSE` accepts
+only an optional bounded `reason_code`, `RESUME` requires an empty payload, and
+`CUSTOM` requires a bounded identifier `name` plus an object `data` payload.
+`CANCEL` is reserved for the dedicated cancellation operation. Signal
+acceptance locks the run, optionally compares `expected_state_version`, rejects
+terminal runs, and atomically appends the signal, the next per-run event, audit
+evidence, and an outbox delivery. A scoped idempotency key replays the original
+accepted event and never creates another sequence or delivery.
+
 The pure lifecycle transition boundary uses compare-and-swap semantics: every
 command supplies a positive expected state version, and every state change
 increments that version exactly once. A stale expected version is rejected

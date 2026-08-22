@@ -46,6 +46,7 @@ type Dependencies struct {
 	AgentDiscovery http.Handler
 	RunAdmission   http.Handler
 	RunQuery       http.Handler
+	RunSignal      http.Handler
 }
 
 type Server struct {
@@ -130,6 +131,9 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 	}
 	if dependencies.RunQuery != nil {
 		mount("GET /v1/runs/{run_id}", dependencies.RunQuery)
+	}
+	if dependencies.RunSignal != nil {
+		mount("POST /v1/runs/{run_id}/signals", dependencies.RunSignal)
 	}
 	mux.Handle("/", middleware("unknown", httpConfig, dependencies, http.HandlerFunc(notFound)))
 	return mux

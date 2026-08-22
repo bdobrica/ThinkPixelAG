@@ -122,7 +122,12 @@ version selection, and stable replay/conflict responses. Remaining lifecycle
 routes follow in later Phase 4 items. `GET /v1/runs/{run_id}` returns the
 tenant-scoped lifecycle and envelope summary only after `runs.read`
 authorization; malformed, absent, cross-tenant, and policy-hidden identifiers
-all produce the same enumeration-safe not-found response. See
+all produce the same enumeration-safe not-found response. `POST
+/v1/runs/{run_id}/signals` accepts only typed, bounded `PAUSE`, `RESUME`, and
+`CUSTOM` commands after `runs.signal` authorization. It supports optional state
+version preconditions and scoped idempotent replay, and atomically records the
+signal, ordered run event, audit evidence, and at-least-once outbox delivery.
+See
 the [Phase 3 evidence](docs/phase-3-evidence.md) for the exact qualified surface
 and security behavior.
 

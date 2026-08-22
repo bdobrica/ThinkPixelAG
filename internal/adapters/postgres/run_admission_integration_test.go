@@ -4,8 +4,10 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -111,6 +113,71 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	}
 	if events != 1 || envelopes != 1 || resolutions != 1 || audits != 1 || outbox != 1 {
 		t.Fatalf("events=%d envelopes=%d resolutions=%d audits=%d outbox=%d", events, envelopes, resolutions, audits, outbox)
+	}
+
+	expectedVersion := int64(1)
+	signal := domain.RunSignal{ID: mustNewRepositoryID(t), TenantID: tenant, RunID: admission.RunID, ActorPrincipalID: principal, Type: domain.RunSignalCustom, Payload: []byte(`{"name":"runtime.refresh","data":{"scope":"tools"}}`), IdempotencyKey: "integration-signal-0001", ExpectedStateVersion: &expectedVersion, CreatedAt: now.Add(time.Second)}
+	signalEvidence := ports.RunSignalEvidence{EventID: mustNewRepositoryID(t), AuditID: mustNewRepositoryID(t), OutboxID: mustNewRepositoryID(t), RequestID: mustNewRepositoryID(t), PolicyDecisionID: mustNewRepositoryID(t), ReasonCodes: []string{"run.access.allowed"}}
+	accepted, err := repository.AppendRunSignal(ctx, signal, signalEvidence)
+	if err != nil || accepted.Sequence != 2 || accepted.Type != "run.signal.accepted" {
+		t.Fatalf("accepted signal=%+v error=%v", accepted, err)
+	}
+	replayed, err := repository.AppendRunSignal(ctx, signal, signalEvidence)
+	if err != nil || replayed.ID != accepted.ID || replayed.Sequence != accepted.Sequence {
+		t.Fatalf("replayed signal=%+v error=%v", replayed, err)
+	}
+	if _, err := otherRepository.AppendRunSignal(ctx, signal, signalEvidence); err == nil {
+		t.Fatal("cross-tenant signal unexpectedly succeeded")
+	}
+	stale := signal
+	stale.ID, stale.IdempotencyKey = mustNewRepositoryID(t), "integration-signal-0002"
+	wrongVersion := int64(2)
+	stale.ExpectedStateVersion = &wrongVersion
+	if _, err := repository.AppendRunSignal(ctx, stale, ports.RunSignalEvidence{EventID: mustNewRepositoryID(t), AuditID: mustNewRepositoryID(t), OutboxID: mustNewRepositoryID(t), RequestID: mustNewRepositoryID(t), PolicyDecisionID: mustNewRepositoryID(t), ReasonCodes: []string{"run.access.allowed"}}); domain.ErrorCodeOf(err) != domain.CodeConflict {
+		t.Fatalf("stale signal error=%v", err)
+	}
+	const parallelSignals = 8
+	var group sync.WaitGroup
+	errorsBySignal := make(chan error, parallelSignals)
+	for index := range parallelSignals {
+		parallel := signal
+		parallel.ID = mustNewRepositoryID(t)
+		parallel.IdempotencyKey = fmt.Sprintf("integration-signal-parallel-%02d", index)
+		evidence := ports.RunSignalEvidence{EventID: mustNewRepositoryID(t), AuditID: mustNewRepositoryID(t), OutboxID: mustNewRepositoryID(t), RequestID: mustNewRepositoryID(t), PolicyDecisionID: mustNewRepositoryID(t), ReasonCodes: []string{"run.access.allowed"}}
+		group.Add(1)
+		go func() {
+			defer group.Done()
+			_, appendErr := repository.AppendRunSignal(ctx, parallel, evidence)
+			errorsBySignal <- appendErr
+		}()
+	}
+	group.Wait()
+	close(errorsBySignal)
+	for appendErr := range errorsBySignal {
+		if appendErr != nil {
+			t.Fatalf("parallel signal: %v", appendErr)
+		}
+	}
+	var signalCount, signalEvents, signalAudits, signalOutbox int
+	for query, target := range map[string]*int{
+		`SELECT count(*) FROM run_signals WHERE tenant_id=$1 AND run_id=$2`:                                                &signalCount,
+		`SELECT count(*) FROM run_events WHERE tenant_id=$1 AND run_id=$2 AND event_type='run.signal.accepted'`:            &signalEvents,
+		`SELECT count(*) FROM audit_events WHERE tenant_id=$1 AND resource_id=$2 AND action='runs.signal'`:                 &signalAudits,
+		`SELECT count(*) FROM outbox_messages WHERE tenant_id=$1 AND aggregate_id=$2 AND event_type='run.signal.accepted'`: &signalOutbox,
+	} {
+		if err := pool.QueryRow(ctx, query, tenant.String(), admission.RunID.String()).Scan(target); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if signalCount != 1+parallelSignals || signalEvents != 1+parallelSignals || signalAudits != 1+parallelSignals || signalOutbox != 1+parallelSignals {
+		t.Fatalf("signals=%d events=%d audits=%d outbox=%d", signalCount, signalEvents, signalAudits, signalOutbox)
+	}
+	var distinctSequences, minimumSequence, maximumSequence int
+	if err := pool.QueryRow(ctx, `SELECT count(DISTINCT sequence),min(sequence),max(sequence) FROM run_events WHERE tenant_id=$1 AND run_id=$2 AND event_type='run.signal.accepted'`, tenant.String(), admission.RunID.String()).Scan(&distinctSequences, &minimumSequence, &maximumSequence); err != nil {
+		t.Fatal(err)
+	}
+	if distinctSequences != 1+parallelSignals || minimumSequence != 2 || maximumSequence != 2+parallelSignals {
+		t.Fatalf("ordered signal sequences distinct=%d range=%d..%d", distinctSequences, minimumSequence, maximumSequence)
 	}
 
 	failedAdmission, failedResolution, failedEvidence := makeAdmission()

@@ -198,11 +198,23 @@ paths:
               $ref: '#/components/schemas/SignalRunRequest'
       responses:
         '202':
-          description: Signal accepted
+          description: Signal durably accepted with an ordered event for at-least-once delivery
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RunEvent'
+        '404':
+          description: Run absent, outside the authenticated tenant, or not visible to the caller
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Expected state version is stale or the run is terminal
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         default:
           $ref: '#/components/responses/Problem'
   /v1/runs/{run_id}/cancel:
@@ -931,11 +943,13 @@ components:
       required: [type, payload]
       properties:
         type:
-          $ref: '#/components/schemas/Identifier'
+          type: string
+          enum: [PAUSE, RESUME, CUSTOM]
+          description: CANCEL is reserved for the dedicated cancellation operation
         payload:
           type: object
           maxProperties: 100
-          description: Restricted, schema-validated per signal type, maximum encoded size 64 KiB
+          description: PAUSE accepts only optional reason_code; RESUME requires an empty object; CUSTOM requires name and bounded data. Maximum encoded size is 64 KiB.
         expected_state_version:
           type: integer
           format: int64
