@@ -26,21 +26,21 @@ func TestMigrationQualification(t *testing.T) {
 
 	t.Run("empty database and access paths", func(t *testing.T) {
 		conn := newMigrationTestDatabase(t, databaseURL)
-		migrateAndRequireVersion(t, ctx, conn, sources, 6)
+		migrateAndRequireVersion(t, ctx, conn, sources, 7)
 		assertQualifiedSchema(t, ctx, conn)
 	})
 
 	t.Run("upgrade seeded prior fixture", func(t *testing.T) {
 		conn := newMigrationTestDatabase(t, databaseURL)
-		prior := migrationPrefixFixture(t, sources, 5)
-		migrateAndRequireVersion(t, ctx, conn, prior, 5)
+		prior := migrationPrefixFixture(t, sources, 6)
+		migrateAndRequireVersion(t, ctx, conn, prior, 6)
 
 		tenantID := mustMigrationID(t)
 		now := time.Now().UTC().Truncate(time.Microsecond)
 		if _, err := conn.Exec(ctx, `INSERT INTO tenants (id, slug, display_name, created_at, updated_at) VALUES ($1, $2, 'prior fixture', $3, $3)`, tenantID, "prior-"+strings.ReplaceAll(tenantID, "-", ""), now); err != nil {
 			t.Fatal(err)
 		}
-		migrateAndRequireVersion(t, ctx, conn, sources, 6)
+		migrateAndRequireVersion(t, ctx, conn, sources, 7)
 		var displayName string
 		if err := conn.QueryRow(ctx, `SELECT display_name FROM tenants WHERE id = $1`, tenantID).Scan(&displayName); err != nil {
 			t.Fatalf("prior row was not preserved: %v", err)

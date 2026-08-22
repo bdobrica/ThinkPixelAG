@@ -56,6 +56,14 @@ stateDiagram-v2
 
 The manifest and content digest are immutable after `REGISTERED`. Approval, deprecation, and revocation are append-only state records. New runs normally select `APPROVED`; a `DEPRECATED` version may be selected only by an explicit rollback policy. `REVOKED` is never eligible. Lifting a revocation creates a new governance event and does not erase history or decrement epochs.
 
+Every version decision requires a verified tenant principal and an explicit,
+authoritative `versions.approve` policy ALLOW. The allowed transitions are
+`REGISTERED -> APPROVED|REJECTED`, `APPROVED -> DEPRECATED|REVOKED`, and
+`DEPRECATED -> REVOKED`; rejected and revoked versions are terminal. The
+decision is committed with its policy decision ID, actor, request ID, audit
+event, and outbox event in one PostgreSQL transaction. Competing decisions lock
+the immutable version and exactly one valid transition succeeds.
+
 Manifest schema version 1 contains exactly `schema_version`, the digest-pinned
 `image` reference, sorted unique `models`, `tools`, `skills`, and `subagents`
 arrays, and `limits`. Missing or unknown fields are rejected. Model, tool, and

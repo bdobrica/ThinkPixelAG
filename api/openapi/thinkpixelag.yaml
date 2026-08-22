@@ -291,7 +291,7 @@ paths:
     post:
       tags: [Registry administration]
       operationId: decideAgentVersionApproval
-      summary: Approve or reject an agent version
+      summary: Approve, reject, deprecate, or revoke an agent version
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -799,12 +799,12 @@ components:
       properties:
         decision:
           type: string
-          enum: [approve, reject]
+          enum: [approve, reject, deprecate, revoke]
         reason_code:
           $ref: '#/components/schemas/Identifier'
         approval_reference:
           type: string
-          maxLength: 256
+          maxLength: 512
     Approval:
       type: object
       additionalProperties: false
@@ -814,7 +814,7 @@ components:
           $ref: '#/components/schemas/Identifier'
         decision:
           type: string
-          enum: [approve, reject]
+          enum: [approve, reject, deprecate, revoke]
         actor_id:
           $ref: '#/components/schemas/Identifier'
         created_at:

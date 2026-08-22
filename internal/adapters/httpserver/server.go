@@ -37,11 +37,12 @@ type ReadinessProbe interface {
 }
 
 type Dependencies struct {
-	Logger    *slog.Logger
-	Metrics   *metrics.Metrics
-	Tracing   *tracing.Tracing
-	Readiness ReadinessProbe
-	NewID     IDGenerator
+	Logger         *slog.Logger
+	Metrics        *metrics.Metrics
+	Tracing        *tracing.Tracing
+	Readiness      ReadinessProbe
+	NewID          IDGenerator
+	AgentApprovals http.Handler
 }
 
 type Server struct {
@@ -112,6 +113,9 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 		}
 		dependencies.Metrics.Handler().ServeHTTP(writer, request)
 	}))
+	if dependencies.AgentApprovals != nil {
+		mount("POST /v1/admin/agents/{agent_id}/versions/{version_digest}/approvals", dependencies.AgentApprovals)
+	}
 	mux.Handle("/", middleware("unknown", httpConfig, dependencies, http.HandlerFunc(notFound)))
 	return mux
 }

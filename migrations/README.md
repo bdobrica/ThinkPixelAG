@@ -38,6 +38,8 @@ The initial schema is split along durable consistency boundaries:
 - `006` enforces database-level immutability for registered agent versions and
   their normalized capability declarations, and aligns skill declaration
   storage with the bounded public manifest contract.
+- `007` enforces database-level append-only approval, deprecation, and
+  revocation history for agent versions.
 
 Tenant-owned relationships use composite foreign keys containing `tenant_id` so
 a database write cannot connect rows across tenants. Frequently used access

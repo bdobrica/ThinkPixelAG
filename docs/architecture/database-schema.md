@@ -65,7 +65,10 @@ Version manifests, capability declarations, approvals, and policy artifacts are
 treated as immutable history. The schema exposes no update timestamp for these
 records. Repository methods omit update/delete authority for them, and
 database triggers reject direct updates or deletes of registered agent versions
-and their normalized capability rows.
+and their normalized capability rows. Approval, deprecation, and revocation
+decisions are serialized by locking the version row, then the decision, audit
+event, and outbox event are inserted atomically. A trigger also rejects direct
+updates or deletes of that decision history.
 
 ## Runs and resolution
 
