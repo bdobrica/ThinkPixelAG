@@ -123,6 +123,17 @@ stateDiagram-v2
 
 Terminal states are `REJECTED`, `COMPLETED`, `FAILED`, `CANCELLED`, `TIMED_OUT`, and `FAILED_BUDGET`. Terminal states cannot transition. Repeating the same terminal command returns the established state without a second settlement or event. A stale worker fencing token cannot change state.
 
+The pure lifecycle transition boundary uses compare-and-swap semantics: every
+command supplies a positive expected state version, and every state change
+increments that version exactly once. A stale expected version is rejected
+without mutation. The sole exception is an authorized replay targeting the
+already-established terminal state, which returns the unchanged state and
+version even when the caller retained an older version. Transition timestamps
+are authoritative UTC values, never move backwards, and equal `terminal_at`
+when a terminal state is first established. Admission transitions are initiated
+by the system actor after the application use case has completed its identity,
+policy, version, freshness, and resource checks.
+
 | From | To | Allowed initiator | Required conditions |
 |---|---|---|---|
 | PENDING | ADMITTED | admission use case | identity/policy/version/freshness valid; root/parent resources committed |
