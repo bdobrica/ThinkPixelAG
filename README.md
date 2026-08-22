@@ -107,6 +107,13 @@ POST /v1/runs/{run_id}/cancel
 GET  /v1/runs/{run_id}/events
 ```
 
+Run event consumption is an authenticated, tenant-scoped SSE stream. Events
+are emitted in database sequence order with HMAC-authenticated, run-bound IDs;
+clients resume with `Last-Event-ID` (or `after`). Idle connections receive
+comment heartbeats, slow clients are bounded by per-write deadlines, and a
+cursor older than the configured 10,000-event logical retention window returns
+`410 Gone` so the client can refetch authoritative run state.
+
 Administrative APIs for agent/version registration, policy promotion, revocation, resource extensions, and trusted metering will be isolated by authorization policy and documented in OpenAPI. Mutation endpoints use idempotency keys and optimistic or transactional concurrency controls.
 
 Phase 3 implements authenticated public agent list/description handlers and the

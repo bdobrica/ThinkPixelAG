@@ -17,7 +17,12 @@ import (
 type requestIDKey struct{}
 
 func middleware(route string, httpConfig config.HTTPConfig, dependencies Dependencies, handler http.Handler) http.Handler {
-	handler = deadlineContext(handler, httpConfig.HandlerTimeout)
+	// Streaming responses own their lifecycle and are bounded by disconnect,
+	// shutdown, heartbeat, and per-write deadlines rather than a unary timeout.
+	if route != "GET /v1/runs/{run_id}/events" {
+		handler = deadlineContext(handler, httpConfig.HandlerTimeout)
+		handler = responseWriteDeadline(handler, httpConfig.WriteTimeout)
+	}
 	handler = bodyLimit(handler, httpConfig.MaxBodyBytes)
 	handler = recoverPanic(handler, dependencies.Logger)
 	handler = observe(handler, route, dependencies)
@@ -25,6 +30,13 @@ func middleware(route string, httpConfig config.HTTPConfig, dependencies Depende
 	handler = traceRequest(handler, route, dependencies)
 	handler = requestID(handler, dependencies.NewID)
 	return handler
+}
+
+func responseWriteDeadline(next http.Handler, timeout time.Duration) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		_ = http.NewResponseController(writer).SetWriteDeadline(time.Now().Add(timeout))
+		next.ServeHTTP(writer, request)
+	})
 }
 
 func requestID(next http.Handler, generate IDGenerator) http.Handler {

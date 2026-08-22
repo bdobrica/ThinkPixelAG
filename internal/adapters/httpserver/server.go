@@ -48,6 +48,7 @@ type Dependencies struct {
 	RunQuery        http.Handler
 	RunSignal       http.Handler
 	RunCancellation http.Handler
+	RunEvents       http.Handler
 }
 
 type Server struct {
@@ -70,9 +71,12 @@ func New(httpConfig config.HTTPConfig, dependencies Dependencies) (*Server, erro
 			Handler:           handler,
 			ReadHeaderTimeout: httpConfig.ReadHeaderTimeout,
 			ReadTimeout:       httpConfig.ReadTimeout,
-			WriteTimeout:      httpConfig.WriteTimeout,
-			IdleTimeout:       httpConfig.IdleTimeout,
-			MaxHeaderBytes:    httpConfig.MaxHeaderBytes,
+			// Per-response deadlines are installed by middleware. SSE refreshes its
+			// deadline for each bounded write, which cannot be expressed by the
+			// server-wide absolute WriteTimeout.
+			WriteTimeout:   0,
+			IdleTimeout:    httpConfig.IdleTimeout,
+			MaxHeaderBytes: httpConfig.MaxHeaderBytes,
 		},
 		readiness: readiness,
 	}, nil
@@ -138,6 +142,9 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 	}
 	if dependencies.RunCancellation != nil {
 		mount("POST /v1/runs/{run_id}/cancel", dependencies.RunCancellation)
+	}
+	if dependencies.RunEvents != nil {
+		mount("GET /v1/runs/{run_id}/events", dependencies.RunEvents)
 	}
 	mux.Handle("/", middleware("unknown", httpConfig, dependencies, http.HandlerFunc(notFound)))
 	return mux

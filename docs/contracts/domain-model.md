@@ -138,6 +138,16 @@ terminal runs, and atomically appends the signal, the next per-run event, audit
 evidence, and an outbox delivery. A scoped idempotency key replays the original
 accepted event and never creates another sequence or delivery.
 
+Run events are read through the same tenant-scoped, `runs.read` authorization
+boundary and streamed in strictly increasing database sequence order. Each SSE
+`id` is an HMAC-authenticated cursor bound to the run, not an authorization
+credential; access is re-evaluated on every connection. `Last-Event-ID` and the
+`after` query parameter resume strictly after the acknowledged event. New
+streams begin at the oldest retained event, while an issued cursor outside the
+10,000-event logical window returns `410 Gone`. Comment heartbeats expose no
+tenant data, polling is bounded to 128 events, and every write has a deadline so
+a slow client cannot hold an unbounded response buffer.
+
 Cancellation is a dedicated `runs.cancel`-authorized terminal command rather
 than a generic signal. It locks the run before evaluating the optional state
 version and transition, so cancellation and worker/governor terminal mutations

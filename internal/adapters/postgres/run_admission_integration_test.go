@@ -129,6 +129,17 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if _, err := otherRepository.AppendRunSignal(ctx, signal, signalEvidence); err == nil {
 		t.Fatal("cross-tenant signal unexpectedly succeeded")
 	}
+	eventWindow, err := repository.ListRunEvents(ctx, admission.RunID, 0, 128)
+	if err != nil || eventWindow.OldestRetained != 1 || eventWindow.Latest != 2 || len(eventWindow.Events) != 2 || eventWindow.Events[0].Sequence != 1 || eventWindow.Events[1].Sequence != 2 {
+		t.Fatalf("ordered event window=%+v error=%v", eventWindow, err)
+	}
+	resumedWindow, err := repository.ListRunEvents(ctx, admission.RunID, 1, 128)
+	if err != nil || len(resumedWindow.Events) != 1 || resumedWindow.Events[0].ID != accepted.ID || resumedWindow.Events[0].Sequence != 2 {
+		t.Fatalf("resumed event window=%+v error=%v", resumedWindow, err)
+	}
+	if _, err := otherRepository.ListRunEvents(ctx, admission.RunID, 0, 128); domain.ErrorCodeOf(err) != domain.CodeNotFound {
+		t.Fatalf("cross-tenant event query error=%v", err)
+	}
 	stale := signal
 	stale.ID, stale.IdempotencyKey = mustNewRepositoryID(t), "integration-signal-0002"
 	wrongVersion := int64(2)

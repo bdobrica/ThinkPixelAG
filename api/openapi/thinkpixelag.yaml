@@ -263,13 +263,13 @@ paths:
       parameters:
         - name: after
           in: query
-          description: Opaque event cursor; Last-Event-ID may be used on reconnect
+          description: HMAC-authenticated, run-bound cursor returned as each SSE id; Last-Event-ID may be used on reconnect and must match after when both are supplied
           schema:
             type: string
             maxLength: 512
       responses:
         '200':
-          description: Server-sent event stream; event data uses RunEvent JSON
+          description: Ordered server-sent event stream; id is the resumable cursor, event is the event type, data uses RunEvent JSON, and comment heartbeats keep idle streams live
           headers:
             Cache-Control:
               schema:
@@ -281,6 +281,18 @@ paths:
                 type: string
         '410':
           description: Cursor is outside retention; authoritative refetch required
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Cursor is malformed, unauthenticated, bound to another run, or conflicts with Last-Event-ID
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Run absent, outside the authenticated tenant, or not visible to the caller
           content:
             application/problem+json:
               schema:
