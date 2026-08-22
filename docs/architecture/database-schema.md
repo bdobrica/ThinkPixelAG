@@ -78,6 +78,10 @@ carry a monotonically increasing fencing token. Each run has one immutable
 digest/version, and normalized resolution evidence. Signals are idempotent per
 run and key. Run-event sequence numbers are unique per tenant/run, providing a
 stable append-only cursor independent of event timestamps.
+Resolution persistence locks and rechecks the selected version's current
+approval state, verifies that the run, version digest, and originating approval
+match, and rejects stale resolution after revocation. A database trigger rejects
+updates and deletes of committed snapshots.
 
 ## Resource accounting
 

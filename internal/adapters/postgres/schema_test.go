@@ -27,6 +27,7 @@ func TestReleasedMigrationChecksumsArePresent(t *testing.T) {
 		"001_create_registry_and_policy.sql", "002_create_runs.sql", "003_create_resources.sql",
 		"004_create_revocations.sql", "005_create_delivery_primitives.sql", "006_enforce_agent_version_immutability.sql",
 		"007_enforce_agent_approval_append_only.sql",
+		"008_enforce_run_resolution_immutability.sql",
 	} {
 		if !strings.Contains(string(contents), migration) {
 			t.Errorf("checksum manifest does not cover %s", migration)
@@ -96,6 +97,10 @@ func TestPhaseTwoSchemaContracts(t *testing.T) {
 		{
 			file:     "007_enforce_agent_approval_append_only.sql",
 			required: []string{"agent_version_approvals_append_only", "reject_agent_artifact_mutation"},
+		},
+		{
+			file:     "008_enforce_run_resolution_immutability.sql",
+			required: []string{"run_version_resolutions_immutable", "reject_agent_artifact_mutation"},
 		},
 	}
 

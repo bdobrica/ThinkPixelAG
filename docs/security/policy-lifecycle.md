@@ -30,6 +30,12 @@ risk-sensitive authoritative checks, stale/gapped security state, and numeric
 constraint narrowing. `make test-policy` compiles and tests it with the pinned
 OPA version.
 
+Server-selected versions use `runs.create`. Explicit historical pins require a
+separate authoritative, zero-TTL `versions.pin` governance decision, and use of
+a deprecated rollback candidate requires `versions.rollback`. The controlled
+selection and invocation decisions must come from the same active policy
+digest/version; a mid-resolution activation change fails closed.
+
 When Valkey is configured, the cache key incorporates the contract and active
 policy versions, relevant global/tenant/agent epochs, verified tenant and
 principal, action, resource, and normalized authorization-input digest. The

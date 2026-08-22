@@ -838,7 +838,7 @@ components:
         requested_version_digest:
           allOf:
             - $ref: '#/components/schemas/Digest'
-          description: Honored only when a privileged controlled-pin policy permits it
+          description: Requires a privileged versions.pin policy decision for an approved historical version, or versions.rollback for a deprecated version; normal invocation authorization is still required
     RequestedConstraints:
       type: object
       additionalProperties: false

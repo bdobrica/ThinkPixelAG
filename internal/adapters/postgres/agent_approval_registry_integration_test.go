@@ -36,7 +36,7 @@ func TestAgentApprovalLifecycleEvidenceIsolationConcurrencyAndImmutability(t *te
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer pool.Close()
+	t.Cleanup(pool.Close)
 
 	tenant, foreign := mustNewRepositoryID(t), mustNewRepositoryID(t)
 	actor, sponsor, agentID, versionID := mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t)
@@ -46,6 +46,9 @@ func TestAgentApprovalLifecycleEvidenceIsolationConcurrencyAndImmutability(t *te
 			t.Fatal(err)
 		}
 	}
+	t.Cleanup(func() {
+		_, _ = pool.Exec(context.Background(), `DELETE FROM outbox_messages WHERE tenant_id=$1`, tenant.String())
+	})
 	for _, id := range []domain.ID{actor, sponsor} {
 		if _, err := pool.Exec(ctx, `INSERT INTO principals(id,tenant_id,external_issuer,external_subject,principal_type,created_at) VALUES($1,$2,'https://reg003.test',$3,'HUMAN',$4)`, id.String(), tenant.String(), id.String(), now); err != nil {
 			t.Fatal(err)

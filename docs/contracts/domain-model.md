@@ -64,6 +64,17 @@ decision is committed with its policy decision ID, actor, request ID, audit
 event, and outbox event in one PostgreSQL transaction. Competing decisions lock
 the immutable version and exactly one valid transition succeeds.
 
+Automatic resolution considers only currently `APPROVED` versions, newest
+first, and selects the first candidate receiving a `runs.create` policy ALLOW.
+A caller-supplied digest is never an ordinary selector: an approved historical
+version additionally requires a zero-TTL `versions.pin` ALLOW, while a
+`DEPRECATED` version requires `versions.rollback`; both still require the
+normal invocation ALLOW under the same active policy version. `REGISTERED`,
+`REJECTED`, and `REVOKED` versions are never eligible. Admission persists the
+chosen version and approval together with the policy digest/version, invocation
+decision, optional controlled-selection decision, resolution mode, narrowed
+constraints, and timestamp as an immutable per-run snapshot.
+
 Manifest schema version 1 contains exactly `schema_version`, the digest-pinned
 `image` reference, sorted unique `models`, `tools`, `skills`, and `subagents`
 arrays, and `limits`. Missing or unknown fields are rejected. Model, tool, and

@@ -40,6 +40,7 @@ The initial schema is split along durable consistency boundaries:
   storage with the bounded public manifest contract.
 - `007` enforces database-level append-only approval, deprecation, and
   revocation history for agent versions.
+- `008` makes persisted run version-resolution evidence immutable.
 
 Tenant-owned relationships use composite foreign keys containing `tenant_id` so
 a database write cannot connect rows across tenants. Frequently used access

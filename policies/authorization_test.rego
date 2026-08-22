@@ -63,6 +63,21 @@ test_governance_admin_allowed if {
     d.decision_ttl_seconds == 0
 }
 
+test_version_pin_requires_governance_admin if {
+    denied := authorization.decision with input as object.union(base,{"action":"versions.pin"})
+    not denied.allow
+    allowed := authorization.decision with input as object.union(base,{"action":"versions.pin","subject":{"tenant_id":"t","roles":["governance-admin"]}})
+    allowed.allow
+    allowed.decision_ttl_seconds == 0
+}
+
+test_version_rollback_requires_governance_admin if {
+    denied := authorization.decision with input as object.union(base,{"action":"versions.rollback"})
+    not denied.allow
+    allowed := authorization.decision with input as object.union(base,{"action":"versions.rollback","subject":{"tenant_id":"t","roles":["governance-admin"]}})
+    allowed.allow
+}
+
 test_workload_role_cannot_administer if {
     d := authorization.decision with input as object.union(base,{"action":"policies.activate","subject":{"tenant_id":"t","roles":["trusted-workload"]}})
     not d.allow
