@@ -43,6 +43,7 @@ type Dependencies struct {
 	Readiness      ReadinessProbe
 	NewID          IDGenerator
 	AgentApprovals http.Handler
+	AgentDiscovery http.Handler
 }
 
 type Server struct {
@@ -115,6 +116,12 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 	}))
 	if dependencies.AgentApprovals != nil {
 		mount("POST /v1/admin/agents/{agent_id}/versions/{version_digest}/approvals", dependencies.AgentApprovals)
+	}
+	if dependencies.AgentDiscovery != nil {
+		mount("GET /v1/agents", dependencies.AgentDiscovery)
+		mount("HEAD /v1/agents", dependencies.AgentDiscovery)
+		mount("GET /v1/agents/{agent_id}", dependencies.AgentDiscovery)
+		mount("HEAD /v1/agents/{agent_id}", dependencies.AgentDiscovery)
 	}
 	mux.Handle("/", middleware("unknown", httpConfig, dependencies, http.HandlerFunc(notFound)))
 	return mux

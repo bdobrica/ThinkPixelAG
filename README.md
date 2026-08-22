@@ -20,8 +20,9 @@ rejection, deprecation, and revocation use an authorized append-only lifecycle
 whose decision, audit record, and outbox event commit atomically. Policy-driven
 resolution selects approved versions server-side, requires privileged policy
 evidence for historical pins or deprecated rollback, and persists immutable
-per-run evidence snapshots. The HTTP
-discovery surface remains scheduled later in Phase 3.
+per-run evidence snapshots. The public agent list and description endpoints
+authenticate opaque cursors, filter every active/invocable agent through policy,
+and return enumeration-safe detail errors.
 Phase 0 contracts, Phase 1 engineering foundations, and Phase 2
 migrations, repositories, idempotency, audit/outbox delivery, and real-database
 verification have passed their exit gates. [PLAN.md](PLAN.md) defines the

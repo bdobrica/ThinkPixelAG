@@ -83,11 +83,23 @@ paths:
         - $ref: '#/components/parameters/PageSize'
       responses:
         '200':
-          description: Visible agents
+          description: Policy-visible active agents with at least one currently approved version, ordered by opaque agent identifier
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AgentPage'
+        '400':
+          description: Invalid page size or authenticated cursor
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Caller is not authorized to discover the agent catalog
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         default:
           $ref: '#/components/responses/Problem'
   /v1/agents/{agent_id}:
@@ -104,6 +116,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Agent'
+        '404':
+          description: Agent is absent, outside the authenticated tenant, inactive, not invocable, or hidden by policy
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         default:
           $ref: '#/components/responses/Problem'
   /v1/agents/{agent_id}/runs:
@@ -590,6 +608,7 @@ components:
     Cursor:
       name: cursor
       in: query
+      description: HMAC-authenticated opaque continuation cursor; it conveys no authorization and is re-evaluated on every page
       schema:
         type: string
         maxLength: 512

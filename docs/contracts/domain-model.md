@@ -34,6 +34,14 @@ stateDiagram-v2
 - `ACTIVE` agents can be discovered/invoked if policy permits and an eligible version exists.
 - `SUSPENDED` prevents new admission; existing-run behavior is a separate policy/revocation decision.
 - `RETIRED` is terminal and preserves evidence/history.
+- Public discovery first authorizes `agents.list`, then evaluates
+  `agents.describe` independently for each active agent's newest approved
+  version. Denied or version-ineligible agents are omitted. Detail lookup maps
+  absent, cross-tenant, inactive, ineligible, and policy-hidden agents to the
+  same `404` response so identifiers cannot be enumerated.
+- List continuation uses an authenticated opaque `agent_id` cursor. Policy and
+  eligibility are re-evaluated after every continuation; a cursor carries no
+  tenant or visibility authority.
 - Agent creation requires distinct, active, same-tenant owner and sponsor
   principals and a closed `LOW`, `MEDIUM`, `HIGH`, or `CRITICAL` risk class.
 - Name, description, owner, sponsor, risk class, and lifecycle state are mutable
