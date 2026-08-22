@@ -18,7 +18,7 @@ clean results.
 | `make test-race` | race-test both Go modules |
 | `make test-policy` | run `opa test policies` once tracked Rego sources exist; until Phase 3 it reports their absence explicitly |
 | `make test-integration` | run integration-tagged tests against real PostgreSQL; defaults to the loopback development database and accepts `TEST_DATABASE_URL` |
-| `make test-e2e` | compile and run the repository with the `e2e` build tag; later phases add workflow suites |
+| `make test-e2e` | run composed workflow tests against real PostgreSQL with the `e2e` build tag; defaults to `TEST_DATABASE_URL` |
 | `make build` | create a static, trimmed `.cache/bin/thinkpixelag` with version/revision metadata |
 | `make image` | build `IMAGE` from immutable Go and distroless base-image indexes with embedded `VERSION`/`REVISION` |
 | `make container-smoke` | build and run `IMAGE`, proving non-root/read-only execution, OCI metadata, probes, and graceful SIGTERM shutdown |

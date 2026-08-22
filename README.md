@@ -164,10 +164,10 @@ make image
 make verify
 ```
 
-`make test-integration` and `make verify` require PostgreSQL. By default they
+`make test-integration`, `make test-e2e`, and `make verify` require PostgreSQL. By default they
 use the loopback-only development database started by `make dev-up`; set
 `TEST_DATABASE_URL` to use another disposable PostgreSQL database. Integration
-tests create and remove isolated databases and must never target production.
+and end-to-end tests use disposable data and must never target production.
 
 Start the pinned local dependencies with `make dev-up` (PostgreSQL and OPA), or
 `make dev-up-valkey` to include the optional cache. Use `make dev-smoke` to check
