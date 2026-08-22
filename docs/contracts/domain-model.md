@@ -101,6 +101,12 @@ Database triggers reject direct updates or deletes of either artifact table.
 
 ## Run lifecycle
 
+The public run status projection is loaded through a tenant-bound repository
+and includes the immutable version-resolution digest plus the current lifecycle
+and envelope versions. `runs.read` authorization is evaluated before it is
+returned. A missing run, a run in another tenant, and a same-tenant run hidden
+by policy are deliberately reported with the same not-found response.
+
 ```mermaid
 stateDiagram-v2
     [*] --> PENDING: create transaction begins

@@ -119,7 +119,10 @@ event, audit record, and outbox record commit as one unit. `POST
 /v1/agents/{agent_id}/runs` enforces bounded strict JSON, a scoped
 `Idempotency-Key`, server-derived tenant/principal identity, controlled explicit
 version selection, and stable replay/conflict responses. Remaining lifecycle
-routes follow in later Phase 4 items. See
+routes follow in later Phase 4 items. `GET /v1/runs/{run_id}` returns the
+tenant-scoped lifecycle and envelope summary only after `runs.read`
+authorization; malformed, absent, cross-tenant, and policy-hidden identifiers
+all produce the same enumeration-safe not-found response. See
 the [Phase 3 evidence](docs/phase-3-evidence.md) for the exact qualified surface
 and security behavior.
 

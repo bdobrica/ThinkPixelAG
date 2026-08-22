@@ -35,6 +35,42 @@ const (
 	RunActorSystem   RunActor = "SYSTEM"
 )
 
+// Run is the tenant-owned public lifecycle projection. Policy-only agent
+// metadata is kept alongside it by the application repository, not exposed.
+type Run struct {
+	ID, TenantID, AgentID, AgentVersionID, RequestedBy ID
+	VersionDigest                                      string
+	ParentRunID                                        *ID
+	State                                              RunState
+	StateVersion, EnvelopeVersion                      int64
+	DeadlineAt                                         *time.Time
+	CreatedAt, UpdatedAt                               time.Time
+}
+
+func (run Run) Validate() error {
+	if run.ID.IsZero() || run.TenantID.IsZero() || run.AgentID.IsZero() || run.AgentVersionID.IsZero() || run.RequestedBy.IsZero() || !ValidDigest(run.VersionDigest) || run.StateVersion < 1 || run.EnvelopeVersion < 1 {
+		return errors.New("run projection is invalid")
+	}
+	created, err := RequireUTC(run.CreatedAt)
+	if err != nil || created.IsZero() {
+		return errors.New("run creation time must be non-zero UTC")
+	}
+	updated, err := RequireUTC(run.UpdatedAt)
+	if err != nil || updated.Before(created) || !run.State.Valid() {
+		return errors.New("run lifecycle projection is invalid")
+	}
+	if run.ParentRunID != nil && (run.ParentRunID.IsZero() || *run.ParentRunID == run.ID) {
+		return errors.New("run parent is invalid")
+	}
+	if run.DeadlineAt != nil {
+		deadline, err := RequireUTC(*run.DeadlineAt)
+		if err != nil || !deadline.After(created) {
+			return errors.New("run deadline is invalid")
+		}
+	}
+	return nil
+}
+
 var (
 	ErrInvalidRunState      = errors.New("invalid run state")
 	ErrInvalidRunActor      = errors.New("invalid run actor")

@@ -86,6 +86,18 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if state != "ADMITTED" || stateVersion != 1 {
 		t.Fatalf("state=%s version=%d", state, stateVersion)
 	}
+	projection, err := repository.GetRun(ctx, admission.RunID)
+	if err != nil || projection.Run.ID != admission.RunID || projection.Run.TenantID != tenant || projection.Run.VersionDigest != digest || projection.Run.EnvelopeVersion != 1 || projection.AgentRiskClass != domain.AgentRiskHigh || projection.AgentOwnerID != principal {
+		t.Fatalf("run projection=%+v error=%v", projection, err)
+	}
+	otherTenant := mustNewRepositoryID(t)
+	if _, err := pool.Exec(ctx, `INSERT INTO tenants(id,slug,display_name,created_at,updated_at)VALUES($1,$2,$2,$3,$3)`, otherTenant.String(), "run-query-"+otherTenant.String(), now); err != nil {
+		t.Fatal(err)
+	}
+	otherRepository, _ := repositories.ForTenant(otherTenant)
+	if _, err := otherRepository.GetRun(ctx, admission.RunID); domain.ErrorCodeOf(err) != domain.CodeNotFound {
+		t.Fatalf("cross-tenant run query error=%v", err)
+	}
 	for query, target := range map[string]*int{
 		`SELECT count(*) FROM run_events WHERE tenant_id=$1 AND run_id=$2`:                                     &events,
 		`SELECT count(*) FROM resource_envelopes WHERE tenant_id=$1 AND run_id=$2`:                             &envelopes,

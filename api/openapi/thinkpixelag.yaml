@@ -173,6 +173,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Run'
+        '404':
+          description: Run absent, outside the authenticated tenant, or not visible to the caller
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         default:
           $ref: '#/components/responses/Problem'
   /v1/runs/{run_id}/signals:
