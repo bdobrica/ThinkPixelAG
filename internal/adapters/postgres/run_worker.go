@@ -155,8 +155,20 @@ func appendWorkerEventWithID(ctx context.Context, db DBTX, lease domain.RunLease
 		return err
 	}
 	payload["fencing_token"] = lease.FencingToken
+	payload["run_id"] = lease.RunID.String()
+	payload["state"] = state
+	payload["state_version"] = version
+	payload["sequence"] = sequence
 	encoded, _ := json.Marshal(payload)
-	_, err := db.Exec(ctx, `INSERT INTO run_events(id,tenant_id,run_id,sequence,event_type,actor_type,actor_id,state,state_version,payload,occurred_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, eventID.String(), lease.TenantID.String(), lease.RunID.String(), sequence, eventType, string(actor), lease.WorkerID.String(), state, version, encoded, at)
+	// The run event ID is also the outbox delivery ID. A publisher crash after
+	// sink acceptance therefore replays the exact same deduplication key.
+	_, err := db.Exec(ctx, `WITH inserted_event AS (
+INSERT INTO run_events(id,tenant_id,run_id,sequence,event_type,actor_type,actor_id,state,state_version,payload,occurred_at)
+VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+RETURNING id
+)
+INSERT INTO outbox_messages(id,tenant_id,aggregate_type,aggregate_id,event_type,schema_version,payload,headers,occurred_at,available_at)
+SELECT id,$2,'run',$3::text,$5,1,$10,'{}'::jsonb,$11,$11 FROM inserted_event`, eventID.String(), lease.TenantID.String(), lease.RunID.String(), sequence, eventType, string(actor), lease.WorkerID.String(), state, version, encoded, at)
 	return err
 }
 

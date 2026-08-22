@@ -218,6 +218,13 @@ same transaction as the lifecycle update and ordered event. Terminal changes
 clear the lease; equality with the expiry is expired. Consequently, a delayed
 heartbeat or mutation from any superseded worker cannot alter the run.
 
+Each committed claim, heartbeat, start, completion, failure, or timeout appends
+the next ordered run event and a transactional outbox envelope. Both rows use
+the same UUIDv7 identity. Publication is at least once: if a process stops after
+the sink accepts an envelope but before PostgreSQL records publication, claim
+expiry makes the unchanged envelope eligible for replay and the sink
+deduplicates by that stable identity.
+
 ## Policy activation lifecycle
 
 ```text

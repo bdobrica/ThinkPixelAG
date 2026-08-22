@@ -146,8 +146,11 @@ recoverable running work, heartbeat a bounded lease, and start, complete, fail,
 or time out the run. Every claim gets a new opaque lease ID and monotonically
 increasing fencing token. PostgreSQL compares the unexpired lease and fence
 while holding the run lock, so a worker delayed beyond expiry cannot heartbeat
-or mutate after another worker reclaims the run. Worker lifecycle changes emit
-ordered run events; full mutation outbox replay qualification is RUN-009.
+or mutate after another worker reclaims the run. Every successful claim,
+heartbeat, start, completion, failure, and timeout atomically emits an ordered
+run event and outbox envelope. The shared event/message UUID is the sink
+deduplication key, so a publisher crash after delivery but before acknowledgement
+causes a safe at-least-once replay of the same identity.
 See
 the [Phase 3 evidence](docs/phase-3-evidence.md) for the exact qualified surface
 and security behavior.

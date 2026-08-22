@@ -349,6 +349,51 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if workerEvents != 6 || workerDistinctSequences != workerEvents {
 		t.Fatalf("worker events=%d distinct sequences=%d", workerEvents, workerDistinctSequences)
 	}
+	var workerOutbox, matchingWorkerOutbox int
+	if err := pool.QueryRow(ctx, `SELECT count(*),count(o.id)
+	FROM run_events e LEFT JOIN outbox_messages o ON o.id=e.id AND o.tenant_id=e.tenant_id AND o.aggregate_type='run' AND o.aggregate_id=e.run_id::text AND o.event_type=e.event_type AND o.payload=e.payload
+	WHERE e.tenant_id=$1 AND e.run_id=$2 AND e.event_type IN ('run.claimed','run.heartbeat','run.started','run.completed')`, tenant.String(), workerAdmission.RunID.String()).Scan(&workerOutbox, &matchingWorkerOutbox); err != nil {
+		t.Fatal(err)
+	}
+	if workerOutbox != 5 || matchingWorkerOutbox != workerOutbox {
+		t.Fatalf("worker outbox=%d matching events=%d", workerOutbox, matchingWorkerOutbox)
+	}
+
+	// Simulate a process crash after the sink accepted a worker event but before
+	// its outbox row was acknowledged. Lease expiry must redeliver the same ID.
+	crashSink := &recordingSink{}
+	crashPublisher, err := NewOutboxPublisher(pool, crashSink, OutboxConfig{WorkerID: "run009-crash-worker", BatchSize: 1000, MaxAttempts: 3, Lease: time.Minute, BaseRetry: time.Second, MaxRetry: time.Minute, Jitter: func(time.Duration) time.Duration { return 0 }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	crashAt := claimAt.Add(10 * time.Minute)
+	claimed, err := crashPublisher.claim(ctx, crashAt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var crashedMessage *ClaimedMessage
+	for index := range claimed {
+		if claimed[index].AggregateID == workerAdmission.RunID.String() && claimed[index].EventType == "run.completed" {
+			crashedMessage = &claimed[index]
+			break
+		}
+	}
+	if crashedMessage == nil {
+		t.Fatal("completed worker outbox message was not claimed")
+	}
+	if err := crashSink.Send(ctx, crashedMessage.OutboxMessage); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := crashPublisher.PublishBatch(ctx, crashAt.Add(time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	if crashSink.count(crashedMessage.ID) != 2 {
+		t.Fatalf("crash replay deliveries=%d want 2", crashSink.count(crashedMessage.ID))
+	}
+	var replayPublished *time.Time
+	if err := pool.QueryRow(ctx, `SELECT published_at FROM outbox_messages WHERE id=$1`, crashedMessage.ID.String()).Scan(&replayPublished); err != nil || replayPublished == nil {
+		t.Fatalf("replayed publication=%v error=%v", replayPublished, err)
+	}
 
 	timeoutAdmission, timeoutResolution, timeoutEvidence := makeAdmission()
 	if err := repository.AdmitRun(ctx, timeoutAdmission, timeoutResolution, timeoutEvidence); err != nil {
