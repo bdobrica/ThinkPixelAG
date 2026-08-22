@@ -12,6 +12,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [Revocation and freshness](contracts/revocation.md)
 - [Policy decision contract](contracts/policy-decision.md)
 - [OpenAPI contract](../api/openapi/thinkpixelag.yaml)
+- [Run lifecycle API examples](api/run-lifecycle.md)
 - [Configuration reference](configuration.md)
 
 ## Security and operations
@@ -31,6 +32,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [Phase 1 engineering foundation evidence](phase-1-evidence.md)
 - [Phase 2 authoritative persistence evidence](phase-2-evidence.md)
 - [Phase 3 identity, policy, and registry evidence](phase-3-evidence.md)
+- [Phase 4 run lifecycle API evidence](phase-4-evidence.md)
 
 ## Architecture decisions
 

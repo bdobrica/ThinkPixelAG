@@ -270,6 +270,14 @@ Valkey 9.1.1. Full evidence is recorded in `docs/phase-3-evidence.md`.
 
 Implement run admission, status, events, signals, cancellation, state transitions, and event publication. Exit when OpenAPI contract and end-to-end lifecycle/idempotency tests pass.
 
+Status: **Completed 2026-08-22.** The authenticated public lifecycle surface,
+tenant-scoped PostgreSQL repositories, ordered resumable SSE, concurrency-safe
+cancellation, fenced worker leases, and transactional outbox publication are
+implemented. The OpenAPI contract, focused concurrency/replay suites, composed
+real-PostgreSQL workflow, and full clean-tree gate passed. API examples and
+full qualification evidence are recorded in `docs/api/run-lifecycle.md` and
+`docs/phase-4-evidence.md`.
+
 ### Phase 5 — Resource governance
 
 Implement resource dimensions, envelope issuance, atomic child reservation, trusted metering, exhaustion transitions, extension, settlement, reclaim, and reconciliation. Exit when stress/property tests cannot oversubscribe or double-credit resources.

@@ -93,7 +93,7 @@ flowchart TB
 
 Caller identity and tenant context come only from a verified access token and trusted identity configuration. Tenant identity, delegation tokens, policy decisions, usage reports, or resource extensions supplied in ordinary request bodies are not trusted. High-risk writes require current authoritative revocation state. Privileged changes require stronger authorization, separation-of-duty integration points, and independent evidence emission.
 
-## API contract and implemented Phase 3 surface
+## API contract and implemented Phase 4 surface
 
 The versioned API begins with:
 
@@ -119,14 +119,13 @@ Administrative APIs for agent/version registration, policy promotion, revocation
 Phase 3 implements authenticated public agent list/description handlers and the
 governed version-approval handler, plus application and PostgreSQL boundaries
 for agent/version registration, approval state, discovery, and version
-resolution. Phase 4 now includes the run-admission application and PostgreSQL
+resolution. Phase 4 implements the run-admission application and PostgreSQL
 transaction and public admission endpoint: authenticated identity, policy-narrowed constraints, version
 eligibility, the admitted run, resolution snapshot, envelope header, first
 event, audit record, and outbox record commit as one unit. `POST
 /v1/agents/{agent_id}/runs` enforces bounded strict JSON, a scoped
 `Idempotency-Key`, server-derived tenant/principal identity, controlled explicit
-version selection, and stable replay/conflict responses. Remaining lifecycle
-routes follow in later Phase 4 items. `GET /v1/runs/{run_id}` returns the
+version selection, and stable replay/conflict responses. `GET /v1/runs/{run_id}` returns the
 tenant-scoped lifecycle and envelope summary only after `runs.read`
 authorization; malformed, absent, cross-tenant, and policy-hidden identifiers
 all produce the same enumeration-safe not-found response. `POST
@@ -151,9 +150,10 @@ heartbeat, start, completion, failure, and timeout atomically emits an ordered
 run event and outbox envelope. The shared event/message UUID is the sink
 deduplication key, so a publisher crash after delivery but before acknowledgement
 causes a safe at-least-once replay of the same identity.
-See
-the [Phase 3 evidence](docs/phase-3-evidence.md) for the exact qualified surface
-and security behavior.
+See the [run lifecycle API examples](docs/api/run-lifecycle.md), the canonical
+[state-machine contract](docs/contracts/domain-model.md#run-lifecycle), and the
+[Phase 4 evidence](docs/phase-4-evidence.md) for the exact qualified surface and
+security behavior.
 
 ## Run and resource model
 
