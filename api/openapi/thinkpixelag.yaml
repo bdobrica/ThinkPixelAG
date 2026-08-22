@@ -729,7 +729,9 @@ components:
         agent_id:
           $ref: '#/components/schemas/Identifier'
         digest:
-          $ref: '#/components/schemas/Digest'
+          allOf:
+            - $ref: '#/components/schemas/Digest'
+          description: SHA-256 of the canonical schema-v1 manifest defined by the registry contract
         image:
           type: string
           maxLength: 1024
@@ -747,6 +749,7 @@ components:
           uniqueItems: true
           items:
             type: string
+            minLength: 1
             maxLength: 1024
         subagents:
           $ref: '#/components/schemas/IdentifierList'
@@ -760,7 +763,9 @@ components:
       required: [digest, image, models, tools, skills, subagents, limits]
       properties:
         digest:
-          $ref: '#/components/schemas/Digest'
+          allOf:
+            - $ref: '#/components/schemas/Digest'
+          description: Must match the SHA-256 of the server-normalized schema-v1 manifest
         image:
           type: string
           maxLength: 1024
@@ -775,6 +780,7 @@ components:
           uniqueItems: true
           items:
             type: string
+            minLength: 1
             maxLength: 1024
         subagents:
           $ref: '#/components/schemas/IdentifierList'

@@ -56,6 +56,22 @@ stateDiagram-v2
 
 The manifest and content digest are immutable after `REGISTERED`. Approval, deprecation, and revocation are append-only state records. New runs normally select `APPROVED`; a `DEPRECATED` version may be selected only by an explicit rollback policy. `REVOKED` is never eligible. Lifting a revocation creates a new governance event and does not erase history or decrement epochs.
 
+Manifest schema version 1 contains exactly `schema_version`, the digest-pinned
+`image` reference, sorted unique `models`, `tools`, `skills`, and `subagents`
+arrays, and `limits`. Missing or unknown fields are rejected. Model, tool, and
+subagent declarations use the bounded API identifier grammar; skill references
+are bounded to 1,024 printable non-whitespace characters. Each array contains
+at most 100 entries. Limits use integers only, reject negative values, bound
+execution time to seven days, and require active children not to exceed total
+children.
+
+The content digest is `sha256:` plus the lowercase SHA-256 of compact JSON
+produced from that field order after declaration arrays are sorted. The image
+digest stored beside the manifest must equal the suffix of the image reference.
+Registration compares both digests, stores the version and its normalized
+capabilities in one PostgreSQL statement, and exposes no update/delete method.
+Database triggers reject direct updates or deletes of either artifact table.
+
 ## Run lifecycle
 
 ```mermaid

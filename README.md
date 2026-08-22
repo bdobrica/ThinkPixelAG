@@ -13,7 +13,10 @@ The policy boundary includes adversarial golden tests and an optional
 integrity-protected, epoch/version-bound Valkey decision cache.
 The agent registry now provides validated tenant-scoped creation, optimistic
 metadata/lifecycle updates, and list/describe application and persistence
-boundaries; its HTTP discovery surface remains scheduled later in Phase 3.
+boundaries. Agent implementations are registered as immutable canonical
+schema-v1 manifests with verified content/image digests, bounded declarations
+and limits, and database-enforced artifact immutability. The HTTP discovery
+surface remains scheduled later in Phase 3.
 Phase 0 contracts, Phase 1 engineering foundations, and Phase 2
 migrations, repositories, idempotency, audit/outbox delivery, and real-database
 verification have passed their exit gates. [PLAN.md](PLAN.md) defines the

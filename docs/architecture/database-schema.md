@@ -63,8 +63,9 @@ policy activation per tenant/channel while activation versions retain history.
 
 Version manifests, capability declarations, approvals, and policy artifacts are
 treated as immutable history. The schema exposes no update timestamp for these
-records. Runtime role grants and repository methods will omit update/delete
-authority for them.
+records. Repository methods omit update/delete authority for them, and
+database triggers reject direct updates or deletes of registered agent versions
+and their normalized capability rows.
 
 ## Runs and resolution
 

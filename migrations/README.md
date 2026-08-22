@@ -35,10 +35,14 @@ The initial schema is split along durable consistency boundaries:
   log and durable gateway checkpoints;
 - `005` contains request-hash-bound idempotency, audit evidence and the
   claim/retry/dead-letter transactional outbox.
+- `006` enforces database-level immutability for registered agent versions and
+  their normalized capability declarations, and aligns skill declaration
+  storage with the bounded public manifest contract.
 
 Tenant-owned relationships use composite foreign keys containing `tenant_id` so
 a database write cannot connect rows across tenants. Frequently used access
 paths begin with `tenant_id`; globally ordered operational streams are the
 documented exceptions. Append-only and immutable tables intentionally have no
-`updated_at` column. Runtime roles and repositories will deny updates to those
-tables when they are introduced in DATA-007 and DATA-008.
+`updated_at` column. Repositories expose no mutation methods for immutable
+artifacts, and security-critical agent version/manifest rows additionally use
+database triggers to reject direct updates or deletes.
