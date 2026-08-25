@@ -4,6 +4,17 @@
 
 Each resource definition has a stable name, class, unit, numeric scale, minimum, maximum, and aggregation rule.
 
+Definitions are tenant-scoped data rather than a closed list in code, so new
+dimensions can be introduced without changing the resource vector schema. Names
+and units use canonical lower-case `snake_case` identifiers of at most 63
+characters. Values are exact signed 64-bit coefficients at the declared decimal
+scale (0–18), and must fall within the definition's inclusive nonnegative bounds.
+Consumables use `SUM`; structural ceilings use `MAX` or `MIN` according to their
+counter/constraint semantics. Deadline-like dimensions use `ABSOLUTE`, scale 0,
+and the explicit `unix_microseconds_utc` unit. New behavioral classes or deadline
+representations require a forward migration rather than being accepted as
+untyped strings.
+
 | Class | Semantics | Examples | Expansion rule |
 |---|---|---|---|
 | Consumable | finite quantity reserved, metered, settled, reclaimed | `usd_microunits`, `llm_tokens`, `tool_calls`, `cpu_milliseconds`, `egress_bytes` | only an authorized additive governance ledger entry |

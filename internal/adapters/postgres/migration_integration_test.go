@@ -26,21 +26,21 @@ func TestMigrationQualification(t *testing.T) {
 
 	t.Run("empty database and access paths", func(t *testing.T) {
 		conn := newMigrationTestDatabase(t, databaseURL)
-		migrateAndRequireVersion(t, ctx, conn, sources, 8)
+		migrateAndRequireVersion(t, ctx, conn, sources, 9)
 		assertQualifiedSchema(t, ctx, conn)
 	})
 
 	t.Run("upgrade seeded prior fixture", func(t *testing.T) {
 		conn := newMigrationTestDatabase(t, databaseURL)
-		prior := migrationPrefixFixture(t, sources, 7)
-		migrateAndRequireVersion(t, ctx, conn, prior, 7)
+		prior := migrationPrefixFixture(t, sources, 8)
+		migrateAndRequireVersion(t, ctx, conn, prior, 8)
 
 		tenantID := mustMigrationID(t)
 		now := time.Now().UTC().Truncate(time.Microsecond)
 		if _, err := conn.Exec(ctx, `INSERT INTO tenants (id, slug, display_name, created_at, updated_at) VALUES ($1, $2, 'prior fixture', $3, $3)`, tenantID, "prior-"+strings.ReplaceAll(tenantID, "-", ""), now); err != nil {
 			t.Fatal(err)
 		}
-		migrateAndRequireVersion(t, ctx, conn, sources, 8)
+		migrateAndRequireVersion(t, ctx, conn, sources, 9)
 		var displayName string
 		if err := conn.QueryRow(ctx, `SELECT display_name FROM tenants WHERE id = $1`, tenantID).Scan(&displayName); err != nil {
 			t.Fatalf("prior row was not preserved: %v", err)
@@ -107,6 +107,16 @@ func assertQualifiedSchema(t *testing.T, ctx context.Context, conn *pgx.Conn) {
 	_, err = conn.Exec(ctx, `INSERT INTO principals (id, tenant_id, external_issuer, external_subject, principal_type, created_at) VALUES ($1, $2, 'https://data011.test', 'missing-tenant', 'HUMAN', $3)`, mustMigrationID(t), mustMigrationID(t), now)
 	if err == nil || !errors.As(err, &pgErr) || pgErr.Code != "23503" {
 		t.Fatalf("principal foreign-key constraint error = %v", err)
+	}
+	for name, statement := range map[string]string{
+		"noncanonical unit":  `INSERT INTO resource_dimensions (id, tenant_id, name, class, unit, scale, minimum_value, maximum_value, aggregation, created_at) VALUES ($1, $2, 'tokens', 'CONSUMABLE', 'Tokens', 0, 0, 10, 'SUM', $3)`,
+		"structural sum":     `INSERT INTO resource_dimensions (id, tenant_id, name, class, unit, scale, minimum_value, maximum_value, aggregation, created_at) VALUES ($1, $2, 'children', 'STRUCTURAL', 'children', 0, 0, 10, 'SUM', $3)`,
+		"ambiguous deadline": `INSERT INTO resource_dimensions (id, tenant_id, name, class, unit, scale, minimum_value, maximum_value, aggregation, created_at) VALUES ($1, $2, 'deadline', 'DEADLINE', 'seconds', 0, 0, 10, 'ABSOLUTE', $3)`,
+	} {
+		_, err = conn.Exec(ctx, statement, mustMigrationID(t), tenantID, now)
+		if err == nil || !errors.As(err, &pgErr) || pgErr.Code != "23514" {
+			t.Fatalf("%s check constraint error = %v", name, err)
+		}
 	}
 	if _, err := conn.Exec(ctx, `SET enable_seqscan = off`); err != nil {
 		t.Fatal(err)
