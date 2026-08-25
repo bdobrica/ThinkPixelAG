@@ -165,6 +165,13 @@ Runs follow an explicit state machine. Terminal transitions are idempotent. Budg
 
 Child reservations are atomically debited from parent availability. Trusted usage is recorded in an append-only ledger. Terminal settlement closes the reservation exactly once and immediately returns unused capacity to the parent in the same database transaction.
 
+The implemented consumable-reservation primitive orders PostgreSQL balance
+locks by dimension UUID and conditionally moves the entire requested vector
+from parent availability to open allocation while issuing matching child
+grants and initial balances. Any unavailable or insufficient dimension rolls
+back the full vector; structural child/depth admission is the next Phase 5
+governance layer.
+
 ## Security and reliability principles
 
 - Deny by default and fail closed when required policy or revocation freshness cannot be established.

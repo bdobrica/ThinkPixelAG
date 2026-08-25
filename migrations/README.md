@@ -45,6 +45,9 @@ The initial schema is split along durable consistency boundaries:
   deadline representations.
 - `010` enforces database-level immutability for issued envelope grants while
   leaving their paired balance rows mutable.
+- `011` makes the committed dimension vector of each resource reservation
+  immutable while leaving reservation headers available for exactly-once
+  settlement state changes.
 
 Tenant-owned relationships use composite foreign keys containing `tenant_id` so
 a database write cannot connect rows across tenants. Frequently used access

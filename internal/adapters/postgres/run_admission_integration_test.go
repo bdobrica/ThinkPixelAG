@@ -44,8 +44,11 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	llmDimension := mustNewRepositoryID(t)
+	llmDimension, toolDimension := mustNewRepositoryID(t), mustNewRepositoryID(t)
 	if _, err := pool.Exec(ctx, `INSERT INTO resource_dimensions(id,tenant_id,name,class,unit,scale,minimum_value,maximum_value,aggregation,created_at) VALUES($1,$2,'llm_tokens','CONSUMABLE','llm_tokens',0,0,1000,'SUM',$3)`, llmDimension.String(), tenant.String(), now); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO resource_dimensions(id,tenant_id,name,class,unit,scale,minimum_value,maximum_value,aggregation,created_at) VALUES($1,$2,'tool_calls','CONSUMABLE','calls',0,0,1000,'SUM',$3)`, toolDimension.String(), tenant.String(), now); err != nil {
 		t.Fatal(err)
 	}
 	for _, id := range []domain.ID{principal, sponsor} {
@@ -73,7 +76,7 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	})
 	makeAdmission := func() (domain.RunAdmission, domain.RunVersionResolution, ports.RunAdmissionEvidence) {
 		runID, envelopeID, decisionID := mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t)
-		constraints := map[string]any{"max_execution_time_seconds": float64(60), "max_llm_tokens": float64(100)}
+		constraints := map[string]any{"max_execution_time_seconds": float64(60), "max_llm_tokens": float64(100), "max_tool_calls": float64(50)}
 		deadline := now.Add(time.Minute)
 		admission := domain.RunAdmission{RunID: runID, EnvelopeID: envelopeID, TenantID: tenant, AgentID: agentID, AgentVersionID: versionID, AgentVersionDigest: digest, RequestedBy: principal, PolicyDecisionID: decisionID, State: domain.RunAdmitted, StateVersion: 1, Constraints: constraints, DeadlineAt: &deadline, CreatedAt: now, UpdatedAt: now}
 		resolution := domain.RunVersionResolution{RunID: runID, TenantID: tenant, AgentID: agentID, AgentVersionID: versionID, ApprovalID: approvalID, AgentContentDigest: digest, PolicyBundleDigest: "sha256:" + strings.Repeat("f", 64), PolicyActivationVersion: 3, Mode: domain.ResolutionAutomatic, InvocationDecisionID: decisionID, ResolvedConstraints: constraints, ResolvedAt: now}
@@ -129,6 +132,100 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	}
 	if _, err := pool.Exec(ctx, `UPDATE resource_envelope_grants SET granted_value=101 WHERE tenant_id=$1 AND envelope_id=$2 AND dimension_id=$3`, tenant.String(), admission.EnvelopeID.String(), llmDimension.String()); err == nil {
 		t.Fatal("immutable root grant accepted an update")
+	}
+	makeChild := func(parent domain.ID) (domain.RunAdmission, domain.RunVersionResolution, ports.RunAdmissionEvidence) {
+		child, childResolution, childEvidence := makeAdmission()
+		child.Constraints = map[string]any{}
+		childResolution.ResolvedConstraints = map[string]any{}
+		if err := repository.AdmitRun(ctx, child, childResolution, childEvidence); err != nil {
+			t.Fatal(err)
+		}
+		if tag, err := pool.Exec(ctx, `UPDATE resource_envelopes SET parent_envelope_id=$1 WHERE tenant_id=$2 AND id=$3`, parent.String(), tenant.String(), child.EnvelopeID.String()); err != nil || tag.RowsAffected() != 1 {
+			t.Fatalf("link child envelope: tag=%v err=%v", tag, err)
+		}
+		return child, childResolution, childEvidence
+	}
+	child, _, _ := makeChild(admission.EnvelopeID)
+	reservation := domain.ResourceReservation{
+		ID: mustNewRepositoryID(t), TenantID: tenant, ParentEnvelopeID: admission.EnvelopeID, ChildEnvelopeID: child.EnvelopeID, ChildRunID: child.RunID, CreatedAt: now.Add(time.Second),
+		Amounts: []domain.ResourceReservationAmount{{DimensionID: toolDimension, Coefficient: 20}, {DimensionID: llmDimension, Coefficient: 40}},
+	}
+	reserved, err := repository.ReserveChildResources(ctx, reservation)
+	if err != nil || reserved.Amounts[0].DimensionID.String() > reserved.Amounts[1].DimensionID.String() {
+		t.Fatalf("reserve child resources=%+v error=%v", reserved, err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE resource_reservation_items SET reserved_value=reserved_value+1 WHERE tenant_id=$1 AND reservation_id=$2 AND dimension_id=$3`, tenant.String(), reservation.ID.String(), llmDimension.String()); err == nil {
+		t.Fatal("immutable reservation item accepted an update")
+	}
+	for _, expected := range []struct {
+		dimension                          domain.ID
+		amount, parentAvailable, allocated int64
+	}{{llmDimension, 40, 60, 40}, {toolDimension, 20, 30, 20}} {
+		var reservedValue, childGranted, childAvailable, parentAvailable, allocated int64
+		err := pool.QueryRow(ctx, `SELECT i.reserved_value,g.granted_value,child.available_value,parent.available_value,parent.allocated_open_value FROM resource_reservation_items i JOIN resource_envelope_grants g ON g.tenant_id=i.tenant_id AND g.envelope_id=$3 AND g.dimension_id=i.dimension_id JOIN resource_balances child ON child.tenant_id=g.tenant_id AND child.envelope_id=g.envelope_id AND child.dimension_id=g.dimension_id JOIN resource_balances parent ON parent.tenant_id=i.tenant_id AND parent.envelope_id=$4 AND parent.dimension_id=i.dimension_id WHERE i.tenant_id=$1 AND i.reservation_id=$2 AND i.dimension_id=$5`, tenant.String(), reservation.ID.String(), child.EnvelopeID.String(), admission.EnvelopeID.String(), expected.dimension.String()).Scan(&reservedValue, &childGranted, &childAvailable, &parentAvailable, &allocated)
+		if err != nil || reservedValue != expected.amount || childGranted != expected.amount || childAvailable != expected.amount || parentAvailable != expected.parentAvailable || allocated != expected.allocated {
+			t.Fatalf("dimension %s reservation=%d child=%d/%d parent=%d/%d err=%v", expected.dimension, reservedValue, childGranted, childAvailable, parentAvailable, allocated, err)
+		}
+	}
+
+	insufficientChild, _, _ := makeChild(admission.EnvelopeID)
+	insufficient := domain.ResourceReservation{ID: mustNewRepositoryID(t), TenantID: tenant, ParentEnvelopeID: admission.EnvelopeID, ChildEnvelopeID: insufficientChild.EnvelopeID, ChildRunID: insufficientChild.RunID, CreatedAt: now.Add(2 * time.Second), Amounts: []domain.ResourceReservationAmount{{DimensionID: toolDimension, Coefficient: 10}, {DimensionID: llmDimension, Coefficient: 61}}}
+	if _, err := repository.ReserveChildResources(ctx, insufficient); domain.ErrorCodeOf(err) != domain.CodeConflict {
+		t.Fatalf("insufficient multi-resource reservation error=%v", err)
+	}
+	var failedReservations, failedItems, failedGrants int
+	if err := pool.QueryRow(ctx, `SELECT (SELECT count(*) FROM resource_reservations WHERE tenant_id=$1 AND id=$2),(SELECT count(*) FROM resource_reservation_items WHERE tenant_id=$1 AND reservation_id=$2),(SELECT count(*) FROM resource_envelope_grants WHERE tenant_id=$1 AND envelope_id=$3)`, tenant.String(), insufficient.ID.String(), insufficientChild.EnvelopeID.String()).Scan(&failedReservations, &failedItems, &failedGrants); err != nil {
+		t.Fatal(err)
+	}
+	var toolAvailable int64
+	if err := pool.QueryRow(ctx, `SELECT available_value FROM resource_balances WHERE tenant_id=$1 AND envelope_id=$2 AND dimension_id=$3`, tenant.String(), admission.EnvelopeID.String(), toolDimension.String()).Scan(&toolAvailable); err != nil {
+		t.Fatal(err)
+	}
+	if failedReservations != 0 || failedItems != 0 || failedGrants != 0 || toolAvailable != 30 {
+		t.Fatalf("failed vector left reservation=%d items=%d grants=%d tool_available=%d", failedReservations, failedItems, failedGrants, toolAvailable)
+	}
+
+	parallelChildren := make([]domain.RunAdmission, 2)
+	parallelReservationIDs := make([]domain.ID, 2)
+	for index := range parallelChildren {
+		parallelChildren[index], _, _ = makeChild(admission.EnvelopeID)
+		parallelReservationIDs[index] = mustNewRepositoryID(t)
+	}
+	parallelErrors := make(chan error, len(parallelChildren))
+	var reservationWait sync.WaitGroup
+	for index, parallelChild := range parallelChildren {
+		reservationWait.Add(1)
+		go func(index int, child domain.RunAdmission) {
+			defer reservationWait.Done()
+			amounts := []domain.ResourceReservationAmount{{DimensionID: llmDimension, Coefficient: 40}, {DimensionID: toolDimension, Coefficient: 20}}
+			if index == 1 {
+				amounts[0], amounts[1] = amounts[1], amounts[0]
+			}
+			_, err := repository.ReserveChildResources(ctx, domain.ResourceReservation{ID: parallelReservationIDs[index], TenantID: tenant, ParentEnvelopeID: admission.EnvelopeID, ChildEnvelopeID: child.EnvelopeID, ChildRunID: child.RunID, CreatedAt: now.Add(time.Duration(3+index) * time.Second), Amounts: amounts})
+			parallelErrors <- err
+		}(index, parallelChild)
+	}
+	reservationWait.Wait()
+	close(parallelErrors)
+	var reservationSuccesses, reservationConflicts int
+	for err := range parallelErrors {
+		if err == nil {
+			reservationSuccesses++
+			continue
+		}
+		switch domain.ErrorCodeOf(err) {
+		case domain.CodeConflict:
+			reservationConflicts++
+		default:
+			t.Fatalf("parallel reservation error=%v", err)
+		}
+	}
+	var llmAvailable, llmAllocated, parallelToolAvailable, parallelToolAllocated int64
+	if err := pool.QueryRow(ctx, `SELECT llm.available_value,llm.allocated_open_value,tool.available_value,tool.allocated_open_value FROM resource_balances llm JOIN resource_balances tool ON tool.tenant_id=llm.tenant_id AND tool.envelope_id=llm.envelope_id WHERE llm.tenant_id=$1 AND llm.envelope_id=$2 AND llm.dimension_id=$3 AND tool.dimension_id=$4`, tenant.String(), admission.EnvelopeID.String(), llmDimension.String(), toolDimension.String()).Scan(&llmAvailable, &llmAllocated, &parallelToolAvailable, &parallelToolAllocated); err != nil {
+		t.Fatal(err)
+	}
+	if reservationSuccesses != 1 || reservationConflicts != 1 || llmAvailable != 20 || llmAllocated != 80 || parallelToolAvailable != 10 || parallelToolAllocated != 40 {
+		t.Fatalf("parallel successes=%d conflicts=%d llm=%d/%d tool=%d/%d", reservationSuccesses, reservationConflicts, llmAvailable, llmAllocated, parallelToolAvailable, parallelToolAllocated)
 	}
 	outOfBoundsAdmission, outOfBoundsResolution, outOfBoundsEvidence := makeAdmission()
 	outOfBoundsAdmission.Constraints["max_llm_tokens"] = float64(1001)

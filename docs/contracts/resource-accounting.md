@@ -73,6 +73,19 @@ persisted absolute run deadline until its enforcement work is introduced.
 
 Concurrent attempts may retry bounded serialization/deadlock failures with jitter only while the idempotency record preserves one logical outcome. PostgreSQL is authoritative; Valkey cannot approve a reservation.
 
+The reservation persistence primitive accepts a non-empty vector of strictly
+positive consumable coefficients. It rejects duplicate dimensions, sorts a
+defensive copy by dimension UUID, and locks parent balance rows in that exact
+order. After every row is locked and shown sufficient, checked updates move
+each coefficient from `available` to `allocated_open`, advancing the balance
+version. The same transaction creates the open reservation, copies the
+authoritative unit and scale into its immutable item vector and child grant,
+and initializes each child balance with full availability. A missing,
+non-consumable, insufficient, overflowing, or concurrently changed dimension
+rolls back the complete vector. RES-004 composes this primitive with governed
+child admission and the structural child/depth checks; callers cannot use the
+persistence primitive as an authorization boundary.
+
 ## Trusted metering
 
 - Only identities granted the meter action for the run/resource source may submit usage.
