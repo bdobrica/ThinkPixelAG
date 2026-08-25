@@ -85,7 +85,7 @@ Status notation: `[ ]` pending, `[x]` implemented and verified. Add completion m
 
 ## Phase 5 — Resource allocation and run governance
 
-- [x] RES-001 Implement extensible typed resource dimensions classified as consumable, structural, or deadline-like with explicit units and validation. — completed 2026-08-25, commit `PENDING`, evidence: domain definition/value validation unit and race tests; migration 009 checksum/schema tests; PostgreSQL 18.4 forward-upgrade and constraint qualification; `make verify`
+- [x] RES-001 Implement extensible typed resource dimensions classified as consumable, structural, or deadline-like with explicit units and validation. — completed 2026-08-25, commit `a1ada23`, evidence: domain definition/value validation unit and race tests; migration 009 checksum/schema tests; PostgreSQL 18.4 forward-upgrade and constraint qualification; `make verify`
 - [ ] RES-002 Implement policy-constrained root envelope issuance and persist its immutable grant plus mutable balances.
 - [ ] RES-003 Implement multi-dimension atomic child reservation using PostgreSQL locks/conditional updates and deterministic lock ordering.
 - [ ] RES-004 Enforce maximum active/total children and delegation depth transactionally during child admission.
@@ -209,7 +209,7 @@ Append one entry per completed atomic item or tightly coupled group. Do not dele
 | 2026-08-22 | RUN-009 | `d0d88df` | Transactional worker event/outbox identity coverage; PostgreSQL 18.4 post-send crash and lease-expiry replay integration repeated 10 times; focused race suite; `make verify` | Every worker mutation emits an outbox row atomically; the run-event UUID is reused as the sink deduplication key, so ambiguous post-send crashes replay the same identity |
 | 2026-08-22 | RUN-010 | `81b7508` | Mounted public HTTP/application/PostgreSQL lifecycle test; OpenAPI response-shape and lint checks; exact idempotency replay/conflict; cross-tenant isolation; SSE reconnect; terminal concurrency repeated 10 times under the race detector; complete end-to-end suite; `make verify` | One composed workflow now qualifies the Phase 4 public surface and trusted worker interaction; focused adapter suites remain the deeper source of crash/replay, retention, fencing, and high-contention coverage |
 | 2026-08-22 | RUN-011 | `6518df7` | Phase 4 API/example/state-machine/evidence reconciliation; clean-tree `make verify` | Phase 4 exit qualified the public lifecycle and trusted worker boundary; resource dimensions, accounting, settlement, and reclaim remain Phase 5 |
-| 2026-08-25 | RES-001 | `PENDING` | Typed tenant-scoped dimension definitions and quantity validation; migration 009 domain/schema constraints; PostgreSQL 18.4 forward-upgrade qualification; domain unit/race tests; `make verify` | Dimensions remain data-driven within the three governed behavioral classes. Deadline-like values use absolute UTC Unix microseconds; adding a behavioral class or representation requires a forward migration rather than accepting an untyped value |
+| 2026-08-25 | RES-001 | `a1ada23` | Typed tenant-scoped dimension definitions and quantity validation; migration 009 domain/schema constraints; PostgreSQL 18.4 forward-upgrade qualification; domain unit/race tests; clean-tree `make verify` at `64a734b` | Dimensions remain data-driven within the three governed behavioral classes. Deadline-like values use absolute UTC Unix microseconds; adding a behavioral class or representation requires a forward migration rather than accepting an untyped value |
 
 ## Active blockers and deviations
 
