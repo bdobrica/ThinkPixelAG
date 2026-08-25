@@ -41,6 +41,10 @@ The initial schema is split along durable consistency boundaries:
 - `007` enforces database-level append-only approval, deprecation, and
   revocation history for agent versions.
 - `008` makes persisted run version-resolution evidence immutable.
+- `009` validates canonical resource units and class-specific aggregation and
+  deadline representations.
+- `010` enforces database-level immutability for issued envelope grants while
+  leaving their paired balance rows mutable.
 
 Tenant-owned relationships use composite foreign keys containing `tenant_id` so
 a database write cannot connect rows across tenants. Frequently used access

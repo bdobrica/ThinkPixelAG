@@ -66,6 +66,10 @@ func (service *RunAdmissionService) Admit(ctx context.Context, command AdmitRun)
 	if err != nil {
 		return domain.RunAdmission{}, err
 	}
+	_, err = domain.RootResourceGrants(resolution.ResolvedConstraints)
+	if err != nil {
+		return domain.RunAdmission{}, domain.WrapError(domain.CodeUnavailable, "policy resolved invalid resource grants", err).WithRetryable()
+	}
 	ids := make([]domain.ID, 4)
 	for index := range ids {
 		ids[index], err = domain.NewID()

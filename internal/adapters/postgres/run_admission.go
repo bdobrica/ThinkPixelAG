@@ -26,6 +26,10 @@ func (r *TenantRepository) AdmitRun(ctx context.Context, admission domain.RunAdm
 	if err := resolution.Validate(); err != nil {
 		return err
 	}
+	resourceGrants, err := domain.RootResourceGrants(resolution.ResolvedConstraints)
+	if err != nil {
+		return domain.WrapError(domain.CodeInvalidArgument, "resolved resource grants are invalid", err)
+	}
 	if evidence.EventID.IsZero() || evidence.AuditID.IsZero() || evidence.OutboxID.IsZero() || evidence.RequestID.IsZero() || len(evidence.ReasonCodes) == 0 {
 		return errors.New("run admission evidence is invalid")
 	}
@@ -92,6 +96,25 @@ func (r *TenantRepository) AdmitRun(ctx context.Context, admission domain.RunAdm
 				return domain.WrapError(domain.CodeInvalidArgument, "run admission references are invalid", err)
 			default:
 				return fmt.Errorf("admit run: %w", err)
+			}
+		}
+		for _, grant := range resourceGrants {
+			commandTag, grantErr := txRepository.db.Exec(ctx, `WITH dimension AS (
+ SELECT id,unit,scale,minimum_value,maximum_value FROM resource_dimensions
+ WHERE tenant_id=$1 AND name=$3
+), inserted_grant AS (
+ INSERT INTO resource_envelope_grants(tenant_id,envelope_id,dimension_id,granted_value,unit,scale)
+ SELECT $1,$2,id,$4,unit,scale FROM dimension
+ WHERE $4 BETWEEN minimum_value AND maximum_value
+ RETURNING dimension_id,unit,scale
+)
+INSERT INTO resource_balances(tenant_id,envelope_id,dimension_id,available_value,direct_consumed_value,allocated_open_value,state_version,updated_at)
+SELECT $1,$2,dimension_id,$4,0,0,1,$5 FROM inserted_grant`, admission.TenantID.String(), admission.EnvelopeID.String(), grant.DimensionName, grant.Coefficient, admission.CreatedAt)
+			if grantErr != nil {
+				return fmt.Errorf("issue root resource grant %q: %w", grant.DimensionName, grantErr)
+			}
+			if commandTag.RowsAffected() != 1 {
+				return domain.NewError(domain.CodeUnavailable, "policy resource dimension is unavailable or outside configured bounds").WithRetryable()
 			}
 		}
 		return nil

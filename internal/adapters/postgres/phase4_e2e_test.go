@@ -66,6 +66,9 @@ func TestPhase4RunLifecycleWorkflow(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	if _, err := pool.Exec(ctx, `INSERT INTO resource_dimensions(id,tenant_id,name,class,unit,scale,minimum_value,maximum_value,aggregation,created_at) VALUES($1,$2,'llm_tokens','CONSUMABLE','llm_tokens',0,0,1000,'SUM',$3)`, newE2EID(t).String(), tenantID.String(), now); err != nil {
+		t.Fatal(err)
+	}
 	for _, principal := range []struct{ id, tenant domain.ID }{{principalID, tenantID}, {sponsorID, tenantID}, {foreignPrincipalID, foreignTenantID}} {
 		if _, err := pool.Exec(ctx, `INSERT INTO principals(id,tenant_id,external_issuer,external_subject,principal_type,created_at) VALUES($1,$2,'https://run010.test',$3,'HUMAN',$4)`, principal.id.String(), principal.tenant.String(), principal.id.String(), now); err != nil {
 			t.Fatal(err)

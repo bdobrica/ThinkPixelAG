@@ -44,6 +44,10 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
+	llmDimension := mustNewRepositoryID(t)
+	if _, err := pool.Exec(ctx, `INSERT INTO resource_dimensions(id,tenant_id,name,class,unit,scale,minimum_value,maximum_value,aggregation,created_at) VALUES($1,$2,'llm_tokens','CONSUMABLE','llm_tokens',0,0,1000,'SUM',$3)`, llmDimension.String(), tenant.String(), now); err != nil {
+		t.Fatal(err)
+	}
 	for _, id := range []domain.ID{principal, sponsor} {
 		if _, err := pool.Exec(ctx, `INSERT INTO principals(id,tenant_id,external_issuer,external_subject,principal_type,created_at)VALUES($1,$2,'https://run002.test',$3,'HUMAN',$4)`, id.String(), tenant.String(), id.String(), now); err != nil {
 			t.Fatal(err)
@@ -113,6 +117,31 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	}
 	if events != 1 || envelopes != 1 || resolutions != 1 || audits != 1 || outbox != 1 {
 		t.Fatalf("events=%d envelopes=%d resolutions=%d audits=%d outbox=%d", events, envelopes, resolutions, audits, outbox)
+	}
+	var granted, available, consumed, allocated, balanceVersion int64
+	var grantUnit string
+	var grantScale int16
+	if err := pool.QueryRow(ctx, `SELECT g.granted_value,g.unit,g.scale,b.available_value,b.direct_consumed_value,b.allocated_open_value,b.state_version FROM resource_envelope_grants g JOIN resource_balances b USING(tenant_id,envelope_id,dimension_id) WHERE g.tenant_id=$1 AND g.envelope_id=$2 AND g.dimension_id=$3`, tenant.String(), admission.EnvelopeID.String(), llmDimension.String()).Scan(&granted, &grantUnit, &grantScale, &available, &consumed, &allocated, &balanceVersion); err != nil {
+		t.Fatal(err)
+	}
+	if granted != 100 || available != granted || consumed != 0 || allocated != 0 || balanceVersion != 1 || grantUnit != "llm_tokens" || grantScale != 0 {
+		t.Fatalf("grant=%d %s/%d balance=%d/%d/%d v%d", granted, grantUnit, grantScale, available, consumed, allocated, balanceVersion)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE resource_envelope_grants SET granted_value=101 WHERE tenant_id=$1 AND envelope_id=$2 AND dimension_id=$3`, tenant.String(), admission.EnvelopeID.String(), llmDimension.String()); err == nil {
+		t.Fatal("immutable root grant accepted an update")
+	}
+	outOfBoundsAdmission, outOfBoundsResolution, outOfBoundsEvidence := makeAdmission()
+	outOfBoundsAdmission.Constraints["max_llm_tokens"] = float64(1001)
+	outOfBoundsResolution.ResolvedConstraints["max_llm_tokens"] = float64(1001)
+	if err := repository.AdmitRun(ctx, outOfBoundsAdmission, outOfBoundsResolution, outOfBoundsEvidence); domain.ErrorCodeOf(err) != domain.CodeUnavailable {
+		t.Fatalf("out-of-bounds grant error=%v", err)
+	}
+	var rolledBackRuns, rolledBackEnvelopes int
+	if err := pool.QueryRow(ctx, `SELECT (SELECT count(*) FROM runs WHERE tenant_id=$1 AND id=$2),(SELECT count(*) FROM resource_envelopes WHERE tenant_id=$1 AND id=$3)`, tenant.String(), outOfBoundsAdmission.RunID.String(), outOfBoundsAdmission.EnvelopeID.String()).Scan(&rolledBackRuns, &rolledBackEnvelopes); err != nil {
+		t.Fatal(err)
+	}
+	if rolledBackRuns != 0 || rolledBackEnvelopes != 0 {
+		t.Fatalf("invalid grant left runs=%d envelopes=%d", rolledBackRuns, rolledBackEnvelopes)
 	}
 
 	expectedVersion := int64(1)
@@ -286,6 +315,9 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	}
 	if remaining != 0 {
 		t.Fatalf("failed admission left %d run rows", remaining)
+	}
+	if _, err := pool.Exec(ctx, `DELETE FROM resource_dimensions WHERE tenant_id=$1 AND id=$2`, tenant.String(), llmDimension.String()); err == nil {
+		t.Fatal("dimension with grants unexpectedly deleted")
 	}
 
 	// Drain earlier claimable fixtures so lease recovery can be asserted against

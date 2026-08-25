@@ -51,6 +51,17 @@ All terms are nonnegative and use the dimension's explicit unit. The authoritati
 
 Run admission resolves the vector through policy and commits the immutable grant, initial balance, run, version snapshot, audit, and outbox records atomically. If any dimension or record fails, no run is admitted.
 
+The admission constraint vocabulary maps `max_budget_usd_microunits`,
+`max_llm_tokens`, `max_tool_calls`, `max_tool_calls_per_minute`,
+`max_active_children`, `max_total_children`, and `max_delegation_depth` to the
+tenant dimension names obtained by removing `max_` (the budget dimension is
+`budget_usd_microunits`). Values must be exact nonnegative integers. Issuance
+looks up each tenant definition, rejects a missing or out-of-range dimension,
+and copies its authoritative unit and scale into the immutable grant. Each
+initial balance has `available = granted`, zero direct consumption, zero open
+child allocation, and state version one. Deadline remains the separately
+persisted absolute run deadline until its enforcement work is introduced.
+
 ## Atomic child reservation
 
 1. Authenticate/authorize parent operation and verify tenant, run state, revocation freshness, delegation depth, and child eligibility.
