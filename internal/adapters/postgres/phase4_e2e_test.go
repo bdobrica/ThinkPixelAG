@@ -167,7 +167,7 @@ func TestPhase4RunLifecycleWorkflow(t *testing.T) {
 	if err != nil || lease.RunID != runID {
 		t.Fatalf("worker claim=%+v error=%v", lease, err)
 	}
-	if _, err := repositories.MutateWorkerRun(ctx, lease, domain.WorkerRunStart, newE2EID(t), now.Add(2*time.Second)); err != nil {
+	if _, err := repositories.MutateWorkerRun(ctx, lease, domain.WorkerRunStart, newE2EID(t), now); err != nil {
 		t.Fatal(err)
 	}
 	cancelBody := `{"reason_code":"caller.request","expected_state_version":2}`
@@ -184,7 +184,7 @@ func TestPhase4RunLifecycleWorkflow(t *testing.T) {
 	go func() {
 		defer group.Done()
 		<-start
-		_, workerErr = repositories.MutateWorkerRun(ctx, lease, domain.WorkerRunComplete, newE2EID(t), now.Add(3*time.Second))
+		_, workerErr = repositories.MutateWorkerRun(ctx, lease, domain.WorkerRunComplete, newE2EID(t), now)
 	}()
 	close(start)
 	group.Wait()
