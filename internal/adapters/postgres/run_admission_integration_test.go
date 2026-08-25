@@ -51,6 +51,14 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if _, err := pool.Exec(ctx, `INSERT INTO resource_dimensions(id,tenant_id,name,class,unit,scale,minimum_value,maximum_value,aggregation,created_at) VALUES($1,$2,'tool_calls','CONSUMABLE','calls',0,0,1000,'SUM',$3)`, toolDimension.String(), tenant.String(), now); err != nil {
 		t.Fatal(err)
 	}
+	for _, definition := range []struct {
+		id   domain.ID
+		name string
+	}{{mustNewRepositoryID(t), "active_children"}, {mustNewRepositoryID(t), "total_children"}, {mustNewRepositoryID(t), "delegation_depth"}} {
+		if _, err := pool.Exec(ctx, `INSERT INTO resource_dimensions(id,tenant_id,name,class,unit,scale,minimum_value,maximum_value,aggregation,created_at) VALUES($1,$2,$3,'STRUCTURAL','children',0,0,1000,'MAX',$4)`, definition.id.String(), tenant.String(), definition.name, now); err != nil {
+			t.Fatal(err)
+		}
+	}
 	for _, id := range []domain.ID{principal, sponsor} {
 		if _, err := pool.Exec(ctx, `INSERT INTO principals(id,tenant_id,external_issuer,external_subject,principal_type,created_at)VALUES($1,$2,'https://run002.test',$3,'HUMAN',$4)`, id.String(), tenant.String(), id.String(), now); err != nil {
 			t.Fatal(err)
@@ -76,7 +84,7 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	})
 	makeAdmission := func() (domain.RunAdmission, domain.RunVersionResolution, ports.RunAdmissionEvidence) {
 		runID, envelopeID, decisionID := mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t)
-		constraints := map[string]any{"max_execution_time_seconds": float64(60), "max_llm_tokens": float64(100), "max_tool_calls": float64(50)}
+		constraints := map[string]any{"max_execution_time_seconds": float64(60), "max_llm_tokens": float64(100), "max_tool_calls": float64(50), "max_active_children": float64(10), "max_total_children": float64(20), "max_delegation_depth": float64(4)}
 		deadline := now.Add(time.Minute)
 		admission := domain.RunAdmission{RunID: runID, EnvelopeID: envelopeID, TenantID: tenant, AgentID: agentID, AgentVersionID: versionID, AgentVersionDigest: digest, RequestedBy: principal, PolicyDecisionID: decisionID, State: domain.RunAdmitted, StateVersion: 1, Constraints: constraints, DeadlineAt: &deadline, CreatedAt: now, UpdatedAt: now}
 		resolution := domain.RunVersionResolution{RunID: runID, TenantID: tenant, AgentID: agentID, AgentVersionID: versionID, ApprovalID: approvalID, AgentContentDigest: digest, PolicyBundleDigest: "sha256:" + strings.Repeat("f", 64), PolicyActivationVersion: 3, Mode: domain.ResolutionAutomatic, InvocationDecisionID: decisionID, ResolvedConstraints: constraints, ResolvedAt: now}
@@ -135,8 +143,8 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	}
 	makeChild := func(parent domain.ID) (domain.RunAdmission, domain.RunVersionResolution, ports.RunAdmissionEvidence) {
 		child, childResolution, childEvidence := makeAdmission()
-		child.Constraints = map[string]any{}
-		childResolution.ResolvedConstraints = map[string]any{}
+		child.Constraints = map[string]any{"max_active_children": float64(10), "max_total_children": float64(20), "max_delegation_depth": float64(4)}
+		childResolution.ResolvedConstraints = child.Constraints
 		if err := repository.AdmitRun(ctx, child, childResolution, childEvidence); err != nil {
 			t.Fatal(err)
 		}
@@ -174,7 +182,7 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 		t.Fatalf("insufficient multi-resource reservation error=%v", err)
 	}
 	var failedReservations, failedItems, failedGrants int
-	if err := pool.QueryRow(ctx, `SELECT (SELECT count(*) FROM resource_reservations WHERE tenant_id=$1 AND id=$2),(SELECT count(*) FROM resource_reservation_items WHERE tenant_id=$1 AND reservation_id=$2),(SELECT count(*) FROM resource_envelope_grants WHERE tenant_id=$1 AND envelope_id=$3)`, tenant.String(), insufficient.ID.String(), insufficientChild.EnvelopeID.String()).Scan(&failedReservations, &failedItems, &failedGrants); err != nil {
+	if err := pool.QueryRow(ctx, `SELECT (SELECT count(*) FROM resource_reservations WHERE tenant_id=$1 AND id=$2),(SELECT count(*) FROM resource_reservation_items WHERE tenant_id=$1 AND reservation_id=$2),(SELECT count(*) FROM resource_envelope_grants g JOIN resource_dimensions d ON d.tenant_id=g.tenant_id AND d.id=g.dimension_id WHERE g.tenant_id=$1 AND g.envelope_id=$3 AND d.class='CONSUMABLE')`, tenant.String(), insufficient.ID.String(), insufficientChild.EnvelopeID.String()).Scan(&failedReservations, &failedItems, &failedGrants); err != nil {
 		t.Fatal(err)
 	}
 	var toolAvailable int64
@@ -226,6 +234,102 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	}
 	if reservationSuccesses != 1 || reservationConflicts != 1 || llmAvailable != 20 || llmAllocated != 80 || parallelToolAvailable != 10 || parallelToolAllocated != 40 {
 		t.Fatalf("parallel successes=%d conflicts=%d llm=%d/%d tool=%d/%d", reservationSuccesses, reservationConflicts, llmAvailable, llmAllocated, parallelToolAvailable, parallelToolAllocated)
+	}
+
+	// Governed child admission composes the authorized aggregate and reservation
+	// atomically. The parent envelope lock makes competing structural checks see
+	// a serial order even when consumable capacity would allow both children.
+	structuralRoot, structuralResolution, structuralEvidence := makeAdmission()
+	structuralRoot.Constraints = map[string]any{"max_llm_tokens": float64(10), "max_active_children": float64(1), "max_total_children": float64(2), "max_delegation_depth": float64(1)}
+	structuralResolution.ResolvedConstraints = structuralRoot.Constraints
+	if err := repository.AdmitRun(ctx, structuralRoot, structuralResolution, structuralEvidence); err != nil {
+		t.Fatal(err)
+	}
+	makeGovernedChild := func(offset time.Duration) (domain.RunAdmission, domain.RunVersionResolution, ports.RunAdmissionEvidence, domain.ResourceReservation) {
+		childAdmission, childResolution, childEvidence := makeAdmission()
+		childAdmission.DeadlineAt = nil
+		childAdmission.Constraints = map[string]any{"max_active_children": float64(1), "max_total_children": float64(2), "max_delegation_depth": float64(1)}
+		childResolution.ResolvedConstraints = childAdmission.Constraints
+		reservation := domain.ResourceReservation{ID: mustNewRepositoryID(t), TenantID: tenant, ParentEnvelopeID: structuralRoot.EnvelopeID, ChildEnvelopeID: childAdmission.EnvelopeID, ChildRunID: childAdmission.RunID, CreatedAt: now.Add(offset), Amounts: []domain.ResourceReservationAmount{{DimensionID: llmDimension, Coefficient: 1}}}
+		return childAdmission, childResolution, childEvidence, reservation
+	}
+	expanded, expandedResolution, expandedEvidence, expandedReservation := makeGovernedChild(19 * time.Second)
+	expanded.Constraints["max_active_children"] = float64(2)
+	if _, err := repository.AdmitChildRun(ctx, expanded, expandedResolution, expandedEvidence, expandedReservation); domain.ErrorCodeOf(err) != domain.CodeConflict {
+		t.Fatalf("expanded child authority error=%v", err)
+	}
+	var rolledBackExpanded int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM runs WHERE tenant_id=$1 AND id=$2`, tenant.String(), expanded.RunID.String()).Scan(&rolledBackExpanded); err != nil || rolledBackExpanded != 0 {
+		t.Fatalf("expanded child remained durable count=%d error=%v", rolledBackExpanded, err)
+	}
+	governed := make([]struct {
+		admission   domain.RunAdmission
+		resolution  domain.RunVersionResolution
+		evidence    ports.RunAdmissionEvidence
+		reservation domain.ResourceReservation
+	}, 2)
+	for index := range governed {
+		governed[index].admission, governed[index].resolution, governed[index].evidence, governed[index].reservation = makeGovernedChild(time.Duration(20+index) * time.Second)
+	}
+	governedErrors := make(chan error, 2)
+	for index := range governed {
+		go func(candidate struct {
+			admission   domain.RunAdmission
+			resolution  domain.RunVersionResolution
+			evidence    ports.RunAdmissionEvidence
+			reservation domain.ResourceReservation
+		}) {
+			_, err := repository.AdmitChildRun(ctx, candidate.admission, candidate.resolution, candidate.evidence, candidate.reservation)
+			governedErrors <- err
+		}(governed[index])
+	}
+	var admittedChildren, rejectedChildren int
+	for range governed {
+		if err := <-governedErrors; err == nil {
+			admittedChildren++
+		} else if domain.ErrorCodeOf(err) == domain.CodeConflict {
+			rejectedChildren++
+		} else {
+			t.Fatalf("governed child admission error=%v", err)
+		}
+	}
+	var durableChildren, structuralReservations int
+	if err := pool.QueryRow(ctx, `SELECT (SELECT count(*) FROM resource_envelopes WHERE tenant_id=$1 AND parent_envelope_id=$2),(SELECT count(*) FROM resource_reservations WHERE tenant_id=$1 AND parent_envelope_id=$2)`, tenant.String(), structuralRoot.EnvelopeID.String()).Scan(&durableChildren, &structuralReservations); err != nil {
+		t.Fatal(err)
+	}
+	if admittedChildren != 1 || rejectedChildren != 1 || durableChildren != 1 || structuralReservations != 1 {
+		t.Fatalf("governed admissions=%d/%d durable=%d reservations=%d", admittedChildren, rejectedChildren, durableChildren, structuralReservations)
+	}
+
+	// Closing the first reservation simulates the RES-009 settlement state for
+	// the structural counters: active capacity reopens, lifetime capacity does
+	// not. A second child is admitted; a third conflicts on total children.
+	if _, err := pool.Exec(ctx, `UPDATE resource_reservations SET state='SETTLED',settled_at=$3 WHERE tenant_id=$1 AND parent_envelope_id=$2 AND state='OPEN'`, tenant.String(), structuralRoot.EnvelopeID.String(), now.Add(30*time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	second, secondResolution, secondEvidence, secondReservation := makeGovernedChild(31 * time.Second)
+	if _, err := repository.AdmitChildRun(ctx, second, secondResolution, secondEvidence, secondReservation); err != nil {
+		t.Fatalf("second lifetime child admission error=%v", err)
+	}
+	third, thirdResolution, thirdEvidence, thirdReservation := makeGovernedChild(32 * time.Second)
+	if _, err := repository.AdmitChildRun(ctx, third, thirdResolution, thirdEvidence, thirdReservation); domain.ErrorCodeOf(err) != domain.CodeConflict {
+		t.Fatalf("total-child ceiling error=%v", err)
+	}
+	var rolledBackThird int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM runs WHERE tenant_id=$1 AND id=$2`, tenant.String(), third.RunID.String()).Scan(&rolledBackThird); err != nil || rolledBackThird != 0 {
+		t.Fatalf("rejected child remained durable count=%d error=%v", rolledBackThird, err)
+	}
+
+	// A grandchild would be depth two while the inherited absolute ceiling is
+	// one, so its entire admission is rolled back.
+	grandchild, grandchildResolution, grandchildEvidence, grandchildReservation := makeGovernedChild(33 * time.Second)
+	grandchildReservation.ParentEnvelopeID = second.EnvelopeID
+	if _, err := repository.AdmitChildRun(ctx, grandchild, grandchildResolution, grandchildEvidence, grandchildReservation); domain.ErrorCodeOf(err) != domain.CodeConflict {
+		t.Fatalf("delegation-depth ceiling error=%v", err)
+	}
+	var rolledBackGrandchild int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM runs WHERE tenant_id=$1 AND id=$2`, tenant.String(), grandchild.RunID.String()).Scan(&rolledBackGrandchild); err != nil || rolledBackGrandchild != 0 {
+		t.Fatalf("rejected grandchild remained durable count=%d error=%v", rolledBackGrandchild, err)
 	}
 	outOfBoundsAdmission, outOfBoundsResolution, outOfBoundsEvidence := makeAdmission()
 	outOfBoundsAdmission.Constraints["max_llm_tokens"] = float64(1001)

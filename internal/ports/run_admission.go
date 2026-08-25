@@ -16,3 +16,9 @@ type RunAdmissionEvidence struct {
 type RunAdmissionRepository interface {
 	AdmitRun(context.Context, domain.RunAdmission, domain.RunVersionResolution, RunAdmissionEvidence) error
 }
+
+// ChildRunAdmissionRepository commits an authorized child aggregate and its
+// resource delegation as one indivisible admission.
+type ChildRunAdmissionRepository interface {
+	AdmitChildRun(context.Context, domain.RunAdmission, domain.RunVersionResolution, RunAdmissionEvidence, domain.ResourceReservation) (domain.ResourceReservation, error)
+}

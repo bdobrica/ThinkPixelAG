@@ -12,6 +12,7 @@ import (
 )
 
 var _ ports.RunAdmissionRepository = (*TenantRepository)(nil)
+var _ ports.ChildRunAdmissionRepository = (*TenantRepository)(nil)
 
 func (r *TenantRepository) AdmitRun(ctx context.Context, admission domain.RunAdmission, resolution domain.RunVersionResolution, evidence ports.RunAdmissionEvidence) error {
 	if err := r.valid(); err != nil {
@@ -119,6 +120,34 @@ SELECT $1,$2,dimension_id,$4,0,0,1,$5 FROM inserted_grant`, admission.TenantID.S
 		}
 		return nil
 	})
+}
+
+// AdmitChildRun composes the already-authorized run aggregate with its parent
+// link, topology checks, and consumable reservation under one transaction. A
+// structural or consumable conflict therefore leaves no child or evidence.
+func (r *TenantRepository) AdmitChildRun(ctx context.Context, admission domain.RunAdmission, resolution domain.RunVersionResolution, evidence ports.RunAdmissionEvidence, reservation domain.ResourceReservation) (domain.ResourceReservation, error) {
+	if reservation.TenantID != admission.TenantID || reservation.ChildRunID != admission.RunID || reservation.ChildEnvelopeID != admission.EnvelopeID || reservation.ParentEnvelopeID.IsZero() {
+		return domain.ResourceReservation{}, domain.NewError(domain.CodeInvalidArgument, "child admission reservation does not match the run")
+	}
+	var admitted domain.ResourceReservation
+	err := r.withAdmissionTransaction(ctx, func(repository *TenantRepository) error {
+		if err := repository.AdmitRun(ctx, admission, resolution, evidence); err != nil {
+			return err
+		}
+		tag, err := repository.db.Exec(ctx, `UPDATE resource_envelopes SET parent_envelope_id=$3 WHERE tenant_id=$1 AND id=$2 AND parent_envelope_id IS NULL`, r.tenantID.String(), admission.EnvelopeID.String(), reservation.ParentEnvelopeID.String())
+		if err != nil {
+			return fmt.Errorf("link child resource envelope: %w", err)
+		}
+		if tag.RowsAffected() != 1 {
+			return domain.NewError(domain.CodeConflict, "child resource envelope could not be linked")
+		}
+		admitted, err = repository.ReserveChildResources(ctx, reservation)
+		return err
+	})
+	if err != nil {
+		return domain.ResourceReservation{}, err
+	}
+	return admitted, nil
 }
 
 func (r *TenantRepository) withAdmissionTransaction(ctx context.Context, fn func(*TenantRepository) error) error {

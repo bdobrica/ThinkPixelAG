@@ -165,12 +165,14 @@ Runs follow an explicit state machine. Terminal transitions are idempotent. Budg
 
 Child reservations are atomically debited from parent availability. Trusted usage is recorded in an append-only ledger. Terminal settlement closes the reservation exactly once and immediately returns unused capacity to the parent in the same database transaction.
 
-The implemented consumable-reservation primitive orders PostgreSQL balance
-locks by dimension UUID and conditionally moves the entire requested vector
-from parent availability to open allocation while issuing matching child
-grants and initial balances. Any unavailable or insufficient dimension rolls
-back the full vector; structural child/depth admission is the next Phase 5
-governance layer.
+Child admission now composes the authorized run aggregate, parent link,
+structural checks, consumable reservation, and evidence in one PostgreSQL
+transaction. A parent-envelope lock serializes sibling admissions: open
+reservations define active children, all reservations define lifetime children,
+and authoritative envelope ancestry defines delegation depth. Child structural
+grants must narrow or equal the parent's immutable grants. Consumable balance
+locks remain ordered by dimension UUID, and any structural or quantity conflict
+rolls back the complete child admission.
 
 ## Security and reliability principles
 

@@ -82,9 +82,20 @@ version. The same transaction creates the open reservation, copies the
 authoritative unit and scale into its immutable item vector and child grant,
 and initializes each child balance with full availability. A missing,
 non-consumable, insufficient, overflowing, or concurrently changed dimension
-rolls back the complete vector. RES-004 composes this primitive with governed
-child admission and the structural child/depth checks; callers cannot use the
-persistence primitive as an authorization boundary.
+rolls back the complete vector.
+
+The governed child-admission boundary composes the authorized run, resolution
+snapshot, event/audit/outbox evidence, parent envelope link, topology checks,
+and reservation under one outer transaction. It locks the parent envelope
+before counting children, making concurrent sibling checks serializable without
+a cache. `OPEN` reservations count toward `active_children`; every durable
+reservation counts toward `total_children`, including a closed reservation;
+and a recursive walk of immutable envelope ancestry determines the prospective
+child's absolute `delegation_depth`. All three parent grants are required, and
+the child's corresponding grants must be less than or equal to them. Any
+ceiling, depth, non-expansion, or consumable conflict rolls back the child run,
+envelope, resolution, evidence, grants, topology state, and reservation together.
+The repository primitive remains inside the trusted authorization boundary.
 
 ## Trusted metering
 

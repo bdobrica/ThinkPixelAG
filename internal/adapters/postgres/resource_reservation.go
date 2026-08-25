@@ -34,6 +34,9 @@ func (r *TenantRepository) ReserveChildResources(ctx context.Context, requested 
 	}
 
 	err = r.withResourceTransaction(ctx, func(repository *TenantRepository) error {
+		if err := repository.enforceChildTopology(ctx, reservation.ParentEnvelopeID, reservation.ChildEnvelopeID); err != nil {
+			return err
+		}
 		var childEnvelope string
 		if err := repository.db.QueryRow(ctx, `SELECT e.id::text FROM resource_envelopes e JOIN runs child ON child.tenant_id=e.tenant_id AND child.id=e.run_id WHERE e.tenant_id=$1 AND e.id=$2 AND e.run_id=$3 AND e.parent_envelope_id=$4 FOR UPDATE`, r.tenantID.String(), reservation.ChildEnvelopeID.String(), reservation.ChildRunID.String(), reservation.ParentEnvelopeID.String()).Scan(&childEnvelope); errors.Is(err, pgx.ErrNoRows) {
 			return domain.NewError(domain.CodeConflict, "child envelope is unavailable for reservation")
@@ -90,6 +93,72 @@ func (r *TenantRepository) ReserveChildResources(ctx context.Context, requested 
 		return domain.ResourceReservation{}, err
 	}
 	return reservation, nil
+}
+
+// enforceChildTopology serializes admissions for one parent by locking its
+// envelope, then evaluates active and lifetime child counts plus the new
+// child's absolute depth against immutable structural grants. Counts are
+// derived from durable reservations, so no cache or caller-supplied value can
+// expand authority.
+func (r *TenantRepository) enforceChildTopology(ctx context.Context, parentEnvelopeID, childEnvelopeID domain.ID) error {
+	var locked string
+	if err := r.db.QueryRow(ctx, `SELECT id::text FROM resource_envelopes WHERE tenant_id=$1 AND id=$2 FOR UPDATE`, r.tenantID.String(), parentEnvelopeID.String()).Scan(&locked); errors.Is(err, pgx.ErrNoRows) {
+		return domain.NewError(domain.CodeConflict, "parent resource envelope is unavailable")
+	} else if err != nil {
+		return fmt.Errorf("lock parent resource envelope: %w", err)
+	}
+
+	var maximumActive, maximumTotal, maximumDepth, childMaximumActive, childMaximumTotal, childMaximumDepth, active, total, childDepth int64
+	err := r.db.QueryRow(ctx, `WITH RECURSIVE ancestry(id,parent_envelope_id,depth) AS (
+ SELECT id,parent_envelope_id,1::bigint FROM resource_envelopes WHERE tenant_id=$1 AND id=$2
+ UNION ALL
+ SELECT parent.id,parent.parent_envelope_id,ancestry.depth+1 FROM resource_envelopes parent
+ JOIN ancestry ON ancestry.parent_envelope_id=parent.id WHERE parent.tenant_id=$1
+), limits AS (
+ SELECT
+  max(g.granted_value) FILTER (WHERE d.name='active_children') AS maximum_active,
+  max(g.granted_value) FILTER (WHERE d.name='total_children') AS maximum_total,
+  max(g.granted_value) FILTER (WHERE d.name='delegation_depth') AS maximum_depth
+ FROM resource_envelope_grants g JOIN resource_dimensions d
+ ON d.tenant_id=g.tenant_id AND d.id=g.dimension_id
+ WHERE g.tenant_id=$1 AND g.envelope_id=$2
+), child_limits AS (
+ SELECT
+  max(g.granted_value) FILTER (WHERE d.name='active_children') AS maximum_active,
+  max(g.granted_value) FILTER (WHERE d.name='total_children') AS maximum_total,
+  max(g.granted_value) FILTER (WHERE d.name='delegation_depth') AS maximum_depth
+ FROM resource_envelope_grants g JOIN resource_dimensions d
+ ON d.tenant_id=g.tenant_id AND d.id=g.dimension_id
+ WHERE g.tenant_id=$1 AND g.envelope_id=$3
+), children AS (
+ SELECT count(*) FILTER (WHERE state='OPEN')::bigint AS active,count(*)::bigint AS total
+ FROM resource_reservations WHERE tenant_id=$1 AND parent_envelope_id=$2
+)
+SELECT limits.maximum_active,limits.maximum_total,limits.maximum_depth,
+ child_limits.maximum_active,child_limits.maximum_total,child_limits.maximum_depth,
+ active,total,(SELECT max(depth) FROM ancestry)
+FROM limits CROSS JOIN child_limits CROSS JOIN children
+WHERE limits.maximum_active IS NOT NULL AND limits.maximum_total IS NOT NULL AND limits.maximum_depth IS NOT NULL
+ AND child_limits.maximum_active IS NOT NULL AND child_limits.maximum_total IS NOT NULL AND child_limits.maximum_depth IS NOT NULL`, r.tenantID.String(), parentEnvelopeID.String(), childEnvelopeID.String()).Scan(&maximumActive, &maximumTotal, &maximumDepth, &childMaximumActive, &childMaximumTotal, &childMaximumDepth, &active, &total, &childDepth)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.NewError(domain.CodeConflict, "parent structural limits are unavailable")
+	}
+	if err != nil {
+		return fmt.Errorf("evaluate child topology: %w", err)
+	}
+	if childMaximumActive > maximumActive || childMaximumTotal > maximumTotal || childMaximumDepth > maximumDepth {
+		return domain.NewError(domain.CodeConflict, "child structural limits expand parent authority")
+	}
+	if active >= maximumActive {
+		return domain.NewError(domain.CodeConflict, "maximum active children reached")
+	}
+	if total >= maximumTotal {
+		return domain.NewError(domain.CodeConflict, "maximum total children reached")
+	}
+	if childDepth > maximumDepth {
+		return domain.NewError(domain.CodeConflict, "maximum delegation depth reached")
+	}
+	return nil
 }
 
 func (r *TenantRepository) withResourceTransaction(ctx context.Context, fn func(*TenantRepository) error) error {
