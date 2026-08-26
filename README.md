@@ -167,6 +167,12 @@ Runs follow an explicit state machine. Terminal transitions are idempotent. Budg
 
 Child reservations are atomically debited from parent availability. Trusted usage is recorded in an append-only ledger. Terminal settlement closes the reservation exactly once and immediately returns unused capacity to the parent in the same database transaction.
 
+The trusted settlement endpoint requires a terminal child state, authoritative
+`resources.settle` policy approval, and an actor-scoped idempotency key. It
+derives consumption from the child's durable balances rather than a caller
+summary, rejects settlement while descendant allocations remain open, and
+returns an identical established result under repeated or concurrent delivery.
+
 Child admission now composes the authorized run aggregate, parent link,
 structural checks, consumable reservation, and evidence in one PostgreSQL
 transaction. A parent-envelope lock serializes sibling admissions: open

@@ -464,6 +464,52 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if reservationSuccesses != 1 || reservationConflicts != 1 || llmAvailable != 20 || llmAllocated != 80 || parallelToolAvailable != 10 || parallelToolAllocated != 40 {
 		t.Fatalf("parallel successes=%d conflicts=%d llm=%d/%d tool=%d/%d", reservationSuccesses, reservationConflicts, llmAvailable, llmAllocated, parallelToolAvailable, parallelToolAllocated)
 	}
+	if _, err := pool.Exec(ctx, `UPDATE runs SET state='RUNNING',state_version=2,updated_at=$3 WHERE tenant_id=$1 AND id=$2`, tenant.String(), child.RunID.String(), now.Add(10*time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	settlementUsageAmount, _ := domain.NewDecimal(10, 0)
+	settlementUsageQuantity, _ := domain.NewQuantity(settlementUsageAmount, "llm_tokens")
+	settlementUsage := domain.TrustedUsage{ID: mustNewRepositoryID(t), TenantID: tenant, RunID: child.RunID, ProducerID: principal, SourceEventID: "settlement-usage", ResourceName: "llm_tokens", Quantity: settlementUsageQuantity, ObservedAt: now.Add(10 * time.Second), RecordedAt: now.Add(10 * time.Second)}
+	if _, err := repository.RecordTrustedUsage(ctx, settlementUsage, domain.ThroughputHint{}, domain.ExhaustionFail); err != nil {
+		t.Fatal(err)
+	}
+	settlementAt := now.Add(11 * time.Second)
+	if _, err := pool.Exec(ctx, `UPDATE runs SET state='COMPLETED',state_version=3,updated_at=$3,terminal_at=$3 WHERE tenant_id=$1 AND id=$2`, tenant.String(), child.RunID.String(), settlementAt); err != nil {
+		t.Fatal(err)
+	}
+	concurrentSettlement := domain.ResourceSettlement{ID: mustNewRepositoryID(t), TenantID: tenant, ReservationID: reservation.ID, ActorPrincipalID: principal, PolicyDecisionID: mustNewRepositoryID(t), IdempotencyKey: "settle-concurrent", TerminalRunState: "COMPLETED", FinalUsageEventIDs: []domain.ID{settlementUsage.ID}, SettledAt: settlementAt}
+	concurrentEvidence := ports.ResourceSettlementEvidence{AuditID: mustNewRepositoryID(t), OutboxID: mustNewRepositoryID(t), RequestID: mustNewRepositoryID(t), ReasonCodes: []string{"workload.operation.allowed"}}
+	settlementResults := make(chan domain.ResourceSettlementResult, 2)
+	settlementErrors := make(chan error, 2)
+	for range 2 {
+		go func() {
+			got, settleErr := repository.SettleReservation(ctx, concurrentSettlement, concurrentEvidence)
+			settlementResults <- got
+			settlementErrors <- settleErr
+		}()
+	}
+	var duplicateSettlements int
+	for range 2 {
+		got, settleErr := <-settlementResults, <-settlementErrors
+		if settleErr != nil {
+			t.Fatalf("concurrent settlement: %v", settleErr)
+		}
+		if got.Duplicate {
+			duplicateSettlements++
+		}
+		if len(got.Consumed) != 2 || len(got.Returned) != 2 {
+			t.Fatalf("settlement vector=%+v", got)
+		}
+	}
+	if duplicateSettlements != 1 {
+		t.Fatalf("duplicate settlements=%d", duplicateSettlements)
+	}
+	if err := pool.QueryRow(ctx, `SELECT llm.available_value,llm.allocated_open_value,tool.available_value,tool.allocated_open_value FROM resource_balances llm JOIN resource_balances tool ON tool.tenant_id=llm.tenant_id AND tool.envelope_id=llm.envelope_id WHERE llm.tenant_id=$1 AND llm.envelope_id=$2 AND llm.dimension_id=$3 AND tool.dimension_id=$4`, tenant.String(), admission.EnvelopeID.String(), llmDimension.String(), toolDimension.String()).Scan(&llmAvailable, &llmAllocated, &parallelToolAvailable, &parallelToolAllocated); err != nil {
+		t.Fatal(err)
+	}
+	if llmAvailable != 50 || llmAllocated != 40 || parallelToolAvailable != 30 || parallelToolAllocated != 20 {
+		t.Fatalf("settled parent llm=%d/%d tool=%d/%d", llmAvailable, llmAllocated, parallelToolAvailable, parallelToolAllocated)
+	}
 
 	// Governed child admission composes the authorized aggregate and reservation
 	// atomically. The parent envelope lock makes competing structural checks see
@@ -547,6 +593,37 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	var rolledBackThird int
 	if err := pool.QueryRow(ctx, `SELECT count(*) FROM runs WHERE tenant_id=$1 AND id=$2`, tenant.String(), third.RunID.String()).Scan(&rolledBackThird); err != nil || rolledBackThird != 0 {
 		t.Fatalf("rejected child remained durable count=%d error=%v", rolledBackThird, err)
+	}
+
+	// Terminal settlement uses the child's authoritative balance, closes its
+	// open reservation, and returns unused capacity to the parent exactly once.
+	settledAt := now.Add(34 * time.Second)
+	if _, err := pool.Exec(ctx, `UPDATE runs SET state='COMPLETED',state_version=2,updated_at=$3,terminal_at=$3 WHERE tenant_id=$1 AND id=$2`, tenant.String(), second.RunID.String(), settledAt); err != nil {
+		t.Fatal(err)
+	}
+	settlement := domain.ResourceSettlement{ID: mustNewRepositoryID(t), TenantID: tenant, ReservationID: secondReservation.ID, ActorPrincipalID: principal, PolicyDecisionID: mustNewRepositoryID(t), IdempotencyKey: "settle-integration-1", TerminalRunState: "COMPLETED", SettledAt: settledAt}
+	settlementEvidence := ports.ResourceSettlementEvidence{AuditID: mustNewRepositoryID(t), OutboxID: mustNewRepositoryID(t), RequestID: mustNewRepositoryID(t), ReasonCodes: []string{"workload.operation.allowed"}}
+	settled, err := repository.SettleReservation(ctx, settlement, settlementEvidence)
+	if err != nil || settled.Duplicate || len(settled.Returned) != 1 || settled.Returned[0].Value != 1 || settled.Consumed[0].Value != 0 {
+		t.Fatalf("settlement=%+v error=%v", settled, err)
+	}
+	replayedSettlement, err := repository.SettleReservation(ctx, settlement, settlementEvidence)
+	if err != nil || !replayedSettlement.Duplicate || replayedSettlement.ID != settled.ID {
+		t.Fatalf("settlement replay=%+v error=%v", replayedSettlement, err)
+	}
+	mismatchedSettlement := settlement
+	mismatchedSettlement.TerminalRunState = "FAILED"
+	if _, err := repository.SettleReservation(ctx, mismatchedSettlement, settlementEvidence); domain.ErrorCodeOf(err) != domain.CodeConflict {
+		t.Fatalf("mismatched settlement replay error=%v", err)
+	}
+	var settlementRows, settlementItems, settlementAudits, settlementOutbox int
+	var settledState string
+	var settledAvailable, settledAllocated int64
+	if err := pool.QueryRow(ctx, `SELECT (SELECT count(*) FROM resource_settlements WHERE tenant_id=$1 AND reservation_id=$2),(SELECT count(*) FROM resource_settlement_items WHERE tenant_id=$1 AND settlement_id=$3),(SELECT count(*) FROM audit_events WHERE tenant_id=$1 AND action='resources.settle' AND resource_id=$2::text),(SELECT count(*) FROM outbox_messages WHERE tenant_id=$1 AND event_type='resource.reservation.settled' AND aggregate_id=$2::text),(SELECT state FROM resource_reservations WHERE tenant_id=$1 AND id=$2),(SELECT available_value FROM resource_balances WHERE tenant_id=$1 AND envelope_id=$4 AND dimension_id=$5),(SELECT allocated_open_value FROM resource_balances WHERE tenant_id=$1 AND envelope_id=$4 AND dimension_id=$5)`, tenant.String(), secondReservation.ID.String(), settlement.ID.String(), structuralRoot.EnvelopeID.String(), llmDimension.String()).Scan(&settlementRows, &settlementItems, &settlementAudits, &settlementOutbox, &settledState, &settledAvailable, &settledAllocated); err != nil {
+		t.Fatal(err)
+	}
+	if settlementRows != 1 || settlementItems != 1 || settlementAudits != 1 || settlementOutbox != 1 || settledState != "SETTLED" || settledAvailable != 9 || settledAllocated != 1 {
+		t.Fatalf("settlement rows=%d items=%d evidence=%d/%d state=%s parent=%d/%d", settlementRows, settlementItems, settlementAudits, settlementOutbox, settledState, settledAvailable, settledAllocated)
 	}
 
 	// A grandchild would be depth two while the inherited absolute ceiling is

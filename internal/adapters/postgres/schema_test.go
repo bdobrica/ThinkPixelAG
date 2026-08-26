@@ -32,6 +32,7 @@ func TestReleasedMigrationChecksumsArePresent(t *testing.T) {
 		"011_enforce_resource_reservation_item_immutability.sql",
 		"012_create_resource_rate_windows.sql",
 		"013_create_resource_extensions.sql",
+		"014_harden_resource_settlements.sql",
 	} {
 		if !strings.Contains(string(contents), migration) {
 			t.Errorf("checksum manifest does not cover %s", migration)
@@ -117,6 +118,7 @@ func TestPhaseTwoSchemaContracts(t *testing.T) {
 		{file: "011_enforce_resource_reservation_item_immutability.sql", required: []string{"resource_reservation_items_immutable", "reject_agent_artifact_mutation"}},
 		{file: "012_create_resource_rate_windows.sql", required: []string{"CREATE TABLE resource_rate_windows", "used_value bigint", "date_trunc('minute', window_start)"}},
 		{file: "013_create_resource_extensions.sql", required: []string{"CREATE TABLE resource_extensions", "CREATE TABLE resource_extension_items", "content_digest text", "resource_extensions_immutable"}},
+		{file: "014_harden_resource_settlements.sql", required: []string{"policy_decision_id", "idempotency_key", "resource_settlements_immutable", "resource_settlement_items_immutable"}},
 	}
 
 	dir := projectMigrationsDir(t)

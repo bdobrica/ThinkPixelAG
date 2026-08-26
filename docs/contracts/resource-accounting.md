@@ -156,6 +156,15 @@ An extension is a positive, typed ledger entry referencing actor, policy decisio
 
 Settlement locks the open reservation and relevant parent balances. It validates trusted consumption, inserts a unique settlement, marks the reservation closed, decrements open-child allocation/active-child count, and credits unused quantity to parent availability in one transaction. A repeated/concurrent settlement reads and returns the established result without another credit.
 
+Terminal settlement is accepted only from an active authenticated workload
+with a live authoritative `resources.settle` decision, and the declared state
+must equal the durable terminal child state. Optional final usage identifiers
+must all belong to that child, but quantities are always derived from its
+authoritative balances. Open descendant allocation prevents settlement. The
+immutable item ledger records reserved, effective consumed, and returned
+values per dimension; actor-scoped idempotency content, audit evidence, and an
+outbox notification commit with the close and parent credit.
+
 Total-child count and delegation history do not decrease. Active-child count decreases once. The parent credit is immediately authoritative even if cache/notifications lag.
 
 ## Reconciliation

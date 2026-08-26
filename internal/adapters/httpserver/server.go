@@ -37,20 +37,21 @@ type ReadinessProbe interface {
 }
 
 type Dependencies struct {
-	Logger            *slog.Logger
-	Metrics           *metrics.Metrics
-	Tracing           *tracing.Tracing
-	Readiness         ReadinessProbe
-	NewID             IDGenerator
-	AgentApprovals    http.Handler
-	AgentDiscovery    http.Handler
-	RunAdmission      http.Handler
-	RunQuery          http.Handler
-	RunSignal         http.Handler
-	RunCancellation   http.Handler
-	RunEvents         http.Handler
-	TrustedUsage      http.Handler
-	ResourceExtension http.Handler
+	Logger             *slog.Logger
+	Metrics            *metrics.Metrics
+	Tracing            *tracing.Tracing
+	Readiness          ReadinessProbe
+	NewID              IDGenerator
+	AgentApprovals     http.Handler
+	AgentDiscovery     http.Handler
+	RunAdmission       http.Handler
+	RunQuery           http.Handler
+	RunSignal          http.Handler
+	RunCancellation    http.Handler
+	RunEvents          http.Handler
+	TrustedUsage       http.Handler
+	ResourceExtension  http.Handler
+	ResourceSettlement http.Handler
 }
 
 type Server struct {
@@ -153,6 +154,9 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 	}
 	if dependencies.ResourceExtension != nil {
 		mount("POST /v1/admin/runs/{run_id}/resource-extensions", dependencies.ResourceExtension)
+	}
+	if dependencies.ResourceSettlement != nil {
+		mount("POST /v1/trusted/reservations/{reservation_id}/settle", dependencies.ResourceSettlement)
 	}
 	mux.Handle("/", middleware("unknown", httpConfig, dependencies, http.HandlerFunc(notFound)))
 	return mux

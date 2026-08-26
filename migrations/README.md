@@ -52,6 +52,8 @@ The initial schema is split along durable consistency boundaries:
 - `013` adds immutable, policy-attributed resource extension headers and items;
   mutable balances, envelope versions, deadlines, and paused-run resumption are
   updated atomically with each ledger action.
+- `014` binds terminal settlements to policy evidence and idempotency content,
+  and makes the established settlement ledger immutable.
 
 Tenant-owned relationships use composite foreign keys containing `tenant_id` so
 a database write cannot connect rows across tenants. Frequently used access
