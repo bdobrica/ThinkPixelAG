@@ -174,6 +174,15 @@ grants must narrow or equal the parent's immutable grants. Consumable balance
 locks remain ordered by dimension UUID, and any structural or quantity conflict
 rolls back the complete child admission.
 
+Trusted metering is exposed at `POST /v1/trusted/runs/{run_id}/usage`. The
+verified principal must match `producer_id` and receive an explicit
+`resources.meter` policy allow. Producer/source event keys are serialized and
+globally unique within the tenant: identical retries return the original
+receipt, while changed reuse conflicts. Accepted nonnegative consumable usage
+is appended and atomically transferred from availability to direct consumption;
+unit mismatches, overflow, over-budget usage, disabled producers, and usage
+after settlement fail closed.
+
 ## Security and reliability principles
 
 - Deny by default and fail closed when required policy or revocation freshness cannot be established.

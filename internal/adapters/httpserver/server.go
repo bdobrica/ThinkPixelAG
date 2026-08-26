@@ -49,6 +49,7 @@ type Dependencies struct {
 	RunSignal       http.Handler
 	RunCancellation http.Handler
 	RunEvents       http.Handler
+	TrustedUsage    http.Handler
 }
 
 type Server struct {
@@ -145,6 +146,9 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 	}
 	if dependencies.RunEvents != nil {
 		mount("GET /v1/runs/{run_id}/events", dependencies.RunEvents)
+	}
+	if dependencies.TrustedUsage != nil {
+		mount("POST /v1/trusted/runs/{run_id}/usage", dependencies.TrustedUsage)
 	}
 	mux.Handle("/", middleware("unknown", httpConfig, dependencies, http.HandlerFunc(notFound)))
 	return mux

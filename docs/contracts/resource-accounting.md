@@ -106,6 +106,15 @@ The repository primitive remains inside the trusted authorization boundary.
 - A harness's terminal summary is not authoritative unless it is also a trusted meter source.
 - Late usage after settlement is rejected/quarantined and alerted; it never silently makes the parent equation negative.
 
+Accepted quantities are incremental, exact, nonnegative values for a
+consumable grant. Ingestion locks the producer/source key, validates the
+authenticated producer is active and policy-authorized for `resources.meter`,
+then atomically appends the immutable entry while decreasing availability and
+increasing direct consumption by the same amount. The update is checked for
+overflow and remaining availability, so consumption is monotonic and the
+conservation equation cannot be crossed. Concurrent identical deliveries
+return the first receipt; changed content under the same source key conflicts.
+
 ## Exhaustion
 
 Consumption reaching a ceiling prevents further grants/authorized consumption for that dimension and triggers `BUDGET_EXHAUSTED`. Enforcement must not depend only on asynchronous metrics. Policy chooses `PAUSED_FOR_BUDGET` or `FAILED_BUDGET`; a paused run performs no governed work until an additive extension commits.

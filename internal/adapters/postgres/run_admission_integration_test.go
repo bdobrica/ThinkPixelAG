@@ -141,6 +141,44 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if _, err := pool.Exec(ctx, `UPDATE resource_envelope_grants SET granted_value=101 WHERE tenant_id=$1 AND envelope_id=$2 AND dimension_id=$3`, tenant.String(), admission.EnvelopeID.String(), llmDimension.String()); err == nil {
 		t.Fatal("immutable root grant accepted an update")
 	}
+	meterAdmission, meterResolution, meterEvidence := makeAdmission()
+	if err := repository.AdmitRun(ctx, meterAdmission, meterResolution, meterEvidence); err != nil {
+		t.Fatal(err)
+	}
+	usageAmount, _ := domain.NewDecimal(7, 0)
+	usageQuantity, _ := domain.NewQuantity(usageAmount, "llm_tokens")
+	usage := domain.TrustedUsage{ID: mustNewRepositoryID(t), TenantID: tenant, RunID: meterAdmission.RunID, ProducerID: principal, SourceEventID: "meter-event-1", ResourceName: "llm_tokens", Quantity: usageQuantity, ObservedAt: now, RecordedAt: now.Add(time.Second)}
+	receipt, err := repository.RecordTrustedUsage(ctx, usage)
+	if err != nil || receipt.Duplicate || receipt.UsageID != usage.ID {
+		t.Fatalf("trusted usage receipt=%+v error=%v", receipt, err)
+	}
+	usageReplay, err := repository.RecordTrustedUsage(ctx, usage)
+	if err != nil || !usageReplay.Duplicate || usageReplay.UsageID != usage.ID {
+		t.Fatalf("trusted usage replay=%+v error=%v", usageReplay, err)
+	}
+	changed := usage
+	changed.ID = mustNewRepositoryID(t)
+	changedAmount, _ := domain.NewDecimal(8, 0)
+	changed.Quantity, _ = domain.NewQuantity(changedAmount, "llm_tokens")
+	if _, err := repository.RecordTrustedUsage(ctx, changed); domain.ErrorCodeOf(err) != domain.CodeConflict {
+		t.Fatalf("mismatched trusted usage replay error=%v", err)
+	}
+	if err := pool.QueryRow(ctx, `SELECT available_value,direct_consumed_value,state_version FROM resource_balances WHERE tenant_id=$1 AND envelope_id=$2 AND dimension_id=$3`, tenant.String(), meterAdmission.EnvelopeID.String(), llmDimension.String()).Scan(&available, &consumed, &balanceVersion); err != nil {
+		t.Fatal(err)
+	}
+	if available != 93 || consumed != 7 || balanceVersion != 2 {
+		t.Fatalf("metered balance available=%d consumed=%d version=%d", available, consumed, balanceVersion)
+	}
+	overAmount, _ := domain.NewDecimal(94, 0)
+	overQuantity, _ := domain.NewQuantity(overAmount, "llm_tokens")
+	over := domain.TrustedUsage{ID: mustNewRepositoryID(t), TenantID: tenant, RunID: meterAdmission.RunID, ProducerID: principal, SourceEventID: "meter-event-over", ResourceName: "llm_tokens", Quantity: overQuantity, ObservedAt: now, RecordedAt: now.Add(2 * time.Second)}
+	if _, err := repository.RecordTrustedUsage(ctx, over); domain.ErrorCodeOf(err) != domain.CodeConflict {
+		t.Fatalf("usage beyond grant error=%v", err)
+	}
+	var usageRows int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM trusted_usage_entries WHERE tenant_id=$1 AND run_id=$2`, tenant.String(), meterAdmission.RunID.String()).Scan(&usageRows); err != nil || usageRows != 1 {
+		t.Fatalf("trusted usage rows=%d error=%v", usageRows, err)
+	}
 	makeChild := func(parent domain.ID) (domain.RunAdmission, domain.RunVersionResolution, ports.RunAdmissionEvidence) {
 		child, childResolution, childEvidence := makeAdmission()
 		child.Constraints = map[string]any{"max_active_children": float64(10), "max_total_children": float64(20), "max_delegation_depth": float64(4)}
