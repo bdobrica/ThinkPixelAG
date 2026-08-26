@@ -425,26 +425,33 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 		t.Fatalf("failed vector left reservation=%d items=%d grants=%d tool_available=%d", failedReservations, failedItems, failedGrants, toolAvailable)
 	}
 
-	parallelChildren := make([]domain.RunAdmission, 2)
-	parallelReservationIDs := make([]domain.ID, 2)
+	// Exercise substantially more contenders than the pool's default maximum
+	// connection count. This forces queued transactions as well as simultaneous
+	// inverse-order vectors through the deterministic dimension lock ordering.
+	const reservationContenders = 32
+	parallelChildren := make([]domain.RunAdmission, reservationContenders)
+	parallelReservationIDs := make([]domain.ID, reservationContenders)
 	for index := range parallelChildren {
 		parallelChildren[index], _, _ = makeChild(admission.EnvelopeID)
 		parallelReservationIDs[index] = mustNewRepositoryID(t)
 	}
 	parallelErrors := make(chan error, len(parallelChildren))
 	var reservationWait sync.WaitGroup
+	startReservations := make(chan struct{})
 	for index, parallelChild := range parallelChildren {
 		reservationWait.Add(1)
 		go func(index int, child domain.RunAdmission) {
 			defer reservationWait.Done()
+			<-startReservations
 			amounts := []domain.ResourceReservationAmount{{DimensionID: llmDimension, Coefficient: 40}, {DimensionID: toolDimension, Coefficient: 20}}
-			if index == 1 {
+			if index%2 == 1 {
 				amounts[0], amounts[1] = amounts[1], amounts[0]
 			}
 			_, err := repository.ReserveChildResources(ctx, domain.ResourceReservation{ID: parallelReservationIDs[index], TenantID: tenant, ParentEnvelopeID: admission.EnvelopeID, ChildEnvelopeID: child.EnvelopeID, ChildRunID: child.RunID, CreatedAt: now.Add(time.Duration(3+index) * time.Second), Amounts: amounts})
 			parallelErrors <- err
 		}(index, parallelChild)
 	}
+	close(startReservations)
 	reservationWait.Wait()
 	close(parallelErrors)
 	var reservationSuccesses, reservationConflicts int
@@ -464,7 +471,7 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if err := pool.QueryRow(ctx, `SELECT llm.available_value,llm.allocated_open_value,tool.available_value,tool.allocated_open_value FROM resource_balances llm JOIN resource_balances tool ON tool.tenant_id=llm.tenant_id AND tool.envelope_id=llm.envelope_id WHERE llm.tenant_id=$1 AND llm.envelope_id=$2 AND llm.dimension_id=$3 AND tool.dimension_id=$4`, tenant.String(), admission.EnvelopeID.String(), llmDimension.String(), toolDimension.String()).Scan(&llmAvailable, &llmAllocated, &parallelToolAvailable, &parallelToolAllocated); err != nil {
 		t.Fatal(err)
 	}
-	if reservationSuccesses != 1 || reservationConflicts != 1 || llmAvailable != 20 || llmAllocated != 80 || parallelToolAvailable != 10 || parallelToolAllocated != 40 {
+	if reservationSuccesses != 1 || reservationConflicts != reservationContenders-1 || llmAvailable != 20 || llmAllocated != 80 || parallelToolAvailable != 10 || parallelToolAllocated != 40 {
 		t.Fatalf("parallel successes=%d conflicts=%d llm=%d/%d tool=%d/%d", reservationSuccesses, reservationConflicts, llmAvailable, llmAllocated, parallelToolAvailable, parallelToolAllocated)
 	}
 	if _, err := pool.Exec(ctx, `UPDATE runs SET state='RUNNING',state_version=2,updated_at=$3 WHERE tenant_id=$1 AND id=$2`, tenant.String(), child.RunID.String(), now.Add(10*time.Second)); err != nil {
@@ -482,17 +489,21 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	}
 	concurrentSettlement := domain.ResourceSettlement{ID: mustNewRepositoryID(t), TenantID: tenant, ReservationID: reservation.ID, ActorPrincipalID: principal, PolicyDecisionID: mustNewRepositoryID(t), IdempotencyKey: "settle-concurrent", TerminalRunState: "COMPLETED", FinalUsageEventIDs: []domain.ID{settlementUsage.ID}, SettledAt: settlementAt}
 	concurrentEvidence := ports.ResourceSettlementEvidence{AuditID: mustNewRepositoryID(t), OutboxID: mustNewRepositoryID(t), RequestID: mustNewRepositoryID(t), ReasonCodes: []string{"workload.operation.allowed"}}
-	settlementResults := make(chan domain.ResourceSettlementResult, 2)
-	settlementErrors := make(chan error, 2)
-	for range 2 {
+	const settlementContenders = 32
+	settlementResults := make(chan domain.ResourceSettlementResult, settlementContenders)
+	settlementErrors := make(chan error, settlementContenders)
+	startSettlements := make(chan struct{})
+	for range settlementContenders {
 		go func() {
+			<-startSettlements
 			got, settleErr := repository.SettleReservation(ctx, concurrentSettlement, concurrentEvidence)
 			settlementResults <- got
 			settlementErrors <- settleErr
 		}()
 	}
+	close(startSettlements)
 	var duplicateSettlements int
-	for range 2 {
+	for range settlementContenders {
 		got, settleErr := <-settlementResults, <-settlementErrors
 		if settleErr != nil {
 			t.Fatalf("concurrent settlement: %v", settleErr)
@@ -504,7 +515,7 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 			t.Fatalf("settlement vector=%+v", got)
 		}
 	}
-	if duplicateSettlements != 1 {
+	if duplicateSettlements != settlementContenders-1 {
 		t.Fatalf("duplicate settlements=%d", duplicateSettlements)
 	}
 	var llmConsumed, parallelToolConsumed int64
@@ -640,16 +651,18 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if err := pool.QueryRow(ctx, `SELECT count(*) FROM runs WHERE tenant_id=$1 AND id=$2`, tenant.String(), expanded.RunID.String()).Scan(&rolledBackExpanded); err != nil || rolledBackExpanded != 0 {
 		t.Fatalf("expanded child remained durable count=%d error=%v", rolledBackExpanded, err)
 	}
+	const structuralContenders = 32
 	governed := make([]struct {
 		admission   domain.RunAdmission
 		resolution  domain.RunVersionResolution
 		evidence    ports.RunAdmissionEvidence
 		reservation domain.ResourceReservation
-	}, 2)
+	}, structuralContenders)
 	for index := range governed {
-		governed[index].admission, governed[index].resolution, governed[index].evidence, governed[index].reservation = makeGovernedChild(time.Duration(20+index) * time.Second)
+		governed[index].admission, governed[index].resolution, governed[index].evidence, governed[index].reservation = makeGovernedChild(20 * time.Second)
 	}
-	governedErrors := make(chan error, 2)
+	governedErrors := make(chan error, structuralContenders)
+	startGovernedAdmissions := make(chan struct{})
 	for index := range governed {
 		go func(candidate struct {
 			admission   domain.RunAdmission
@@ -657,10 +670,12 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 			evidence    ports.RunAdmissionEvidence
 			reservation domain.ResourceReservation
 		}) {
+			<-startGovernedAdmissions
 			_, err := repository.AdmitChildRun(ctx, candidate.admission, candidate.resolution, candidate.evidence, candidate.reservation)
 			governedErrors <- err
 		}(governed[index])
 	}
+	close(startGovernedAdmissions)
 	var admittedChildren, rejectedChildren int
 	for range governed {
 		if err := <-governedErrors; err == nil {
@@ -675,7 +690,7 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if err := pool.QueryRow(ctx, `SELECT (SELECT count(*) FROM resource_envelopes WHERE tenant_id=$1 AND parent_envelope_id=$2),(SELECT count(*) FROM resource_reservations WHERE tenant_id=$1 AND parent_envelope_id=$2)`, tenant.String(), structuralRoot.EnvelopeID.String()).Scan(&durableChildren, &structuralReservations); err != nil {
 		t.Fatal(err)
 	}
-	if admittedChildren != 1 || rejectedChildren != 1 || durableChildren != 1 || structuralReservations != 1 {
+	if admittedChildren != 1 || rejectedChildren != structuralContenders-1 || durableChildren != 1 || structuralReservations != 1 {
 		t.Fatalf("governed admissions=%d/%d durable=%d reservations=%d", admittedChildren, rejectedChildren, durableChildren, structuralReservations)
 	}
 
