@@ -173,6 +173,15 @@ derives consumption from the child's durable balances rather than a caller
 summary, rejects settlement while descendant allocations remain open, and
 returns an identical established result under repeated or concurrent delivery.
 
+A tenant-scoped reconciliation worker repairs terminal reservations left open
+after a crash and reservations whose governed expiry has passed. Replicas claim
+eligible rows with PostgreSQL `SKIP LOCKED`; an expired live child is fenced and
+timed out before its authoritative unused balance is returned. Each candidate
+commits independently with immutable settlement, audit, run-event (when timed
+out), and outbox evidence. The unique reservation settlement boundary makes a
+lost response or concurrent retry unable to credit the parent twice. Open
+descendant allocations remain held for a later leaf-first reconciliation pass.
+
 Child admission now composes the authorized run aggregate, parent link,
 structural checks, consumable reservation, and evidence in one PostgreSQL
 transaction. A parent-envelope lock serializes sibling admissions: open

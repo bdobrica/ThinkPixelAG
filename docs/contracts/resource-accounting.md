@@ -171,6 +171,26 @@ Total-child count and delegation history do not decrease. Active-child count dec
 
 A replay-safe worker finds terminal children with open reservations and expired abandoned reservations. It uses the same settlement operation and unique constraints. It does not infer usage from untrusted status. Unknown final usage is handled by deployment policy conservatively (for example, hold allocation pending trusted reconciliation), never fabricated as zero merely to free budget.
 
+The worker is invoked for one tenant with an active `SYSTEM` principal and a
+bounded batch size. Every item is a separate transaction. Candidates are
+selected with `FOR UPDATE SKIP LOCKED`; terminal children are preferred, and a
+candidate with any open descendant allocation is skipped so reconciliation
+progresses leaf first. An expired `ADMITTED`, `RUNNING`, or
+`PAUSED_FOR_BUDGET` child is atomically fenced, transitioned to `TIMED_OUT`, and
+given ordered run/outbox evidence before reclaim. This prevents late trusted
+metering or a stale runtime lease from spending capacity after it is returned.
+
+Consumed and returned amounts come only from the locked child balances and the
+immutable reservation vector. The same transaction inserts the unique
+settlement and items, decrements the parent's open allocation, credits only the
+child's remaining availability, closes the reservation as `SETTLED` or
+`EXPIRED_SETTLED`, and appends audit/outbox evidence. A process crash either
+rolls the entire item back or leaves a closed reservation that subsequent scans
+do not select; concurrent replicas therefore cannot double credit. A terminal
+child with open descendants, an unexpired nonterminal child, or a state whose
+final usage is not yet authoritative remains allocated rather than being
+treated as zero consumption.
+
 ## Required properties
 
 - Conservation equation holds after every committed operation.

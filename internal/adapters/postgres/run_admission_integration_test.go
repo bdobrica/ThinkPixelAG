@@ -39,7 +39,7 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	}
 	t.Cleanup(pool.Close)
 
-	tenant, principal, sponsor, agentID, versionID, approvalID := mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t)
+	tenant, principal, sponsor, systemPrincipal, agentID, versionID, approvalID := mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t)
 	now := time.Now().UTC().Truncate(time.Microsecond)
 	_, err = pool.Exec(ctx, `INSERT INTO tenants(id,slug,display_name,created_at,updated_at)VALUES($1,$2,$2,$3,$3)`, tenant.String(), "run002-"+tenant.String(), now)
 	if err != nil {
@@ -67,6 +67,9 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 		if _, err := pool.Exec(ctx, `INSERT INTO principals(id,tenant_id,external_issuer,external_subject,principal_type,created_at)VALUES($1,$2,'https://run002.test',$3,'HUMAN',$4)`, id.String(), tenant.String(), id.String(), now); err != nil {
 			t.Fatal(err)
 		}
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO principals(id,tenant_id,external_issuer,external_subject,principal_type,created_at)VALUES($1,$2,'https://run002.test',$3,'SYSTEM',$4)`, systemPrincipal.String(), tenant.String(), systemPrincipal.String(), now); err != nil {
+		t.Fatal(err)
 	}
 	if _, err := pool.Exec(ctx, `INSERT INTO agents(id,tenant_id,name,owner_principal_id,sponsor_principal_id,risk_class,created_at,updated_at)VALUES($1,$2,$3,$4,$5,'HIGH',$6,$6)`, agentID.String(), tenant.String(), "admission-"+agentID.String(), principal.String(), sponsor.String(), now); err != nil {
 		t.Fatal(err)
@@ -509,6 +512,102 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	}
 	if llmAvailable != 50 || llmAllocated != 40 || parallelToolAvailable != 30 || parallelToolAllocated != 20 {
 		t.Fatalf("settled parent llm=%d/%d tool=%d/%d", llmAvailable, llmAllocated, parallelToolAvailable, parallelToolAllocated)
+	}
+
+	// Reconciliation uses the reservation as its exactly-once boundary. Two
+	// replicas racing one terminal orphan produce one settlement and one no-work
+	// result; replay observes no candidate and cannot credit the parent again.
+	orphan, _, _ := makeChild(admission.EnvelopeID)
+	orphanReservation := domain.ResourceReservation{ID: mustNewRepositoryID(t), TenantID: tenant, ParentEnvelopeID: admission.EnvelopeID, ChildEnvelopeID: orphan.EnvelopeID, ChildRunID: orphan.RunID, CreatedAt: now.Add(12 * time.Second), Amounts: []domain.ResourceReservationAmount{{DimensionID: llmDimension, Coefficient: 5}, {DimensionID: toolDimension, Coefficient: 2}}}
+	if _, err := repository.ReserveChildResources(ctx, orphanReservation); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE runs SET state='FAILED',state_version=2,updated_at=$3,terminal_at=$3 WHERE tenant_id=$1 AND id=$2`, tenant.String(), orphan.RunID.String(), now.Add(13*time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	reconcileEvidence := func() ports.ResourceReconciliationEvidence {
+		return ports.ResourceReconciliationEvidence{SettlementID: mustNewRepositoryID(t), PolicyDecisionID: mustNewRepositoryID(t), AuditID: mustNewRepositoryID(t), OutboxID: mustNewRepositoryID(t), RunEventID: mustNewRepositoryID(t)}
+	}
+	failedReconciliationEvidence := reconcileEvidence()
+	failedReconciliationEvidence.OutboxID = evidence.OutboxID // force a late unique failure, like a worker crash before commit
+	if _, err := repositories.ReconcileNextReservation(ctx, tenant, systemPrincipal, now.Add(40*time.Second), failedReconciliationEvidence); err == nil {
+		t.Fatal("reconciliation with conflicting evidence unexpectedly committed")
+	}
+	var afterFailureState string
+	var afterFailureSettlements int
+	if err := pool.QueryRow(ctx, `SELECT state,(SELECT count(*) FROM resource_settlements WHERE tenant_id=$1 AND reservation_id=$2) FROM resource_reservations WHERE tenant_id=$1 AND id=$2`, tenant.String(), orphanReservation.ID.String()).Scan(&afterFailureState, &afterFailureSettlements); err != nil {
+		t.Fatal(err)
+	}
+	if afterFailureState != "OPEN" || afterFailureSettlements != 0 {
+		t.Fatalf("failed reconciliation left state=%s settlements=%d", afterFailureState, afterFailureSettlements)
+	}
+	type reconciliationAttempt struct {
+		result domain.ResourceReconciliationResult
+		err    error
+	}
+	reconcileAttempts := make(chan reconciliationAttempt, 2)
+	for range 2 {
+		go func() {
+			got, reconcileErr := repositories.ReconcileNextReservation(ctx, tenant, systemPrincipal, now.Add(40*time.Second), reconcileEvidence())
+			reconcileAttempts <- reconciliationAttempt{result: got, err: reconcileErr}
+		}()
+	}
+	var reconciled, unavailable int
+	for range 2 {
+		attempt := <-reconcileAttempts
+		got, reconcileErr := attempt.result, attempt.err
+		if reconcileErr == nil {
+			reconciled++
+			if got.Expired || len(got.Settlement.Returned) != 2 {
+				t.Fatalf("terminal reconciliation=%+v", got)
+			}
+		} else if errors.Is(reconcileErr, domain.ErrResourceReconciliationUnavailable) {
+			unavailable++
+		} else {
+			t.Fatalf("terminal reconciliation error=%v", reconcileErr)
+		}
+	}
+	if reconciled != 1 || unavailable != 1 {
+		t.Fatalf("terminal reconciliation results=%d unavailable=%d", reconciled, unavailable)
+	}
+
+	// An expired nonterminal child is first fenced and durably timed out, then
+	// its authoritative remaining balances are reclaimed in the same commit.
+	expiredChild, _, _ := makeChild(admission.EnvelopeID)
+	expiresAt := now.Add(15 * time.Second)
+	expiredReservation := domain.ResourceReservation{ID: mustNewRepositoryID(t), TenantID: tenant, ParentEnvelopeID: admission.EnvelopeID, ChildEnvelopeID: expiredChild.EnvelopeID, ChildRunID: expiredChild.RunID, CreatedAt: now.Add(14 * time.Second), ExpiresAt: &expiresAt, Amounts: []domain.ResourceReservationAmount{{DimensionID: llmDimension, Coefficient: 5}, {DimensionID: toolDimension, Coefficient: 2}}}
+	if _, err := repository.ReserveChildResources(ctx, expiredReservation); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE runs SET state='RUNNING',state_version=2,updated_at=$3,lease_id=$4,lease_expires_at=$5,fencing_token=7 WHERE tenant_id=$1 AND id=$2`, tenant.String(), expiredChild.RunID.String(), now.Add(14*time.Second), mustNewRepositoryID(t).String(), now.Add(time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	expiredResult, err := repositories.ReconcileNextReservation(ctx, tenant, systemPrincipal, now.Add(40*time.Second), reconcileEvidence())
+	if err != nil || !expiredResult.Expired {
+		t.Fatalf("expired reconciliation=%+v error=%v", expiredResult, err)
+	}
+	if _, err := repositories.ReconcileNextReservation(ctx, tenant, systemPrincipal, now.Add(40*time.Second), reconcileEvidence()); !errors.Is(err, domain.ErrResourceReconciliationUnavailable) {
+		t.Fatalf("reconciliation replay error=%v", err)
+	}
+	var orphanSettlements, expiredSettlements, reconciliationAudits, reconciliationOutbox, timeoutEvents int
+	var expiredReservationState, expiredRunState string
+	var expiredFence int64
+	if err := pool.QueryRow(ctx, `SELECT
+(SELECT count(*) FROM resource_settlements WHERE tenant_id=$1 AND reservation_id=$2),
+(SELECT count(*) FROM resource_settlements WHERE tenant_id=$1 AND reservation_id=$3),
+(SELECT count(*) FROM audit_events WHERE tenant_id=$1 AND action='resources.reconcile' AND resource_id IN ($2::text,$3::text)),
+(SELECT count(*) FROM outbox_messages WHERE tenant_id=$1 AND event_type='resource.reservation.reconciled' AND aggregate_id IN ($2::text,$3::text)),
+(SELECT count(*) FROM run_events WHERE tenant_id=$1 AND run_id=$4 AND event_type='run.timed_out'),
+(SELECT state FROM resource_reservations WHERE tenant_id=$1 AND id=$3),
+(SELECT state FROM runs WHERE tenant_id=$1 AND id=$4),
+(SELECT fencing_token FROM runs WHERE tenant_id=$1 AND id=$4)`, tenant.String(), orphanReservation.ID.String(), expiredReservation.ID.String(), expiredChild.RunID.String()).Scan(&orphanSettlements, &expiredSettlements, &reconciliationAudits, &reconciliationOutbox, &timeoutEvents, &expiredReservationState, &expiredRunState, &expiredFence); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, `SELECT llm.available_value,llm.allocated_open_value,tool.available_value,tool.allocated_open_value FROM resource_balances llm JOIN resource_balances tool ON tool.tenant_id=llm.tenant_id AND tool.envelope_id=llm.envelope_id WHERE llm.tenant_id=$1 AND llm.envelope_id=$2 AND llm.dimension_id=$3 AND tool.dimension_id=$4`, tenant.String(), admission.EnvelopeID.String(), llmDimension.String(), toolDimension.String()).Scan(&llmAvailable, &llmAllocated, &parallelToolAvailable, &parallelToolAllocated); err != nil {
+		t.Fatal(err)
+	}
+	if orphanSettlements != 1 || expiredSettlements != 1 || reconciliationAudits != 2 || reconciliationOutbox != 2 || timeoutEvents != 1 || expiredReservationState != "EXPIRED_SETTLED" || expiredRunState != "TIMED_OUT" || expiredFence != 8 || llmAvailable != 50 || llmAllocated != 40 || parallelToolAvailable != 30 || parallelToolAllocated != 20 {
+		t.Fatalf("reconciliation settlements=%d/%d evidence=%d/%d timeout=%d reservation=%s run=%s fence=%d parent=%d/%d,%d/%d", orphanSettlements, expiredSettlements, reconciliationAudits, reconciliationOutbox, timeoutEvents, expiredReservationState, expiredRunState, expiredFence, llmAvailable, llmAllocated, parallelToolAvailable, parallelToolAllocated)
 	}
 
 	// Governed child admission composes the authorized aggregate and reservation
