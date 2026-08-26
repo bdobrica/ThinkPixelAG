@@ -6,8 +6,7 @@ The project implements the governance-plane concepts in the Enterprise Execution
 
 ## Status
 
-The engineering foundation, authoritative PostgreSQL persistence, and Phase 3
-identity, policy, and registry work are complete. Phase 3 provides OIDC
+The engineering foundation and Phases 2 through 5 are complete. Phase 3 provides OIDC
 authentication plus a fail-closed OPA policy boundary, signed bundle activation
 lifecycle, and baseline Rego.
 The policy boundary includes adversarial golden tests and an optional
@@ -24,8 +23,10 @@ evidence for historical pins or deprecated rollback, and persists immutable
 per-run evidence snapshots. The public agent list and description endpoints
 authenticate opaque cursors, filter every active/invocable agent through policy,
 and return enumeration-safe detail errors.
-Phase 0 contracts and the Phase 1, Phase 2, and Phase 3 implementations have
-passed their exit gates. [PLAN.md](PLAN.md) defines the
+Phase 4 provides the governed run lifecycle, and Phase 5 provides authoritative
+resource issuance, reservation, metering, exhaustion, extension, settlement,
+and reconciliation. Phase 0 contracts and the Phase 1 through Phase 5
+implementations have passed their exit gates. [PLAN.md](PLAN.md) defines the
 target architecture and delivery phases; [TODO.md](TODO.md) is the ordered,
 atomic release-candidate checklist. Phase evidence is indexed in
 [docs/README.md](docs/README.md).

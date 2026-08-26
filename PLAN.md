@@ -282,6 +282,15 @@ full qualification evidence are recorded in `docs/api/run-lifecycle.md` and
 
 Implement resource dimensions, envelope issuance, atomic child reservation, trusted metering, exhaustion transitions, extension, settlement, reclaim, and reconciliation. Exit when stress/property tests cannot oversubscribe or double-credit resources.
 
+Status: **Completed 2026-08-26.** Tenant-scoped typed dimensions, immutable
+grants, lockable balances, atomic child allocation, trusted metering and rate
+enforcement, governed exhaustion and extension, terminal settlement, and
+replay-safe reconciliation are implemented. Randomized conservation checks,
+32-way real-PostgreSQL contention scenarios, the composed allocation lifecycle,
+and the full clean-tree gate passed. The authoritative model and qualification
+results are recorded in `docs/contracts/resource-accounting.md`,
+`docs/architecture/database-schema.md`, and `docs/phase-5-evidence.md`.
+
 ### Phase 6 — Revocation and freshness
 
 Implement scoped revocation, epochs, ordered durable log, resumable push stream, gateway reconciliation/checkpoints, cache invalidation, and fail-closed freshness gates. Exit when disconnect/gap/staleness scenarios meet declared security behavior.

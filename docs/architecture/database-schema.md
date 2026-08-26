@@ -105,9 +105,29 @@ inserts ordered run events, audit evidence, and matching outbox records before
 commit. No additional exhaustion table or asynchronous correctness path is
 required.
 
-Conservation across multiple balance rows requires transactional locking and is
-implemented in Phase 5. These migrations establish the nonnegative arithmetic,
-uniqueness, ownership, and all-or-nothing relational substrate for it.
+Child reservation locks the parent envelope and then consumable balance rows in
+dimension-UUID order. In one transaction it validates topology ceilings, moves
+each reserved amount from parent availability to open allocation, creates the
+child envelope and immutable grants, and initializes child balances. This lock
+order is shared by every multi-dimension allocation path; a failed dimension or
+structural check rolls back the complete child aggregate.
+
+`resource_extensions` and their immutable items preserve the original grant.
+Each approved additive action records its actor, decision, approval reference,
+and prior/new value while advancing the envelope version. Consumable additions
+credit availability; deadline additions move only forward. The run, extension,
+audit, ordered event, and outbox evidence commit together, including an atomic
+resume when a paused exhausted run receives new capacity.
+
+Settlement locks the open reservation, child balances, and parent balances. A
+unique reservation settlement derives consumption from the child balances,
+rolls descendant consumption into the parent, credits only unused capacity,
+and closes the reservation in one transaction. Reconciliation claims eligible
+terminal or expired reservations with `SKIP LOCKED`, fences and times out live
+expired children, and uses the same unique close boundary. Open descendants are
+held for a leaf-first later pass. These constraints and locks preserve
+`available + direct_consumed + allocated_open = effective_grant` and make retry
+or concurrent replicas unable to oversubscribe or double-credit resources.
 
 ## Revocation ordering
 

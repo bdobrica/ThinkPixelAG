@@ -33,6 +33,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [Phase 2 authoritative persistence evidence](phase-2-evidence.md)
 - [Phase 3 identity, policy, and registry evidence](phase-3-evidence.md)
 - [Phase 4 run lifecycle API evidence](phase-4-evidence.md)
+- [Phase 5 resource governance evidence](phase-5-evidence.md)
 
 ## Architecture decisions
 
