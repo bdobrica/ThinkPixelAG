@@ -300,6 +300,37 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 			if _, err := repository.RecordTrustedUsage(ctx, late, domain.ThroughputHint{}, exhaustion.disposition); domain.ErrorCodeOf(err) != domain.CodeConflict {
 				t.Fatalf("post-exhaustion usage error=%v", err)
 			}
+			if exhaustion.disposition == domain.ExhaustionPause {
+				addedAmount, _ := domain.NewDecimal(25, 0)
+				addedQuantity, _ := domain.NewQuantity(addedAmount, "llm_tokens")
+				extension := domain.ResourceExtension{ID: mustNewRepositoryID(t), TenantID: tenant, RunID: exhaustionAdmission.RunID, ActorPrincipalID: sponsor, PolicyDecisionID: mustNewRepositoryID(t), IdempotencyKey: "extend-paused-budget", ReasonCode: "budget.increase", ApprovalReference: "CAB-42", Additions: []domain.ResourceExtensionAmount{{Name: "llm_tokens", Quantity: addedQuantity}}, DeadlineExtensionSeconds: 30, CreatedAt: now.Add(40 * time.Second)}
+				extensionEvidence := ports.ResourceExtensionEvidence{AuditID: mustNewRepositoryID(t), OutboxID: mustNewRepositoryID(t), EventID: mustNewRepositoryID(t), RequestID: mustNewRepositoryID(t), ReasonCodes: []string{"resource.extension.approved"}}
+				extended, err := repository.ExtendResources(ctx, extension, extensionEvidence)
+				if err != nil || !extended.Resumed || extended.EnvelopeVersion != 2 || extended.DeadlineAt == nil || !extended.DeadlineAt.Equal(now.Add(90*time.Second)) {
+					t.Fatalf("extension=%+v error=%v", extended, err)
+				}
+				var extensionState string
+				var extensionStateVersion, extensionEnvelopeVersion, immutableGrant, extensionAvailable, extensionConsumed, priorGrant, newGrant, extensionEvents, extensionAudits, extensionOutbox int64
+				if err := pool.QueryRow(ctx, `SELECT r.state,r.state_version,e.version,g.granted_value,b.available_value,b.direct_consumed_value,i.prior_granted_value,i.new_granted_value,(SELECT count(*) FROM run_events WHERE tenant_id=r.tenant_id AND run_id=r.id AND event_type='run.resources_extended'),(SELECT count(*) FROM audit_events WHERE tenant_id=r.tenant_id AND resource_id=e.id::text AND action='resources.extend'),(SELECT count(*) FROM outbox_messages WHERE tenant_id=r.tenant_id AND aggregate_id=r.id::text AND event_type='run.resources_extended') FROM runs r JOIN resource_envelopes e ON e.tenant_id=r.tenant_id AND e.run_id=r.id JOIN resource_envelope_grants g ON g.tenant_id=e.tenant_id AND g.envelope_id=e.id JOIN resource_balances b ON b.tenant_id=g.tenant_id AND b.envelope_id=g.envelope_id AND b.dimension_id=g.dimension_id JOIN resource_extension_items i ON i.tenant_id=g.tenant_id AND i.dimension_id=g.dimension_id JOIN resource_extensions x ON x.tenant_id=i.tenant_id AND x.id=i.extension_id AND x.envelope_id=e.id WHERE r.tenant_id=$1 AND r.id=$2 AND g.dimension_id=$3`, tenant.String(), exhaustionAdmission.RunID.String(), llmDimension.String()).Scan(&extensionState, &extensionStateVersion, &extensionEnvelopeVersion, &immutableGrant, &extensionAvailable, &extensionConsumed, &priorGrant, &newGrant, &extensionEvents, &extensionAudits, &extensionOutbox); err != nil {
+					t.Fatal(err)
+				}
+				if extensionState != "RUNNING" || extensionStateVersion != 5 || extensionEnvelopeVersion != 2 || immutableGrant != 100 || extensionAvailable != 25 || extensionConsumed != 100 || priorGrant != 100 || newGrant != 125 || extensionEvents != 1 || extensionAudits != 1 || extensionOutbox != 1 {
+					t.Fatalf("extension state=%s/%d envelope=%d grant=%d balance=%d/%d ledger=%d/%d evidence=%d/%d/%d", extensionState, extensionStateVersion, extensionEnvelopeVersion, immutableGrant, extensionAvailable, extensionConsumed, priorGrant, newGrant, extensionEvents, extensionAudits, extensionOutbox)
+				}
+				replay, err := repository.ExtendResources(ctx, extension, extensionEvidence)
+				if err != nil || replay.ID != extension.ID || replay.EnvelopeVersion != 2 || !replay.Resumed {
+					t.Fatalf("extension replay=%+v error=%v", replay, err)
+				}
+				extension.DeadlineExtensionSeconds = 31
+				if _, err := repository.ExtendResources(ctx, extension, extensionEvidence); domain.ErrorCodeOf(err) != domain.CodeConflict {
+					t.Fatalf("mismatched extension replay error=%v", err)
+				}
+				// Keep this focused fixture out of the later generic claim-drain loop;
+				// worker lease/recovery behavior is qualified independently below.
+				if _, err := pool.Exec(ctx, `UPDATE runs SET state='COMPLETED',state_version=state_version+1,terminal_at=$3,updated_at=$3 WHERE tenant_id=$1 AND id=$2`, tenant.String(), exhaustionAdmission.RunID.String(), now.Add(50*time.Second)); err != nil {
+					t.Fatal(err)
+				}
+			}
 		})
 	}
 	t.Run("concurrent usage exhausts exactly once", func(t *testing.T) {

@@ -116,6 +116,8 @@ cursor older than the configured 10,000-event logical retention window returns
 
 Administrative APIs for agent/version registration, policy promotion, revocation, resource extensions, and trusted metering will be isolated by authorization policy and documented in OpenAPI. Mutation endpoints use idempotency keys and optimistic or transactional concurrency controls.
 
+Authorized resource extensions are additive, approval-referenced ledger actions. They can add consumable capacity or move an existing deadline forward without rewriting the original grant, and a run requester cannot extend its own run even if it also holds an administrative role.
+
 Phase 3 implements authenticated public agent list/description handlers and the
 governed version-approval handler, plus application and PostgreSQL boundaries
 for agent/version registration, approval state, discovery, and version

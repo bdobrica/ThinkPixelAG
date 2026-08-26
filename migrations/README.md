@@ -48,6 +48,10 @@ The initial schema is split along durable consistency boundaries:
 - `011` makes the committed dimension vector of each resource reservation
   immutable while leaving reservation headers available for exactly-once
   settlement state changes.
+- `012` stores authoritative fixed-window structural throughput counters.
+- `013` adds immutable, policy-attributed resource extension headers and items;
+  mutable balances, envelope versions, deadlines, and paused-run resumption are
+  updated atomically with each ledger action.
 
 Tenant-owned relationships use composite foreign keys containing `tenant_id` so
 a database write cannot connect rows across tenants. Frequently used access

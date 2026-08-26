@@ -37,19 +37,20 @@ type ReadinessProbe interface {
 }
 
 type Dependencies struct {
-	Logger          *slog.Logger
-	Metrics         *metrics.Metrics
-	Tracing         *tracing.Tracing
-	Readiness       ReadinessProbe
-	NewID           IDGenerator
-	AgentApprovals  http.Handler
-	AgentDiscovery  http.Handler
-	RunAdmission    http.Handler
-	RunQuery        http.Handler
-	RunSignal       http.Handler
-	RunCancellation http.Handler
-	RunEvents       http.Handler
-	TrustedUsage    http.Handler
+	Logger            *slog.Logger
+	Metrics           *metrics.Metrics
+	Tracing           *tracing.Tracing
+	Readiness         ReadinessProbe
+	NewID             IDGenerator
+	AgentApprovals    http.Handler
+	AgentDiscovery    http.Handler
+	RunAdmission      http.Handler
+	RunQuery          http.Handler
+	RunSignal         http.Handler
+	RunCancellation   http.Handler
+	RunEvents         http.Handler
+	TrustedUsage      http.Handler
+	ResourceExtension http.Handler
 }
 
 type Server struct {
@@ -149,6 +150,9 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 	}
 	if dependencies.TrustedUsage != nil {
 		mount("POST /v1/trusted/runs/{run_id}/usage", dependencies.TrustedUsage)
+	}
+	if dependencies.ResourceExtension != nil {
+		mount("POST /v1/admin/runs/{run_id}/resource-extensions", dependencies.ResourceExtension)
 	}
 	mux.Handle("/", middleware("unknown", httpConfig, dependencies, http.HandlerFunc(notFound)))
 	return mux

@@ -1112,7 +1112,7 @@ components:
       properties:
         additions:
           type: array
-          minItems: 1
+          minItems: 0
           maxItems: 100
           items:
             $ref: '#/components/schemas/ResourceAmount'

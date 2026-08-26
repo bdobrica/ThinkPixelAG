@@ -89,6 +89,15 @@ test_trusted_workload_allowed_to_settle if {
     d.decision_ttl_seconds == 0
 }
 
+test_extension_requires_governance_admin_and_separate_actor if {
+    resource := {"tenant_id":"t","attributes":{"requested_by":"runner"}}
+    allowed := authorization.decision with input as object.union(base,{"action":"resources.extend","subject":{"principal_id":"admin","tenant_id":"t","roles":["governance-admin"]},"resource":resource})
+    allowed.allow
+    allowed.reason_codes == ["resource.extension.approved"]
+    self := authorization.decision with input as object.union(base,{"action":"resources.extend","subject":{"principal_id":"runner","tenant_id":"t","roles":["governance-admin"]},"resource":resource})
+    not self.allow
+}
+
 test_metering_policy_selects_budget_exhaustion_disposition if {
     low := authorization.decision with input as object.union(base,{"action":"resources.meter","subject":{"tenant_id":"t","roles":["trusted-workload"]},"agent":{"approved":true,"revoked":false,"risk_class":"low"}})
     low.obligations == [{"type":"budget.pause_on_exhaustion","mandatory":false}]

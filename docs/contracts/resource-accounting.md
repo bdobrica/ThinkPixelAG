@@ -150,7 +150,7 @@ only on asynchronous metrics.
 
 ## Extension
 
-An extension is a positive, typed ledger entry referencing actor, policy decision, reason, approval when required, prior/new grant, and audit/outbox evidence. It atomically increases granted and available quantity (or adjusts deadline/structural root ceiling as expressly approved). It never rewrites the original grant or consumption. A run/worker identity cannot approve its own extension.
+An extension is a positive, typed ledger entry referencing actor, policy decision, reason, mandatory approval reference, prior/new grant, and audit/outbox evidence. Consumable additions atomically credit availability while immutable original grants remain unchanged; effective grant is the original grant plus its ordered extension items. Deadline additions record the prior/new absolute deadline. Each action increments the envelope version and appends audit, run-event, and outbox evidence in the same transaction. Extending a paused exhausted run resumes it only after the credit commits. Idempotency is scoped to tenant, actor, and key, and reuse with different content conflicts. Terminal runs cannot be extended. A run requester cannot approve its own extension; this is enforced by policy, application, and persistence boundaries.
 
 ## Settlement and reclaim
 
