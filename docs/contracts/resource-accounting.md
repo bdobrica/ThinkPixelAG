@@ -115,6 +115,24 @@ overflow and remaining availability, so consumption is monotonic and the
 conservation equation cannot be crossed. Concurrent identical deliveries
 return the first receipt; changed content under the same source key conflicts.
 
+### Structural throughput
+
+A consumable named `x` is rate-governed when its envelope also grants the
+structural `MAX`, scale-zero dimension `x_per_minute`. Accepted quantities are
+counted by server `recorded_at` in half-open UTC fixed windows
+`[minute, minute+1m)`; producer-supplied observation time never selects a
+window. The window row and usage/balance mutations share one transaction, and
+the conditional upsert admits an event only when the resulting exact count is
+at most the immutable structural grant. A denied event changes neither window,
+ledger, nor consumable balance. The next window reopens capacity.
+
+Valkey stores only a short-lived, integrity-protected marker for a window that
+PostgreSQL has already denied. A marker may conservatively reject new work but
+cannot approve it, increase a grant, or suppress the authoritative check on a
+cache miss. Missing, malformed, or unavailable Valkey state is bypassed to
+PostgreSQL. The repository resolves identical source-event replay before
+honoring a blocked hint, preserving idempotent receipts during exhaustion.
+
 ## Exhaustion
 
 Consumption reaching a ceiling prevents further grants/authorized consumption for that dimension and triggers `BUDGET_EXHAUSTED`. Enforcement must not depend only on asynchronous metrics. Policy chooses `PAUSED_FOR_BUDGET` or `FAILED_BUDGET`; a paused run performs no governed work until an additive extension commits.

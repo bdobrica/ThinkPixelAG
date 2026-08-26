@@ -12,7 +12,7 @@ import (
 
 var _ ports.TrustedUsageRepository = (*TenantRepository)(nil)
 
-func (r *TenantRepository) RecordTrustedUsage(ctx context.Context, candidate domain.TrustedUsage) (receipt domain.UsageReceipt, err error) {
+func (r *TenantRepository) RecordTrustedUsage(ctx context.Context, candidate domain.TrustedUsage, hint domain.ThroughputHint) (receipt domain.UsageReceipt, err error) {
 	if err = r.valid(); err != nil {
 		return receipt, err
 	}
@@ -65,6 +65,34 @@ func (r *TenantRepository) RecordTrustedUsage(ctx context.Context, candidate dom
 		}
 		if closed {
 			return domain.NewError(domain.CodeConflict, "late usage is not accepted after settlement")
+		}
+		rateDimension, nameErr := domain.ThroughputDimensionName(usage.ResourceName)
+		if nameErr == nil {
+			var rateDimensionID, rateUnit string
+			var rateLimit int64
+			rateErr := repository.db.QueryRow(ctx, `SELECT d.id::text,d.unit,g.granted_value FROM resource_envelope_grants g JOIN resource_dimensions d ON d.tenant_id=g.tenant_id AND d.id=g.dimension_id WHERE g.tenant_id=$1 AND g.envelope_id=$2 AND d.name=$3 AND d.class='STRUCTURAL' AND d.aggregation='MAX' AND d.scale=0`, r.tenantID.String(), envelopeID, rateDimension).Scan(&rateDimensionID, &rateUnit, &rateLimit)
+			if rateErr != nil && !errors.Is(rateErr, pgx.ErrNoRows) {
+				return fmt.Errorf("resolve structural throughput grant: %w", rateErr)
+			}
+			if rateErr == nil {
+				expectedRateUnit, unitErr := domain.ThroughputUnitName(usage.Quantity.Unit())
+				if unitErr != nil || rateUnit != expectedRateUnit {
+					return domain.NewError(domain.CodeInvalidArgument, "structural throughput unit is invalid")
+				}
+				retryAt := usage.RecordedAt.Truncate(domain.ThroughputWindow).Add(domain.ThroughputWindow)
+				if hint.Blocked && hint.DimensionName == rateDimension {
+					return &domain.ThroughputLimitExceeded{DimensionName: rateDimension, RetryAt: retryAt}
+				}
+				windowStart := usage.RecordedAt.Truncate(domain.ThroughputWindow)
+				var used int64
+				rateErr = repository.db.QueryRow(ctx, `INSERT INTO resource_rate_windows(tenant_id,envelope_id,dimension_id,window_start,used_value,updated_at) SELECT $1,$2,$3,$4,$5::bigint,$6 WHERE $5::bigint <= $7::bigint ON CONFLICT(tenant_id,envelope_id,dimension_id,window_start) DO UPDATE SET used_value=resource_rate_windows.used_value+EXCLUDED.used_value,updated_at=EXCLUDED.updated_at WHERE resource_rate_windows.used_value <= $7::bigint-EXCLUDED.used_value RETURNING used_value`, r.tenantID.String(), envelopeID, rateDimensionID, windowStart, usage.Quantity.Amount().Coefficient(), usage.RecordedAt, rateLimit).Scan(&used)
+				if errors.Is(rateErr, pgx.ErrNoRows) {
+					return &domain.ThroughputLimitExceeded{DimensionName: rateDimension, RetryAt: retryAt}
+				}
+				if rateErr != nil {
+					return fmt.Errorf("apply structural throughput limit: %w", rateErr)
+				}
+			}
 		}
 		tag, err := repository.db.Exec(ctx, `UPDATE resource_balances SET available_value=available_value-$4,direct_consumed_value=direct_consumed_value+$4,state_version=state_version+1,updated_at=$5 WHERE tenant_id=$1 AND envelope_id=$2 AND dimension_id=$3 AND available_value >= $4 AND direct_consumed_value <= 9223372036854775807-$4 AND state_version < 9223372036854775807`, r.tenantID.String(), envelopeID, dimensionID, usage.Quantity.Amount().Coefficient(), usage.RecordedAt)
 		if err != nil {

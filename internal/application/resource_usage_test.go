@@ -14,22 +14,60 @@ import (
 type usageRepoStub struct {
 	record ports.RunAccessRecord
 	usage  domain.TrustedUsage
+	hint   domain.ThroughputHint
+	err    error
 	calls  int
 }
 
 func (r *usageRepoStub) GetRun(context.Context, domain.ID) (ports.RunAccessRecord, error) {
 	return r.record, nil
 }
-func (r *usageRepoStub) RecordTrustedUsage(_ context.Context, u domain.TrustedUsage) (domain.UsageReceipt, error) {
+func (r *usageRepoStub) RecordTrustedUsage(_ context.Context, u domain.TrustedUsage, hint domain.ThroughputHint) (domain.UsageReceipt, error) {
 	r.calls++
 	r.usage = u
-	return domain.UsageReceipt{UsageID: u.ID, AcceptedAt: u.RecordedAt}, nil
+	r.hint = hint
+	return domain.UsageReceipt{UsageID: u.ID, AcceptedAt: u.RecordedAt}, r.err
+}
+
+type usageRateStub struct {
+	blocked, marked bool
+	err             error
+}
+
+func (a *usageRateStub) Blocked(context.Context, string) (bool, error) { return a.blocked, a.err }
+func (a *usageRateStub) MarkBlocked(context.Context, string, time.Time) error {
+	a.marked = true
+	return a.err
 }
 
 type usagePolicyStub struct {
 	input policy.Input
 	allow bool
 	err   error
+}
+
+func TestTrustedUsageRateAcceleratorIsConservativeAndOptional(t *testing.T) {
+	ids := make([]domain.ID, 7)
+	for i := range ids {
+		ids[i], _ = domain.NewID()
+	}
+	now := time.Date(2026, 8, 26, 12, 34, 0, 0, time.UTC)
+	repo := &usageRepoStub{record: ports.RunAccessRecord{Run: domain.Run{ID: ids[0], TenantID: ids[1], AgentID: ids[2], AgentVersionID: ids[3], RequestedBy: ids[4], VersionDigest: "sha256:" + strings.Repeat("a", 64), State: domain.RunRunning, StateVersion: 2, EnvelopeVersion: 1, CreatedAt: now, UpdatedAt: now}, AgentRiskClass: domain.AgentRiskLow, AgentOwnerID: ids[5]}}
+	accelerator := &usageRateStub{blocked: true}
+	service, _ := NewTrustedUsageService(repo, &usagePolicyStub{allow: true}, fixedClock{now: now}, accelerator)
+	command := RecordTrustedUsage{TenantID: ids[1], ProducerID: ids[6], RequestID: ids[4], RunID: ids[0], SourceEventID: "evt-rate", ResourceName: "tool_calls", Unit: "calls", Quantity: 1, ObservedAt: now, SecurityState: policy.SecurityState{Authoritative: true}}
+	if _, err := service.Record(context.Background(), command); err != nil || !repo.hint.Blocked || repo.hint.DimensionName != "tool_calls_per_minute" {
+		t.Fatalf("hint=%+v error=%v", repo.hint, err)
+	}
+	accelerator.err = context.DeadlineExceeded
+	if _, err := service.Record(context.Background(), command); err != nil {
+		t.Fatalf("accelerator outage must bypass to repository: %v", err)
+	}
+	repo.err = &domain.ThroughputLimitExceeded{DimensionName: "tool_calls_per_minute", RetryAt: now.Add(time.Minute)}
+	accelerator.err = nil
+	if _, err := service.Record(context.Background(), command); domain.ErrorCodeOf(err) != domain.CodeConflict || !accelerator.marked {
+		t.Fatalf("rate denial=%v marked=%v", err, accelerator.marked)
+	}
 }
 
 func (p *usagePolicyStub) Decide(_ context.Context, in policy.Input) (policy.Result, error) {

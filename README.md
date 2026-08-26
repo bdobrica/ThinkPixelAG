@@ -183,6 +183,15 @@ is appended and atomically transferred from availability to direct consumption;
 unit mismatches, overflow, over-budget usage, disabled producers, and usage
 after settlement fail closed.
 
+Metered consumables may have a structural `<resource>_per_minute` companion
+grant (for example, `tool_calls_per_minute`). The server applies each accepted
+event to a PostgreSQL-backed UTC minute window in the same transaction as its
+usage ledger and balance mutation. Concurrent events cannot cross the grant.
+An optional integrity-protected Valkey marker can reject an already exhausted
+window sooner; cache misses, corruption, or outages bypass to PostgreSQL and
+never create an allow. Identical source-event retries remain replayable even
+when the accelerator reports that the window is blocked.
+
 ## Security and reliability principles
 
 - Deny by default and fail closed when required policy or revocation freshness cannot be established.

@@ -1,5 +1,5 @@
-// Package valkey provides a disposable policy-decision cache. It never owns
-// authorization truth; callers bypass it on every error.
+// Package valkey provides disposable decision-cache and rate-limit
+// acceleration. It never owns authorization or capacity truth.
 package valkey
 
 import (
@@ -16,6 +16,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 )
 
 var ErrMiss = errors.New("valkey cache miss")
@@ -29,6 +31,32 @@ type Cache struct {
 	tlsConfig                   *tls.Config
 	timeout                     time.Duration
 	integrityKey                []byte
+}
+
+var _ ports.ThroughputAccelerator = (*Cache)(nil)
+
+// Blocked reads only an integrity-protected exhausted-window marker. A miss or
+// any error is bypassed by the caller in favor of PostgreSQL.
+func (c *Cache) Blocked(ctx context.Context, key string) (bool, error) {
+	value, err := c.Get(ctx, key)
+	if errors.Is(err, ErrMiss) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if string(value) != "blocked" {
+		return false, errors.New("invalid throughput marker")
+	}
+	return true, nil
+}
+
+func (c *Cache) MarkBlocked(ctx context.Context, key string, retryAt time.Time) error {
+	ttl := time.Until(retryAt)
+	if ttl <= 0 {
+		return nil
+	}
+	return c.Set(ctx, key, []byte("blocked"), ttl)
 }
 
 func New(rawURL string, timeout time.Duration, integrityKey []byte) (*Cache, error) {

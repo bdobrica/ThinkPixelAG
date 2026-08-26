@@ -2,6 +2,8 @@ package application
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"sort"
 	"strings"
@@ -13,9 +15,10 @@ import (
 )
 
 type TrustedUsageService struct {
-	repository ports.TrustedUsageRepository
-	evaluator  policy.Evaluator
-	clock      domain.Clock
+	repository  ports.TrustedUsageRepository
+	evaluator   policy.Evaluator
+	clock       domain.Clock
+	accelerator ports.ThroughputAccelerator
 }
 
 type RecordTrustedUsage struct {
@@ -27,11 +30,18 @@ type RecordTrustedUsage struct {
 	SecurityState                             policy.SecurityState
 }
 
-func NewTrustedUsageService(repository ports.TrustedUsageRepository, evaluator policy.Evaluator, clock domain.Clock) (*TrustedUsageService, error) {
+func NewTrustedUsageService(repository ports.TrustedUsageRepository, evaluator policy.Evaluator, clock domain.Clock, accelerators ...ports.ThroughputAccelerator) (*TrustedUsageService, error) {
 	if repository == nil || evaluator == nil || clock == nil {
 		return nil, errors.New("trusted usage requires a repository, policy evaluator, and clock")
 	}
-	return &TrustedUsageService{repository, evaluator, clock}, nil
+	if len(accelerators) > 1 {
+		return nil, errors.New("trusted usage accepts at most one throughput accelerator")
+	}
+	var accelerator ports.ThroughputAccelerator
+	if len(accelerators) == 1 {
+		accelerator = accelerators[0]
+	}
+	return &TrustedUsageService{repository: repository, evaluator: evaluator, clock: clock, accelerator: accelerator}, nil
 }
 
 func (s *TrustedUsageService) Record(ctx context.Context, command RecordTrustedUsage) (domain.UsageReceipt, error) {
@@ -82,5 +92,27 @@ func (s *TrustedUsageService) Record(ctx context.Context, command RecordTrustedU
 		return domain.UsageReceipt{}, domain.WrapError(domain.CodeInvalidArgument, "trusted usage quantity is invalid", err)
 	}
 	usage := domain.TrustedUsage{ID: usageID, TenantID: command.TenantID, RunID: command.RunID, ProducerID: command.ProducerID, SourceEventID: command.SourceEventID, ResourceName: command.ResourceName, Quantity: quantity, ObservedAt: command.ObservedAt, RecordedAt: now}
-	return s.repository.RecordTrustedUsage(ctx, usage)
+	rateDimension, _ := domain.ThroughputDimensionName(command.ResourceName)
+	hint := domain.ThroughputHint{DimensionName: rateDimension}
+	key := throughputKey(command.TenantID, command.RunID, rateDimension, now)
+	if s.accelerator != nil && rateDimension != "" {
+		// Cache failure is a safe bypass because PostgreSQL still performs the
+		// complete authoritative check.
+		hint.Blocked, _ = s.accelerator.Blocked(ctx, key)
+	}
+	receipt, err := s.repository.RecordTrustedUsage(ctx, usage, hint)
+	var exceeded *domain.ThroughputLimitExceeded
+	if err != nil && errors.As(err, &exceeded) {
+		if s.accelerator != nil {
+			_ = s.accelerator.MarkBlocked(ctx, key, exceeded.RetryAt)
+		}
+		return domain.UsageReceipt{}, domain.NewError(domain.CodeConflict, "structural throughput limit exceeded").WithRetryable()
+	}
+	return receipt, err
+}
+
+func throughputKey(tenantID, runID domain.ID, dimension string, now time.Time) string {
+	window := now.UTC().Truncate(domain.ThroughputWindow).Format(time.RFC3339)
+	sum := sha256.Sum256([]byte(tenantID.String() + "\x00" + runID.String() + "\x00" + dimension + "\x00" + window))
+	return "thinkpixelag:rate:v1:" + hex.EncodeToString(sum[:])
 }

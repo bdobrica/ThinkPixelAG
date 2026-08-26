@@ -92,6 +92,12 @@ closure; settlement items enforce `returned = reserved - consumed` without
 overflow or negative values. Trusted usage is unique by tenant, producer, and
 source event ID, with a content digest available to detect mismatched replay.
 
+`resource_rate_windows` is the authoritative fixed-window structural
+throughput counter. Its tenant/envelope/dimension/window primary key serializes
+competing increments, its grant foreign key prevents detached counters, and a
+conditional upsert prevents the resulting count from crossing the immutable
+envelope grant. Valkey contains only disposable exhausted-window markers.
+
 Conservation across multiple balance rows requires transactional locking and is
 implemented in Phase 5. These migrations establish the nonnegative arithmetic,
 uniqueness, ownership, and all-or-nothing relational substrate for it.

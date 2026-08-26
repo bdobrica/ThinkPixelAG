@@ -54,3 +54,26 @@ func TestWrongValkeyCredentialFails(t *testing.T) {
 		t.Fatal("wrong credential succeeded")
 	}
 }
+
+func TestThroughputBlockedMarkerExpires(t *testing.T) {
+	raw := os.Getenv("THINKPIXELAG_TEST_VALKEY_URL")
+	if raw == "" {
+		t.Skip("THINKPIXELAG_TEST_VALKEY_URL is not set")
+	}
+	c, err := New(raw, time.Second, testIntegrityKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	key := "thinkpixelag:rate:test:" + time.Now().UTC().Format("150405.000000000")
+	if err := c.MarkBlocked(ctx, key, time.Now().Add(50*time.Millisecond)); err != nil {
+		t.Fatal(err)
+	}
+	if blocked, err := c.Blocked(ctx, key); err != nil || !blocked {
+		t.Fatalf("blocked=%v error=%v", blocked, err)
+	}
+	time.Sleep(80 * time.Millisecond)
+	if blocked, err := c.Blocked(ctx, key); err != nil || blocked {
+		t.Fatalf("expired blocked=%v error=%v", blocked, err)
+	}
+}
