@@ -507,11 +507,15 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if duplicateSettlements != 1 {
 		t.Fatalf("duplicate settlements=%d", duplicateSettlements)
 	}
-	if err := pool.QueryRow(ctx, `SELECT llm.available_value,llm.allocated_open_value,tool.available_value,tool.allocated_open_value FROM resource_balances llm JOIN resource_balances tool ON tool.tenant_id=llm.tenant_id AND tool.envelope_id=llm.envelope_id WHERE llm.tenant_id=$1 AND llm.envelope_id=$2 AND llm.dimension_id=$3 AND tool.dimension_id=$4`, tenant.String(), admission.EnvelopeID.String(), llmDimension.String(), toolDimension.String()).Scan(&llmAvailable, &llmAllocated, &parallelToolAvailable, &parallelToolAllocated); err != nil {
+	var llmConsumed, parallelToolConsumed int64
+	if err := pool.QueryRow(ctx, `SELECT llm.available_value,llm.direct_consumed_value,llm.allocated_open_value,tool.available_value,tool.direct_consumed_value,tool.allocated_open_value FROM resource_balances llm JOIN resource_balances tool ON tool.tenant_id=llm.tenant_id AND tool.envelope_id=llm.envelope_id WHERE llm.tenant_id=$1 AND llm.envelope_id=$2 AND llm.dimension_id=$3 AND tool.dimension_id=$4`, tenant.String(), admission.EnvelopeID.String(), llmDimension.String(), toolDimension.String()).Scan(&llmAvailable, &llmConsumed, &llmAllocated, &parallelToolAvailable, &parallelToolConsumed, &parallelToolAllocated); err != nil {
 		t.Fatal(err)
 	}
-	if llmAvailable != 50 || llmAllocated != 40 || parallelToolAvailable != 30 || parallelToolAllocated != 20 {
-		t.Fatalf("settled parent llm=%d/%d tool=%d/%d", llmAvailable, llmAllocated, parallelToolAvailable, parallelToolAllocated)
+	if llmAvailable != 50 || llmConsumed != 10 || llmAllocated != 40 || parallelToolAvailable != 30 || parallelToolConsumed != 0 || parallelToolAllocated != 20 {
+		t.Fatalf("settled parent llm=%d/%d/%d tool=%d/%d/%d", llmAvailable, llmConsumed, llmAllocated, parallelToolAvailable, parallelToolConsumed, parallelToolAllocated)
+	}
+	if llmAvailable+llmConsumed+llmAllocated != 100 || parallelToolAvailable+parallelToolConsumed+parallelToolAllocated != 50 {
+		t.Fatalf("settlement violated conservation: llm=%d tool=%d", llmAvailable+llmConsumed+llmAllocated, parallelToolAvailable+parallelToolConsumed+parallelToolAllocated)
 	}
 
 	// Reconciliation uses the reservation as its exactly-once boundary. Two

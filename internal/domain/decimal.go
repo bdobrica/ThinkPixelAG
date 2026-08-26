@@ -87,10 +87,10 @@ func (d Decimal) Sub(other Decimal) (Decimal, error) {
 	if d.scale != other.scale {
 		return Decimal{}, ErrScaleMismatch
 	}
-	if other.coefficient == math.MinInt64 {
+	if other.coefficient > 0 && d.coefficient < math.MinInt64+other.coefficient || other.coefficient < 0 && d.coefficient > math.MaxInt64+other.coefficient {
 		return Decimal{}, ErrDecimalOverflow
 	}
-	return d.Add(Decimal{coefficient: -other.coefficient, scale: other.scale})
+	return Decimal{coefficient: d.coefficient - other.coefficient, scale: d.scale}, nil
 }
 
 func (d Decimal) String() string {

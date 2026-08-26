@@ -128,7 +128,7 @@ WHERE i.tenant_id=$1 AND i.reservation_id=$2 ORDER BY i.dimension_id FOR UPDATE 
 			if _, err := db.Exec(ctx, `INSERT INTO resource_settlement_items(tenant_id,settlement_id,dimension_id,reserved_value,consumed_value,returned_value,unit,scale) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, tenantID.String(), evidence.SettlementID.String(), item.dimension, item.reserved, consumed, item.available, item.unit, item.scale); err != nil {
 				return fmt.Errorf("insert reconciled settlement item: %w", err)
 			}
-			tag, updateErr := db.Exec(ctx, `UPDATE resource_balances SET available_value=available_value+$4,allocated_open_value=allocated_open_value-$5,state_version=state_version+1,updated_at=$6 WHERE tenant_id=$1 AND envelope_id=$2 AND dimension_id=$3 AND available_value<=9223372036854775807-$4 AND allocated_open_value >= $5 AND state_version<9223372036854775807`, tenantID.String(), parentEnvelope, item.dimension, item.available, item.reserved, now)
+			tag, updateErr := db.Exec(ctx, `UPDATE resource_balances SET available_value=available_value+$4,direct_consumed_value=direct_consumed_value+$5,allocated_open_value=allocated_open_value-$6,state_version=state_version+1,updated_at=$7 WHERE tenant_id=$1 AND envelope_id=$2 AND dimension_id=$3 AND available_value<=9223372036854775807-$4 AND direct_consumed_value<=9223372036854775807-$5 AND allocated_open_value >= $6 AND state_version<9223372036854775807`, tenantID.String(), parentEnvelope, item.dimension, item.available, consumed, item.reserved, now)
 			if updateErr != nil || tag.RowsAffected() != 1 {
 				return domain.NewError(domain.CodeConflict, "parent reconciliation balance changed or overflowed")
 			}
