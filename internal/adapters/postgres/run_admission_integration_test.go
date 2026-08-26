@@ -149,14 +149,17 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if err := repository.AdmitRun(ctx, meterAdmission, meterResolution, meterEvidence); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := pool.Exec(ctx, `UPDATE runs SET state='RUNNING',state_version=2,lease_id=$3,lease_expires_at=$4,fencing_token=1 WHERE tenant_id=$1 AND id=$2`, tenant.String(), meterAdmission.RunID.String(), mustNewRepositoryID(t).String(), now.Add(time.Hour)); err != nil {
+		t.Fatal(err)
+	}
 	usageAmount, _ := domain.NewDecimal(7, 0)
 	usageQuantity, _ := domain.NewQuantity(usageAmount, "llm_tokens")
 	usage := domain.TrustedUsage{ID: mustNewRepositoryID(t), TenantID: tenant, RunID: meterAdmission.RunID, ProducerID: principal, SourceEventID: "meter-event-1", ResourceName: "llm_tokens", Quantity: usageQuantity, ObservedAt: now, RecordedAt: now.Add(time.Second)}
-	receipt, err := repository.RecordTrustedUsage(ctx, usage, domain.ThroughputHint{})
+	receipt, err := repository.RecordTrustedUsage(ctx, usage, domain.ThroughputHint{}, domain.ExhaustionFail)
 	if err != nil || receipt.Duplicate || receipt.UsageID != usage.ID {
 		t.Fatalf("trusted usage receipt=%+v error=%v", receipt, err)
 	}
-	usageReplay, err := repository.RecordTrustedUsage(ctx, usage, domain.ThroughputHint{})
+	usageReplay, err := repository.RecordTrustedUsage(ctx, usage, domain.ThroughputHint{}, domain.ExhaustionFail)
 	if err != nil || !usageReplay.Duplicate || usageReplay.UsageID != usage.ID {
 		t.Fatalf("trusted usage replay=%+v error=%v", usageReplay, err)
 	}
@@ -164,7 +167,7 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	changed.ID = mustNewRepositoryID(t)
 	changedAmount, _ := domain.NewDecimal(8, 0)
 	changed.Quantity, _ = domain.NewQuantity(changedAmount, "llm_tokens")
-	if _, err := repository.RecordTrustedUsage(ctx, changed, domain.ThroughputHint{}); domain.ErrorCodeOf(err) != domain.CodeConflict {
+	if _, err := repository.RecordTrustedUsage(ctx, changed, domain.ThroughputHint{}, domain.ExhaustionFail); domain.ErrorCodeOf(err) != domain.CodeConflict {
 		t.Fatalf("mismatched trusted usage replay error=%v", err)
 	}
 	if err := pool.QueryRow(ctx, `SELECT available_value,direct_consumed_value,state_version FROM resource_balances WHERE tenant_id=$1 AND envelope_id=$2 AND dimension_id=$3`, tenant.String(), meterAdmission.EnvelopeID.String(), llmDimension.String()).Scan(&available, &consumed, &balanceVersion); err != nil {
@@ -176,7 +179,7 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	overAmount, _ := domain.NewDecimal(94, 0)
 	overQuantity, _ := domain.NewQuantity(overAmount, "llm_tokens")
 	over := domain.TrustedUsage{ID: mustNewRepositoryID(t), TenantID: tenant, RunID: meterAdmission.RunID, ProducerID: principal, SourceEventID: "meter-event-over", ResourceName: "llm_tokens", Quantity: overQuantity, ObservedAt: now, RecordedAt: now.Add(2 * time.Second)}
-	if _, err := repository.RecordTrustedUsage(ctx, over, domain.ThroughputHint{}); domain.ErrorCodeOf(err) != domain.CodeConflict {
+	if _, err := repository.RecordTrustedUsage(ctx, over, domain.ThroughputHint{}, domain.ExhaustionFail); domain.ErrorCodeOf(err) != domain.CodeConflict {
 		t.Fatalf("usage beyond grant error=%v", err)
 	}
 	var usageRows int
@@ -186,21 +189,21 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	toolAmount, _ := domain.NewDecimal(3, 0)
 	toolQuantity, _ := domain.NewQuantity(toolAmount, "calls")
 	toolUsage := domain.TrustedUsage{ID: mustNewRepositoryID(t), TenantID: tenant, RunID: meterAdmission.RunID, ProducerID: principal, SourceEventID: "tool-rate-1", ResourceName: "tool_calls", Quantity: toolQuantity, ObservedAt: now, RecordedAt: now.Add(3 * time.Second)}
-	if _, err := repository.RecordTrustedUsage(ctx, toolUsage, domain.ThroughputHint{}); err != nil {
+	if _, err := repository.RecordTrustedUsage(ctx, toolUsage, domain.ThroughputHint{}, domain.ExhaustionFail); err != nil {
 		t.Fatalf("first rate-governed usage: %v", err)
 	}
 	secondToolUsage := toolUsage
 	secondToolUsage.ID, secondToolUsage.SourceEventID = mustNewRepositoryID(t), "tool-rate-2"
-	if _, err := repository.RecordTrustedUsage(ctx, secondToolUsage, domain.ThroughputHint{}); !errors.Is(err, domain.ErrStructuralThroughputExceeded) {
+	if _, err := repository.RecordTrustedUsage(ctx, secondToolUsage, domain.ThroughputHint{}, domain.ExhaustionFail); !errors.Is(err, domain.ErrStructuralThroughputExceeded) {
 		t.Fatalf("throughput excess error=%v", err)
 	}
-	if replay, err := repository.RecordTrustedUsage(ctx, toolUsage, domain.ThroughputHint{DimensionName: "tool_calls_per_minute", Blocked: true}); err != nil || !replay.Duplicate {
+	if replay, err := repository.RecordTrustedUsage(ctx, toolUsage, domain.ThroughputHint{DimensionName: "tool_calls_per_minute", Blocked: true}, domain.ExhaustionFail); err != nil || !replay.Duplicate {
 		t.Fatalf("blocked-hint replay=%+v error=%v", replay, err)
 	}
 	nextWindow := toolUsage
 	nextWindow.ID, nextWindow.SourceEventID = mustNewRepositoryID(t), "tool-rate-next-window"
 	nextWindow.RecordedAt = toolUsage.RecordedAt.Truncate(time.Minute).Add(time.Minute)
-	if _, err := repository.RecordTrustedUsage(ctx, nextWindow, domain.ThroughputHint{}); err != nil {
+	if _, err := repository.RecordTrustedUsage(ctx, nextWindow, domain.ThroughputHint{}, domain.ExhaustionFail); err != nil {
 		t.Fatalf("next throughput window: %v", err)
 	}
 	var rateUsed int64
@@ -209,6 +212,9 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	}
 	concurrentRateAdmission, concurrentRateResolution, concurrentRateEvidence := makeAdmission()
 	if err := repository.AdmitRun(ctx, concurrentRateAdmission, concurrentRateResolution, concurrentRateEvidence); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE runs SET state='RUNNING',state_version=2,lease_id=$3,lease_expires_at=$4,fencing_token=1 WHERE tenant_id=$1 AND id=$2`, tenant.String(), concurrentRateAdmission.RunID.String(), mustNewRepositoryID(t).String(), now.Add(time.Hour)); err != nil {
 		t.Fatal(err)
 	}
 	oneAmount, _ := domain.NewDecimal(1, 0)
@@ -224,7 +230,7 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 		go func(index int) {
 			defer rateGroup.Done()
 			candidate := domain.TrustedUsage{ID: rateUsageIDs[index], TenantID: tenant, RunID: concurrentRateAdmission.RunID, ProducerID: principal, SourceEventID: fmt.Sprintf("tool-rate-concurrent-%02d", index), ResourceName: "tool_calls", Quantity: oneToolCall, ObservedAt: now, RecordedAt: now.Add(10 * time.Second)}
-			_, recordErr := repository.RecordTrustedUsage(ctx, candidate, domain.ThroughputHint{})
+			_, recordErr := repository.RecordTrustedUsage(ctx, candidate, domain.ThroughputHint{}, domain.ExhaustionFail)
 			rateResults <- recordErr
 		}(i)
 	}
@@ -247,6 +253,92 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if err := pool.QueryRow(ctx, `SELECT used_value FROM resource_rate_windows WHERE tenant_id=$1 AND envelope_id=$2 AND dimension_id=$3`, tenant.String(), concurrentRateAdmission.EnvelopeID.String(), toolRateDimension.String()).Scan(&rateUsed); err != nil || rateUsed != 5 {
 		t.Fatalf("concurrent rate usage=%d error=%v", rateUsed, err)
 	}
+	for _, exhaustion := range []struct {
+		name        string
+		disposition domain.ExhaustionDisposition
+		wantState   string
+		wantEvent   string
+	}{{"pause", domain.ExhaustionPause, "PAUSED_FOR_BUDGET", "run.paused_for_budget"}, {"fail", domain.ExhaustionFail, "FAILED_BUDGET", "run.failed_budget"}} {
+		t.Run("budget exhaustion "+exhaustion.name, func(t *testing.T) {
+			exhaustionAdmission, exhaustionResolution, exhaustionEvidence := makeAdmission()
+			if err := repository.AdmitRun(ctx, exhaustionAdmission, exhaustionResolution, exhaustionEvidence); err != nil {
+				t.Fatal(err)
+			}
+			leaseID := mustNewRepositoryID(t)
+			if _, err := pool.Exec(ctx, `UPDATE runs SET state='RUNNING',state_version=2,lease_id=$3,lease_expires_at=$4,fencing_token=7 WHERE tenant_id=$1 AND id=$2`, tenant.String(), exhaustionAdmission.RunID.String(), leaseID.String(), now.Add(time.Minute)); err != nil {
+				t.Fatal(err)
+			}
+			fullAmount, _ := domain.NewDecimal(100, 0)
+			fullQuantity, _ := domain.NewQuantity(fullAmount, "llm_tokens")
+			fullUsage := domain.TrustedUsage{ID: mustNewRepositoryID(t), TenantID: tenant, RunID: exhaustionAdmission.RunID, ProducerID: principal, SourceEventID: "exhaust-" + exhaustion.name, ResourceName: "llm_tokens", Quantity: fullQuantity, ObservedAt: now, RecordedAt: now.Add(20 * time.Second)}
+			if _, err := repository.RecordTrustedUsage(ctx, fullUsage, domain.ThroughputHint{}, exhaustion.disposition); err != nil {
+				t.Fatal(err)
+			}
+			var gotState string
+			var gotVersion, gotFence, exhaustedEvents, dispositionEvents, exhaustionOutbox, exhaustionAudits int64
+			var gotLease *string
+			if err := pool.QueryRow(ctx, `SELECT state,state_version,fencing_token,lease_id::text FROM runs WHERE tenant_id=$1 AND id=$2`, tenant.String(), exhaustionAdmission.RunID.String()).Scan(&gotState, &gotVersion, &gotFence, &gotLease); err != nil {
+				t.Fatal(err)
+			}
+			if err := pool.QueryRow(ctx, `SELECT count(*) FILTER (WHERE event_type='run.budget_exhausted'),count(*) FILTER (WHERE event_type=$3) FROM run_events WHERE tenant_id=$1 AND run_id=$2`, tenant.String(), exhaustionAdmission.RunID.String(), exhaustion.wantEvent).Scan(&exhaustedEvents, &dispositionEvents); err != nil {
+				t.Fatal(err)
+			}
+			if err := pool.QueryRow(ctx, `SELECT count(*) FROM outbox_messages WHERE tenant_id=$1 AND aggregate_id=$2 AND event_type IN ('run.budget_exhausted',$3)`, tenant.String(), exhaustionAdmission.RunID.String(), exhaustion.wantEvent).Scan(&exhaustionOutbox); err != nil {
+				t.Fatal(err)
+			}
+			if err := pool.QueryRow(ctx, `SELECT count(*) FROM audit_events WHERE tenant_id=$1 AND resource_id=$2 AND action='resources.exhaust'`, tenant.String(), exhaustionAdmission.RunID.String()).Scan(&exhaustionAudits); err != nil {
+				t.Fatal(err)
+			}
+			if gotState != exhaustion.wantState || gotVersion != 4 || gotFence != 8 || gotLease != nil || exhaustedEvents != 1 || dispositionEvents != 1 || exhaustionOutbox != 2 || exhaustionAudits != 1 {
+				t.Fatalf("state=%s version=%d fence=%d lease=%v exhausted=%d disposition=%d outbox=%d audits=%d", gotState, gotVersion, gotFence, gotLease, exhaustedEvents, dispositionEvents, exhaustionOutbox, exhaustionAudits)
+			}
+			if replay, err := repository.RecordTrustedUsage(ctx, fullUsage, domain.ThroughputHint{}, exhaustion.disposition); err != nil || !replay.Duplicate {
+				t.Fatalf("exhaustion replay=%+v error=%v", replay, err)
+			}
+			late := fullUsage
+			late.ID, late.SourceEventID = mustNewRepositoryID(t), "late-"+exhaustion.name
+			if _, err := repository.RecordTrustedUsage(ctx, late, domain.ThroughputHint{}, exhaustion.disposition); domain.ErrorCodeOf(err) != domain.CodeConflict {
+				t.Fatalf("post-exhaustion usage error=%v", err)
+			}
+		})
+	}
+	t.Run("concurrent usage exhausts exactly once", func(t *testing.T) {
+		exhaustionAdmission, exhaustionResolution, exhaustionEvidence := makeAdmission()
+		if err := repository.AdmitRun(ctx, exhaustionAdmission, exhaustionResolution, exhaustionEvidence); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := pool.Exec(ctx, `UPDATE runs SET state='RUNNING',state_version=2,lease_id=$3,lease_expires_at=$4,fencing_token=1 WHERE tenant_id=$1 AND id=$2`, tenant.String(), exhaustionAdmission.RunID.String(), mustNewRepositoryID(t).String(), now.Add(time.Minute)); err != nil {
+			t.Fatal(err)
+		}
+		results := make(chan error, 2)
+		var group sync.WaitGroup
+		for index, coefficient := range []int64{40, 60} {
+			group.Add(1)
+			go func(index int, coefficient int64) {
+				defer group.Done()
+				amount, _ := domain.NewDecimal(coefficient, 0)
+				quantity, _ := domain.NewQuantity(amount, "llm_tokens")
+				candidate := domain.TrustedUsage{ID: mustNewRepositoryID(t), TenantID: tenant, RunID: exhaustionAdmission.RunID, ProducerID: principal, SourceEventID: fmt.Sprintf("concurrent-exhaust-%d", index), ResourceName: "llm_tokens", Quantity: quantity, ObservedAt: now, RecordedAt: now.Add(30 * time.Second)}
+				_, err := repository.RecordTrustedUsage(ctx, candidate, domain.ThroughputHint{}, domain.ExhaustionPause)
+				results <- err
+			}(index, coefficient)
+		}
+		group.Wait()
+		close(results)
+		for err := range results {
+			if err != nil {
+				t.Fatalf("concurrent exhaustion error=%v", err)
+			}
+		}
+		var gotState string
+		var available, consumed, exhaustionEvents int64
+		if err := pool.QueryRow(ctx, `SELECT r.state,b.available_value,b.direct_consumed_value,(SELECT count(*) FROM run_events WHERE tenant_id=$1 AND run_id=$2 AND event_type='run.budget_exhausted') FROM runs r JOIN resource_envelopes e ON e.tenant_id=r.tenant_id AND e.run_id=r.id JOIN resource_balances b ON b.tenant_id=e.tenant_id AND b.envelope_id=e.id WHERE r.tenant_id=$1 AND r.id=$2 AND b.dimension_id=$3`, tenant.String(), exhaustionAdmission.RunID.String(), llmDimension.String()).Scan(&gotState, &available, &consumed, &exhaustionEvents); err != nil {
+			t.Fatal(err)
+		}
+		if gotState != "PAUSED_FOR_BUDGET" || available != 0 || consumed != 100 || exhaustionEvents != 1 {
+			t.Fatalf("state=%s available=%d consumed=%d exhaustion_events=%d", gotState, available, consumed, exhaustionEvents)
+		}
+	})
 	makeChild := func(parent domain.ID) (domain.RunAdmission, domain.RunVersionResolution, ports.RunAdmissionEvidence) {
 		child, childResolution, childEvidence := makeAdmission()
 		child.Constraints = map[string]any{"max_active_children": float64(10), "max_total_children": float64(20), "max_delegation_depth": float64(4)}

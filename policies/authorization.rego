@@ -17,12 +17,17 @@ allow_result := allow("agent.discover.allowed", 10) if { input.contract_version 
 allow_result := allow("agent.invoke.allowed", ttl) if { input.contract_version == "thinkpixelag.authorization/v1alpha1"; tenant_ok; fresh; input.action == "runs.create"; has_role("agent-invoker"); agent_ready; input.agent.risk_class in {"low", "medium"}; ttl := 10 }
 allow_result := allow("agent.invoke.allowed", 0) if { input.contract_version == "thinkpixelag.authorization/v1alpha1"; tenant_ok; not input.security_state.has_gap; input.security_state.authoritative; input.action == "runs.create"; has_role("agent-invoker"); agent_ready; input.agent.risk_class in {"high", "critical"} }
 allow_result := allow("run.access.allowed", 5) if { tenant_ok; fresh; input.action in {"runs.read", "runs.events.read", "runs.signal", "runs.cancel"}; has_role("agent-invoker") }
-allow_result := allow("workload.operation.allowed", 0) if { tenant_ok; input.security_state.authoritative; input.action in {"runs.claim", "runs.heartbeat", "runs.complete", "resources.meter", "resources.settle"}; has_role("trusted-workload") }
+allow_result := allow("workload.operation.allowed", 0) if { tenant_ok; input.security_state.authoritative; input.action in {"runs.claim", "runs.heartbeat", "runs.complete", "resources.settle"}; has_role("trusted-workload") }
+allow_result := allow_with_obligations("workload.operation.allowed", 0, [budget_exhaustion_obligation]) if { tenant_ok; input.security_state.authoritative; input.action == "resources.meter"; has_role("trusted-workload") }
 allow_result := allow("governance.operation.allowed", 0) if { tenant_ok; input.security_state.authoritative; input.action in {"agents.manage", "versions.approve", "versions.pin", "versions.rollback", "policies.manage", "policies.activate", "revocations.manage", "resources.extend"}; has_role("governance-admin") }
 allow_result := allow("workload.operation.allowed", 0) if { tenant_ok; input.security_state.authoritative; input.action == "revocations.reconcile"; has_role("trusted-gateway") }
 
 allow(reason, ttl) := {"contract_version": "thinkpixelag.authorization/v1alpha1", "decision_id": input.decision_id, "allow": true, "reason_codes": [reason], "resolved_constraints": resolved, "obligations": [], "decision_ttl_seconds": ttl} if resolved := narrow_constraints
+allow_with_obligations(reason, ttl, obligations) := {"contract_version": "thinkpixelag.authorization/v1alpha1", "decision_id": input.decision_id, "allow": true, "reason_codes": [reason], "resolved_constraints": resolved, "obligations": obligations, "decision_ttl_seconds": ttl} if resolved := narrow_constraints
 deny(reason) := {"contract_version": "thinkpixelag.authorization/v1alpha1", "decision_id": input.decision_id, "allow": false, "reason_codes": [reason], "resolved_constraints": {}, "obligations": [], "decision_ttl_seconds": 0}
+
+budget_exhaustion_obligation := {"type": "budget.pause_on_exhaustion", "mandatory": false} if input.agent.risk_class in {"low", "medium"}
+else := {"type": "budget.fail_on_exhaustion", "mandatory": false}
 
 default narrow_constraints := {}
 narrow_constraints := {"max_tokens": value} if {

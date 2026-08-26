@@ -9,7 +9,7 @@ import (
 
 type TrustedUsageRepository interface {
 	RunQueryRepository
-	RecordTrustedUsage(context.Context, domain.TrustedUsage, domain.ThroughputHint) (domain.UsageReceipt, error)
+	RecordTrustedUsage(context.Context, domain.TrustedUsage, domain.ThroughputHint, domain.ExhaustionDisposition) (domain.UsageReceipt, error)
 }
 
 type ThroughputAccelerator interface {

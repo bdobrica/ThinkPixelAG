@@ -73,6 +73,11 @@ Each action defines a JSON Schema-compatible resource and constraint shape. Unkn
 - `reason_codes` contains one or more registered, stable, non-sensitive codes and is bounded in count/length.
 - `resolved_constraints` is mandatory for admission/allocation and must be equal to or stricter than every `authority_constraints` ceiling. The Go domain validates non-expansion independently of Rego.
 - `obligations` is a bounded list of typed obligations understood by the service. Unknown mandatory obligations deny; the service never silently ignores them.
+- For `resources.meter`, `budget.pause_on_exhaustion` directs an exhausted run
+  into the governed extension workflow. `budget.fail_on_exhaustion`, an absent
+  disposition, or unrecognized optional advice selects conservative terminal
+  failure. The baseline pauses low/medium-risk runs and fails high/critical-risk
+  runs.
 - `decision_ttl_seconds` is nonnegative and capped by deployment, identity, policy, and revocation freshness. Zero disables ALLOW caching and is mandatory for high-risk writes.
 
 ## Initial actions

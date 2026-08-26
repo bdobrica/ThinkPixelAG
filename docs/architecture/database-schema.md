@@ -98,6 +98,13 @@ competing increments, its grant foreign key prevents detached counters, and a
 conditional upsert prevents the resulting count from crossing the immutable
 envelope grant. Valkey contains only disposable exhausted-window markers.
 
+The trusted-usage transaction also locks the owning run before changing a
+consumable balance. A zero result advances the run through the exhaustion and
+policy disposition states, clears its lease, advances its fencing token, and
+inserts ordered run events, audit evidence, and matching outbox records before
+commit. No additional exhaustion table or asynchronous correctness path is
+required.
+
 Conservation across multiple balance rows requires transactional locking and is
 implemented in Phase 5. These migrations establish the nonnegative arithmetic,
 uniqueness, ownership, and all-or-nothing relational substrate for it.

@@ -12,20 +12,22 @@ import (
 )
 
 type usageRepoStub struct {
-	record ports.RunAccessRecord
-	usage  domain.TrustedUsage
-	hint   domain.ThroughputHint
-	err    error
-	calls  int
+	record      ports.RunAccessRecord
+	usage       domain.TrustedUsage
+	hint        domain.ThroughputHint
+	disposition domain.ExhaustionDisposition
+	err         error
+	calls       int
 }
 
 func (r *usageRepoStub) GetRun(context.Context, domain.ID) (ports.RunAccessRecord, error) {
 	return r.record, nil
 }
-func (r *usageRepoStub) RecordTrustedUsage(_ context.Context, u domain.TrustedUsage, hint domain.ThroughputHint) (domain.UsageReceipt, error) {
+func (r *usageRepoStub) RecordTrustedUsage(_ context.Context, u domain.TrustedUsage, hint domain.ThroughputHint, disposition domain.ExhaustionDisposition) (domain.UsageReceipt, error) {
 	r.calls++
 	r.usage = u
 	r.hint = hint
+	r.disposition = disposition
 	return domain.UsageReceipt{UsageID: u.ID, AcceptedAt: u.RecordedAt}, r.err
 }
 
@@ -41,9 +43,10 @@ func (a *usageRateStub) MarkBlocked(context.Context, string, time.Time) error {
 }
 
 type usagePolicyStub struct {
-	input policy.Input
-	allow bool
-	err   error
+	input       policy.Input
+	allow       bool
+	err         error
+	obligations []policy.Obligation
 }
 
 func TestTrustedUsageRateAcceleratorIsConservativeAndOptional(t *testing.T) {
@@ -72,7 +75,7 @@ func TestTrustedUsageRateAcceleratorIsConservativeAndOptional(t *testing.T) {
 
 func (p *usagePolicyStub) Decide(_ context.Context, in policy.Input) (policy.Result, error) {
 	p.input = in
-	return policy.Result{Decision: policy.Decision{DecisionID: in.DecisionID, Allow: p.allow, ReasonCodes: []string{"workload.operation.allowed"}, ResolvedConstraints: map[string]any{}, Obligations: []policy.Obligation{}}}, p.err
+	return policy.Result{Decision: policy.Decision{DecisionID: in.DecisionID, Allow: p.allow, ReasonCodes: []string{"workload.operation.allowed"}, ResolvedConstraints: map[string]any{}, Obligations: p.obligations}}, p.err
 }
 
 func TestTrustedUsageAuthenticatesAuthorizesAndPersistsProducer(t *testing.T) {
@@ -88,8 +91,15 @@ func TestTrustedUsageAuthenticatesAuthorizesAndPersistsProducer(t *testing.T) {
 	if err != nil || repo.calls != 1 || repo.usage.ProducerID != ids[6] || eval.input.Action != "resources.meter" || eval.input.Subject.PrincipalType != "workload" {
 		t.Fatalf("calls=%d input=%+v err=%v", repo.calls, eval.input, err)
 	}
+	if repo.disposition != domain.ExhaustionFail {
+		t.Fatalf("default exhaustion disposition=%q", repo.disposition)
+	}
+	eval.obligations = []policy.Obligation{{Type: "budget.pause_on_exhaustion"}}
+	if _, err = service.Record(context.Background(), RecordTrustedUsage{TenantID: ids[1], ProducerID: ids[6], RequestID: ids[4], RunID: ids[0], SourceEventID: "evt-pause", ResourceName: "llm_tokens", Unit: "llm_tokens", Quantity: 1, ObservedAt: now, SecurityState: policy.SecurityState{Authoritative: true}}); err != nil || repo.disposition != domain.ExhaustionPause {
+		t.Fatalf("pause disposition=%q error=%v", repo.disposition, err)
+	}
 	eval.allow = false
-	if _, err = service.Record(context.Background(), RecordTrustedUsage{TenantID: ids[1], ProducerID: ids[6], RequestID: ids[4], RunID: ids[0], SourceEventID: "evt-2", ResourceName: "llm_tokens", Unit: "llm_tokens", Quantity: 1, ObservedAt: now}); domain.ErrorCodeOf(err) != domain.CodeForbidden || repo.calls != 1 {
+	if _, err = service.Record(context.Background(), RecordTrustedUsage{TenantID: ids[1], ProducerID: ids[6], RequestID: ids[4], RunID: ids[0], SourceEventID: "evt-2", ResourceName: "llm_tokens", Unit: "llm_tokens", Quantity: 1, ObservedAt: now}); domain.ErrorCodeOf(err) != domain.CodeForbidden || repo.calls != 2 {
 		t.Fatalf("denial err=%v calls=%d", err, repo.calls)
 	}
 }

@@ -192,6 +192,16 @@ window sooner; cache misses, corruption, or outages bypass to PostgreSQL and
 never create an allow. Identical source-event retries remain replayable even
 when the accelerator reports that the window is blocked.
 
+Metering is accepted only while the authoritative run state is `RUNNING`. When
+an accepted event makes any consumable balance exactly zero, that same
+PostgreSQL transaction records `BUDGET_EXHAUSTED`, invalidates the worker lease,
+and applies the policy-selected disposition. The baseline policy pauses
+low/medium-risk runs for the governed extension workflow and terminates
+high/critical-risk runs as `FAILED_BUDGET`; missing disposition advice fails
+conservatively. Both lifecycle steps, their ordered events, audit evidence, and
+outbox messages commit with the usage ledger and balance update. Exact usage
+replays still return their original receipt after the state changes.
+
 ## Security and reliability principles
 
 - Deny by default and fail closed when required policy or revocation freshness cannot be established.

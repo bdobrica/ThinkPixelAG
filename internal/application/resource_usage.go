@@ -100,7 +100,13 @@ func (s *TrustedUsageService) Record(ctx context.Context, command RecordTrustedU
 		// complete authoritative check.
 		hint.Blocked, _ = s.accelerator.Blocked(ctx, key)
 	}
-	receipt, err := s.repository.RecordTrustedUsage(ctx, usage, hint)
+	disposition := domain.ExhaustionFail
+	for _, obligation := range result.Decision.Obligations {
+		if obligation.Type == "budget.pause_on_exhaustion" {
+			disposition = domain.ExhaustionPause
+		}
+	}
+	receipt, err := s.repository.RecordTrustedUsage(ctx, usage, hint, disposition)
 	var exceeded *domain.ThroughputLimitExceeded
 	if err != nil && errors.As(err, &exceeded) {
 		if s.accelerator != nil {

@@ -29,3 +29,9 @@ func TestTrustedUsageValidationAndDigest(t *testing.T) {
 		t.Fatal("invalid source event accepted")
 	}
 }
+
+func TestExhaustionDispositionIsClosed(t *testing.T) {
+	if !ExhaustionFail.Valid() || !ExhaustionPause.Valid() || ExhaustionDisposition("continue").Valid() {
+		t.Fatal("exhaustion disposition set is not closed")
+	}
+}

@@ -135,7 +135,18 @@ honoring a blocked hint, preserving idempotent receipts during exhaustion.
 
 ## Exhaustion
 
-Consumption reaching a ceiling prevents further grants/authorized consumption for that dimension and triggers `BUDGET_EXHAUSTED`. Enforcement must not depend only on asynchronous metrics. Policy chooses `PAUSED_FOR_BUDGET` or `FAILED_BUDGET`; a paused run performs no governed work until an additive extension commits.
+Consumption reaching a ceiling prevents further grants/authorized consumption
+for that dimension and triggers `BUDGET_EXHAUSTED`. Trusted metering locks the
+run and balance, applies the final accepted usage, invalidates the active lease,
+and appends the exhaustion transition in one PostgreSQL transaction. It then
+applies the disposition selected by the metering policy:
+`budget.pause_on_exhaustion` enters `PAUSED_FOR_BUDGET`; absent or explicit
+failure advice enters terminal `FAILED_BUDGET`. A paused run performs no
+governed work until an additive extension commits. Exact source-event replay is
+resolved before the run-state gate, but new metering is accepted only for a
+`RUNNING` run. Ordered lifecycle events, audit evidence, and outbox records
+commit atomically with the usage ledger and balance. Enforcement never depends
+only on asynchronous metrics.
 
 ## Extension
 

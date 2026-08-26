@@ -89,6 +89,13 @@ test_trusted_workload_allowed_to_settle if {
     d.decision_ttl_seconds == 0
 }
 
+test_metering_policy_selects_budget_exhaustion_disposition if {
+    low := authorization.decision with input as object.union(base,{"action":"resources.meter","subject":{"tenant_id":"t","roles":["trusted-workload"]},"agent":{"approved":true,"revoked":false,"risk_class":"low"}})
+    low.obligations == [{"type":"budget.pause_on_exhaustion","mandatory":false}]
+    high := authorization.decision with input as object.union(base,{"action":"resources.meter","subject":{"tenant_id":"t","roles":["trusted-workload"]},"agent":{"approved":true,"revoked":false,"risk_class":"high"}})
+    high.obligations == [{"type":"budget.fail_on_exhaustion","mandatory":false}]
+}
+
 test_unknown_action_denied if {
     d := authorization.decision with input as object.union(base,{"action":"unknown.action"})
     not d.allow

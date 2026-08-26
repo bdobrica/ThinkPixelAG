@@ -12,6 +12,20 @@ import (
 var ErrInvalidTrustedUsage = errors.New("invalid trusted usage event")
 var ErrStructuralThroughputExceeded = errors.New("structural throughput limit exceeded")
 
+// ExhaustionDisposition is the policy-selected state entered after an
+// authoritative consumable balance reaches zero. Failure is the conservative
+// default; pausing keeps the run non-terminal for the governed extension flow.
+type ExhaustionDisposition string
+
+const (
+	ExhaustionFail  ExhaustionDisposition = "FAIL"
+	ExhaustionPause ExhaustionDisposition = "PAUSE"
+)
+
+func (d ExhaustionDisposition) Valid() bool {
+	return d == ExhaustionFail || d == ExhaustionPause
+}
+
 const ThroughputWindow = time.Minute
 
 // ThroughputDimensionName returns the structural companion used to rate-limit
