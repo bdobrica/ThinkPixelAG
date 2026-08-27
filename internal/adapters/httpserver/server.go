@@ -52,6 +52,7 @@ type Dependencies struct {
 	TrustedUsage       http.Handler
 	ResourceExtension  http.Handler
 	ResourceSettlement http.Handler
+	Revocations        http.Handler
 }
 
 type Server struct {
@@ -157,6 +158,10 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 	}
 	if dependencies.ResourceSettlement != nil {
 		mount("POST /v1/trusted/reservations/{reservation_id}/settle", dependencies.ResourceSettlement)
+	}
+	if dependencies.Revocations != nil {
+		mount("POST /v1/admin/revocations", dependencies.Revocations)
+		mount("POST /v1/admin/revocations/{revocation_id}/lift", dependencies.Revocations)
 	}
 	mux.Handle("/", middleware("unknown", httpConfig, dependencies, http.HandlerFunc(notFound)))
 	return mux

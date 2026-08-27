@@ -1202,7 +1202,7 @@ components:
         target:
           type: string
           minLength: 1
-          maxLength: 1024
+          maxLength: 512
         reason_code:
           $ref: '#/components/schemas/Identifier'
         effective_at:
@@ -1211,7 +1211,10 @@ components:
           $ref: '#/components/schemas/Timestamp'
         approval_reference:
           type: string
-          maxLength: 256
+          maxLength: 512
+        detail_reference:
+          type: string
+          maxLength: 1024
     LiftRevocationRequest:
       type: object
       additionalProperties: false
@@ -1222,7 +1225,7 @@ components:
         approval_reference:
           type: string
           minLength: 1
-          maxLength: 256
+          maxLength: 512
     EpochVector:
       type: object
       additionalProperties: false
@@ -1233,6 +1236,10 @@ components:
           format: int64
           minimum: 0
         tenant_policy_epoch:
+          type: integer
+          format: int64
+          minimum: 0
+        tenant_revocation_epoch:
           type: integer
           format: int64
           minimum: 0

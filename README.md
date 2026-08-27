@@ -115,7 +115,12 @@ comment heartbeats, slow clients are bounded by per-write deadlines, and a
 cursor older than the configured 10,000-event logical retention window returns
 `410 Gone` so the client can refetch authoritative run state.
 
-Administrative APIs for agent/version registration, policy promotion, revocation, resource extensions, and trusted metering will be isolated by authorization policy and documented in OpenAPI. Mutation endpoints use idempotency keys and optimistic or transactional concurrency controls.
+Administrative revocation creation and lift are typed, authenticated,
+authoritatively policy-controlled operations for all supported scopes. Each
+change atomically advances applicable epochs and appends ordered distribution,
+audit, and outbox evidence. Other administrative APIs for agent/version
+registration, policy promotion, resource extensions, and trusted metering are
+isolated by authorization policy and documented in OpenAPI.
 
 Authorized resource extensions are additive, approval-referenced ledger actions. They can add consumable capacity or move an existing deadline forward without rewriting the original grant, and a run requester cannot extend its own run even if it also holds an administrative role.
 

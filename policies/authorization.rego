@@ -19,7 +19,7 @@ allow_result := allow("agent.invoke.allowed", 0) if { input.contract_version == 
 allow_result := allow("run.access.allowed", 5) if { tenant_ok; fresh; input.action in {"runs.read", "runs.events.read", "runs.signal", "runs.cancel"}; has_role("agent-invoker") }
 allow_result := allow("workload.operation.allowed", 0) if { tenant_ok; input.security_state.authoritative; input.action in {"runs.claim", "runs.heartbeat", "runs.complete", "resources.settle"}; has_role("trusted-workload") }
 allow_result := allow_with_obligations("workload.operation.allowed", 0, [budget_exhaustion_obligation]) if { tenant_ok; input.security_state.authoritative; input.action == "resources.meter"; has_role("trusted-workload") }
-allow_result := allow("governance.operation.allowed", 0) if { tenant_ok; input.security_state.authoritative; input.action in {"agents.manage", "versions.approve", "versions.pin", "versions.rollback", "policies.manage", "policies.activate", "revocations.manage"}; has_role("governance-admin") }
+allow_result := allow("governance.operation.allowed", 0) if { tenant_ok; input.security_state.authoritative; input.action in {"agents.manage", "versions.approve", "versions.pin", "versions.rollback", "policies.manage", "policies.activate", "revocations.manage", "revocations.create", "revocations.lift"}; has_role("governance-admin") }
 allow_result := allow("resource.extension.approved", 0) if { tenant_ok; input.security_state.authoritative; input.action == "resources.extend"; has_role("governance-admin"); input.subject.principal_id != input.resource.attributes.requested_by }
 allow_result := allow("workload.operation.allowed", 0) if { tenant_ok; input.security_state.authoritative; input.action == "revocations.reconcile"; has_role("trusted-gateway") }
 

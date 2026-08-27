@@ -132,10 +132,14 @@ or concurrent replicas unable to oversubscribe or double-credit resources.
 ## Revocation ordering
 
 Global, tenant, and agent epoch rows store checked nonnegative `bigint` values.
-Updates must lock the applicable rows and reject overflow. Revocations retain
-append-only create/lift/expiry changes; `revocation_log.sequence` supplies one
-global committed order and snapshots the resulting epoch vector. Gateway
-checkpoints persist the last fully applied order and freshness observations.
+Creation and lift run under one transaction that increments the global epoch,
+the tenant revocation epoch for every tenant-scoped change, the tenant policy
+epoch for tenant/policy scopes, and the agent epoch for agent/version scopes.
+Checked updates reject 64-bit overflow. The same transaction appends the
+immutable change, database-ordered log record with its resulting epoch vector,
+privileged audit evidence, and replay-safe outbox event. A lift is a new change,
+never deletion or epoch reversal. Gateway checkpoints persist the last fully
+applied order and freshness observations.
 
 ## Delivery primitives
 

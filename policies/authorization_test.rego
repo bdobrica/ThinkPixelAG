@@ -63,6 +63,15 @@ test_governance_admin_allowed if {
     d.decision_ttl_seconds == 0
 }
 
+test_revocation_changes_require_authoritative_governance_admin if {
+    create := authorization.decision with input as object.union(base,{"action":"revocations.create","subject":{"tenant_id":"t","roles":["governance-admin"]}})
+    create.allow
+    lift := authorization.decision with input as object.union(base,{"action":"revocations.lift","subject":{"tenant_id":"t","roles":["governance-admin"]}})
+    lift.allow
+    not_authoritative := authorization.decision with input as object.union(base,{"action":"revocations.create","subject":{"tenant_id":"t","roles":["governance-admin"]},"security_state":{"authoritative":false,"age_seconds":0,"has_gap":false}})
+    not not_authoritative.allow
+}
+
 test_version_pin_requires_governance_admin if {
     denied := authorization.decision with input as object.union(base,{"action":"versions.pin"})
     not denied.allow
