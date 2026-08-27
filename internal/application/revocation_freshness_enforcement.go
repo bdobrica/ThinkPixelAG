@@ -58,6 +58,7 @@ func (e *FreshnessEnforcingEvaluator) Decide(ctx context.Context, in policy.Inpu
 		return policy.Result{}, domain.NewError(domain.CodeUnavailable, "revocation freshness input is invalid").WithRetryable()
 	}
 	class := ClassifyFreshness(in)
+	e.tracker.TrackTenant(tenant)
 	if class == FreshnessHighRiskWrite {
 		in.SecurityState = policy.SecurityState{Authoritative: true}
 		result, err := e.next.Decide(ctx, in)

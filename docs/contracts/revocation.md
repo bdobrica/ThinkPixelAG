@@ -103,6 +103,24 @@ regression fails closed rather than refreshing the observation.
 
 Each instance exposes last applied sequence/epochs, last stream receipt, last authoritative reconciliation, calculated age, gap state, and outcomes as metrics without tenant IDs as unbounded labels. Readiness is false when the instance cannot satisfy the configured minimum operation class it is meant to serve. Liveness is not tied to a transient upstream partition.
 
+The implemented process aggregates tenant state into
+`thinkpixelag_revocation_age_seconds`, `thinkpixelag_revocation_lag_entries`,
+`thinkpixelag_revocation_gaps`, `thinkpixelag_revocation_gap_events_total`,
+`thinkpixelag_revocation_tracked_tenants`, and
+`thinkpixelag_revocation_fresh`. Age and lag are the maxima across tracked
+tenants; gap and tenant gauges are counts, so tenant identifiers never become
+metric labels. Scrape-time age continues advancing during a partition.
+
+A tenant enters the readiness contract when the freshness-enforcing boundary
+first sees it (or process assembly registers it explicitly). It begins unknown
+after every process start. Readiness fails when any tracked tenant has no
+authoritative observation, an unhealthy monotonic clock, age beyond the
+configured minimum serving-class bound, a known authority head beyond its last
+applied sequence, or an unresolved gap. Successful reconciliation clears a gap
+only after applying its authoritative sequence and epochs. The HTTP readiness
+composition retains database/startup/drain ownership while adding this security
+probe; liveness deliberately does not compose it.
+
 ## Required scenarios
 
 Tests cover concurrent increments, global/tenant/run/agent/tool/skill/policy revocation, lift/expiry, duplicate and out-of-order delivery, dropped sequence, retention gap, stream reconnect, process restart, clock adjustment, cache expiry, partition beyond each freshness bound, snapshot reconciliation, and recovery without transient stale ALLOW.

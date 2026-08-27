@@ -2,11 +2,33 @@ package metrics
 
 import (
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 )
+
+func TestRevocationFreshnessMetrics(t *testing.T) {
+	metricSet, err := New(true, BuildInfo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = metricSet.RegisterRevocationFreshness(func() (time.Duration, int64, int, uint64, int, bool) { return 12 * time.Second, 3, 1, 4, 2, false })
+	if err != nil {
+		t.Fatal(err)
+	}
+	response := httptest.NewRecorder()
+	metricSet.Handler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	for _, want := range []string{"thinkpixelag_revocation_age_seconds 12", "thinkpixelag_revocation_lag_entries 3", "thinkpixelag_revocation_gaps 1", "thinkpixelag_revocation_gap_events_total 4", "thinkpixelag_revocation_tracked_tenants 2", "thinkpixelag_revocation_fresh 0"} {
+		if !strings.Contains(response.Body.String(), want) {
+			t.Errorf("metrics output missing %q", want)
+		}
+	}
+	if err = metricSet.RegisterRevocationFreshness(func() (time.Duration, int64, int, uint64, int, bool) { return 0, 0, 0, 0, 0, true }); err == nil {
+		t.Fatal("accepted duplicate revocation collector")
+	}
+}
 
 func TestEnabledMetrics(t *testing.T) {
 	t.Parallel()

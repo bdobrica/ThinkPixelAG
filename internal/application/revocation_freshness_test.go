@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"testing"
@@ -8,6 +9,58 @@ import (
 
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
 )
+
+func TestRevocationFreshnessMetricsAndReadinessTrackAgeLagAndGap(t *testing.T) {
+	tenant := applicationID(t)
+	clock := &freshnessTestClock{wall: time.Date(2026, 8, 27, 10, 0, 0, 0, time.UTC)}
+	tracker, _ := NewRevocationFreshnessTrackerWithElapsed(clock, clock.monotonic)
+	readiness, err := NewRevocationReadiness(tracker, 30*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tracker.TrackTenant(tenant)
+	if err = readiness.Ready(context.Background()); err == nil {
+		t.Fatal("unknown post-restart state was ready")
+	}
+	if err = tracker.RecordReconciliation(tenant, 10, domain.EpochVector{Security: 3}); err != nil {
+		t.Fatal(err)
+	}
+	if err = readiness.Ready(context.Background()); err != nil {
+		t.Fatalf("fresh state not ready: %v", err)
+	}
+	if err = tracker.RecordAuthoritativeHead(tenant, 12); err != nil {
+		t.Fatal(err)
+	}
+	if status := tracker.Metrics(30 * time.Second); status.MaximumLag != 2 || status.Healthy {
+		t.Fatalf("lag status = %+v", status)
+	}
+	if err = tracker.RecordGap(tenant, 13); err != nil {
+		t.Fatal(err)
+	}
+	status := tracker.Metrics(30 * time.Second)
+	if status.CurrentGaps != 1 || status.GapEvents != 1 || status.MaximumLag != 3 {
+		t.Fatalf("gap status = %+v", status)
+	}
+	if err = tracker.RecordReconciliation(tenant, 13, domain.EpochVector{Security: 4}); err != nil {
+		t.Fatal(err)
+	}
+	clock.advance(31*time.Second, 31*time.Second)
+	status = tracker.Metrics(30 * time.Second)
+	if status.CurrentGaps != 0 || status.MaximumLag != 0 || status.MaximumAge != 31*time.Second || status.Healthy {
+		t.Fatalf("stale recovery status = %+v", status)
+	}
+}
+
+func TestRevocationFreshnessRejectsRegressingAuthoritativeHead(t *testing.T) {
+	tracker, _ := NewRevocationFreshnessTracker(fixedClock{now: time.Now().UTC()})
+	tenant := applicationID(t)
+	if err := tracker.RecordAuthoritativeHead(tenant, 9); err != nil {
+		t.Fatal(err)
+	}
+	if err := tracker.RecordAuthoritativeHead(tenant, 8); !errors.Is(err, ErrFreshnessRegression) {
+		t.Fatalf("regressing head error = %v", err)
+	}
+}
 
 type freshnessTestClock struct {
 	mu      sync.Mutex

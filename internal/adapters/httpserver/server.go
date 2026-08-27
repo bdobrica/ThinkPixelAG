@@ -36,6 +36,38 @@ type ReadinessProbe interface {
 	MarkNotReady()
 }
 
+type AdditionalReadinessProbe interface{ Ready(context.Context) error }
+
+type compositeReadiness struct {
+	primary ReadinessProbe
+	extra   []AdditionalReadinessProbe
+}
+
+// ComposeReadiness keeps startup/drain ownership in the primary probe while
+// requiring every additional dependency or security probe to pass.
+func ComposeReadiness(primary ReadinessProbe, extra ...AdditionalReadinessProbe) ReadinessProbe {
+	if primary == nil {
+		primary = &Readiness{}
+	}
+	return &compositeReadiness{primary: primary, extra: extra}
+}
+
+func (r *compositeReadiness) MarkReady()    { r.primary.MarkReady() }
+func (r *compositeReadiness) MarkNotReady() { r.primary.MarkNotReady() }
+func (r *compositeReadiness) Ready(ctx context.Context) error {
+	if err := r.primary.Ready(ctx); err != nil {
+		return err
+	}
+	for _, probe := range r.extra {
+		if probe != nil {
+			if err := probe.Ready(ctx); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type Dependencies struct {
 	Logger                 *slog.Logger
 	Metrics                *metrics.Metrics

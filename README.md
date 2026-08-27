@@ -136,7 +136,12 @@ Configuration can tighten the defaults but cannot loosen them, and cache TTL is
 capped by the remaining monotonic freshness window. Authoritative policy
 evaluation checks global, tenant, principal, run, agent/version, tool, skill,
 and policy scopes before delegating to OPA; worker mutations use the same
-authority boundary. Other administrative APIs for agent/version
+authority boundary. The process exposes aggregate revocation age, authoritative
+sequence lag, unresolved gaps, gap incidents, tracked-tenant count, and freshness
+health on `/metrics` without tenant labels. A composable readiness probe rejects
+governed traffic when any tracked tenant is unknown after restart, behind a known
+authority head, in gap recovery, beyond the configured serving age, or affected
+by monotonic-clock regression; these conditions never affect `/livez`. Other administrative APIs for agent/version
 registration, policy promotion, resource extensions, and trusted metering are
 isolated by authorization policy and documented in OpenAPI.
 

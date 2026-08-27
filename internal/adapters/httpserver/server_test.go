@@ -20,6 +20,24 @@ import (
 	"github.com/bdobrica/ThinkPixelAG/internal/observability/tracing"
 )
 
+type staticAdditionalReadiness struct{ err error }
+
+func (p staticAdditionalReadiness) Ready(context.Context) error { return p.err }
+
+func TestComposeReadinessIncludesSecurityProbe(t *testing.T) {
+	primary := &Readiness{}
+	securityErr := errors.New("revocation state is stale")
+	probe := ComposeReadiness(primary, staticAdditionalReadiness{err: securityErr})
+	probe.MarkReady()
+	if err := probe.Ready(context.Background()); !errors.Is(err, securityErr) {
+		t.Fatalf("composed readiness error = %v", err)
+	}
+	probe.MarkNotReady()
+	if err := primary.Ready(context.Background()); err == nil {
+		t.Fatal("primary readiness lifecycle was not cleared")
+	}
+}
+
 const fixedRequestID = "019feba6-b9bb-7fff-bfff-ffffffffffff"
 
 func testDependencies(t *testing.T, logs *bytes.Buffer, enabledMetrics bool) Dependencies {

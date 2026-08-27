@@ -3,6 +3,7 @@
 package metrics
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -24,13 +25,55 @@ type BuildInfo struct {
 // Metrics is safe for concurrent use. When disabled, observations are no-ops
 // and the registry remains empty.
 type Metrics struct {
-	enabled             bool
-	registry            *prometheus.Registry
-	httpRequests        *prometheus.CounterVec
-	httpRequestDuration *prometheus.HistogramVec
-	databaseOperations  *prometheus.CounterVec
-	databaseDuration    *prometheus.HistogramVec
-	databaseHealth      prometheus.Gauge
+	enabled              bool
+	registry             *prometheus.Registry
+	httpRequests         *prometheus.CounterVec
+	httpRequestDuration  *prometheus.HistogramVec
+	databaseOperations   *prometheus.CounterVec
+	databaseDuration     *prometheus.HistogramVec
+	databaseHealth       prometheus.Gauge
+	revocationCollectors []prometheus.Collector
+}
+
+// RevocationFreshnessSource supplies one consistent scrape-time aggregate.
+// The callback shape keeps application state independent from Prometheus.
+type RevocationFreshnessSource func() (time.Duration, int64, int, uint64, int, bool)
+
+type revocationCollector struct {
+	source                                    RevocationFreshnessSource
+	age, lag, gaps, gapEvents, tenants, fresh *prometheus.Desc
+}
+
+func newRevocationCollector(source RevocationFreshnessSource) *revocationCollector {
+	return &revocationCollector{
+		source:    source,
+		age:       prometheus.NewDesc(namespace+"_revocation_age_seconds", "Maximum monotonic age of tracked tenant revocation state.", nil, nil),
+		lag:       prometheus.NewDesc(namespace+"_revocation_lag_entries", "Maximum known authoritative sequence lag across tracked tenants.", nil, nil),
+		gaps:      prometheus.NewDesc(namespace+"_revocation_gaps", "Number of tracked tenants with an unresolved distribution gap.", nil, nil),
+		gapEvents: prometheus.NewDesc(namespace+"_revocation_gap_events_total", "Total detected revocation distribution gap incidents.", nil, nil),
+		tenants:   prometheus.NewDesc(namespace+"_revocation_tracked_tenants", "Number of tenant freshness states tracked by this process.", nil, nil),
+		fresh:     prometheus.NewDesc(namespace+"_revocation_fresh", "Whether all tracked revocation state meets the configured readiness contract.", nil, nil),
+	}
+}
+
+func (c *revocationCollector) Describe(ch chan<- *prometheus.Desc) {
+	for _, desc := range []*prometheus.Desc{c.age, c.lag, c.gaps, c.gapEvents, c.tenants, c.fresh} {
+		ch <- desc
+	}
+}
+
+func (c *revocationCollector) Collect(ch chan<- prometheus.Metric) {
+	age, lag, gaps, gapEvents, tenants, healthy := c.source()
+	fresh := 0.0
+	if healthy {
+		fresh = 1
+	}
+	ch <- prometheus.MustNewConstMetric(c.age, prometheus.GaugeValue, age.Seconds())
+	ch <- prometheus.MustNewConstMetric(c.lag, prometheus.GaugeValue, float64(lag))
+	ch <- prometheus.MustNewConstMetric(c.gaps, prometheus.GaugeValue, float64(gaps))
+	ch <- prometheus.MustNewConstMetric(c.gapEvents, prometheus.CounterValue, float64(gapEvents))
+	ch <- prometheus.MustNewConstMetric(c.tenants, prometheus.GaugeValue, float64(tenants))
+	ch <- prometheus.MustNewConstMetric(c.fresh, prometheus.GaugeValue, fresh)
 }
 
 // New creates an isolated registry. It never registers collectors globally.
@@ -122,6 +165,28 @@ func (m *Metrics) SetDatabaseHealthy(healthy bool) {
 	} else {
 		m.databaseHealth.Set(0)
 	}
+}
+
+// RegisterRevocationFreshness adds bounded-cardinality revocation telemetry to
+// this process registry. It must be called at most once during assembly.
+func (m *Metrics) RegisterRevocationFreshness(source RevocationFreshnessSource) error {
+	if source == nil {
+		return errors.New("revocation freshness metrics require a source")
+	}
+	if !m.enabled {
+		return nil
+	}
+	if len(m.revocationCollectors) != 0 {
+		return errors.New("revocation freshness metrics already registered")
+	}
+	metricCollectors := []prometheus.Collector{newRevocationCollector(source)}
+	for _, collector := range metricCollectors {
+		if err := m.registry.Register(collector); err != nil {
+			return err
+		}
+	}
+	m.revocationCollectors = metricCollectors
+	return nil
 }
 
 // Enabled reports whether application and runtime metrics are collected.
