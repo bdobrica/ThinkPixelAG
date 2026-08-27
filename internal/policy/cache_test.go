@@ -113,11 +113,50 @@ func TestCachedEvaluatorBypassesFailureAndPoison(t *testing.T) {
 	in := cacheInput("two")
 	digest, _ := AuthorizationDigest(in)
 	cache.values[CacheKey("sha256:policy", 7, in, digest)] = []byte(`{"decision":{"allow":true}}`)
+	e, _ = NewCachedEvaluator(next, cache, func() (string, int64, bool) { return "sha256:policy", 7, true }, 30*time.Second, func() time.Time { return now })
 	if _, err := e.Decide(context.Background(), in); err != nil {
 		t.Fatal(err)
 	}
 	if next.calls != 2 {
 		t.Fatalf("poisoned cache avoided evaluator: calls=%d", next.calls)
+	}
+}
+
+func TestCachedEvaluatorInvalidationClearsLocalAndVersionsExternalKey(t *testing.T) {
+	now := time.Now().UTC()
+	cache := &memoryCache{values: map[string][]byte{}}
+	next := &fakeEvaluator{decision: allowDecision()}
+	e, _ := NewCachedEvaluator(next, cache, func() (string, int64, bool) { return "sha256:policy", 7, true }, 30*time.Second, func() time.Time { return now })
+	in := cacheInput("one")
+	if _, err := e.Decide(context.Background(), in); err != nil {
+		t.Fatal(err)
+	}
+	in.DecisionID = "two"
+	if _, err := e.Decide(context.Background(), in); err != nil || next.calls != 1 {
+		t.Fatalf("local cache was not used: calls=%d err=%v", next.calls, err)
+	}
+	e.InvalidateTenant(in.Subject.TenantID)
+	in.DecisionID = "three"
+	if _, err := e.Decide(context.Background(), in); err != nil || next.calls != 2 {
+		t.Fatalf("invalidated decision was reused: calls=%d err=%v", next.calls, err)
+	}
+	if len(cache.values) != 2 {
+		t.Fatalf("Valkey namespace did not advance: keys=%d", len(cache.values))
+	}
+}
+
+func TestCachedEvaluatorGlobalInvalidationVersionsEveryTenant(t *testing.T) {
+	now := time.Now().UTC()
+	cache := &memoryCache{values: map[string][]byte{}}
+	next := &fakeEvaluator{decision: allowDecision()}
+	e, _ := NewCachedEvaluator(next, cache, func() (string, int64, bool) { return "sha256:policy", 7, true }, 30*time.Second, func() time.Time { return now })
+	in := cacheInput("one")
+	_, _ = e.Decide(context.Background(), in)
+	e.InvalidateTenant("")
+	in.DecisionID = "two"
+	_, _ = e.Decide(context.Background(), in)
+	if next.calls != 2 || len(cache.values) != 2 {
+		t.Fatalf("global invalidation reused decision: calls=%d keys=%d", next.calls, len(cache.values))
 	}
 }
 func TestCachedEvaluatorBoundsFreshnessAndZeroTTL(t *testing.T) {

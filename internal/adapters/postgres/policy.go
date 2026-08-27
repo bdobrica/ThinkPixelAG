@@ -12,16 +12,23 @@ import (
 )
 
 type PolicyStore struct {
-	db        DBTX
-	tx        *Transactor
-	freshness *policy.Freshness
+	db         DBTX
+	tx         *Transactor
+	freshness  *policy.Freshness
+	invalidate func(string)
 }
 
 func NewPolicyStore(db DBTX, tx *Transactor, f *policy.Freshness) (*PolicyStore, error) {
 	if db == nil || tx == nil || f == nil {
 		return nil, errors.New("policy store dependencies are required")
 	}
-	return &PolicyStore{db, tx, f}, nil
+	return &PolicyStore{db: db, tx: tx, freshness: f}, nil
+}
+
+// SetCacheInvalidator wires successful activation metadata changes to the
+// instance-local and versioned remote decision-cache namespace.
+func (s *PolicyStore) SetCacheInvalidator(invalidate func(string)) {
+	s.invalidate = invalidate
 }
 
 type PolicyBundle struct {
@@ -86,6 +93,9 @@ func (s *PolicyStore) Activate(ctx context.Context, tenant, bundle, actor domain
 	if err := s.freshness.Set(active); err != nil {
 		return policy.ActiveBundle{}, fmt.Errorf("update local policy freshness: %w", err)
 	}
+	if s.invalidate != nil {
+		s.invalidate(tenant.String())
+	}
 	return active, nil
 }
 
@@ -98,6 +108,9 @@ func (s *PolicyStore) RefreshActive(ctx context.Context, tenant domain.ID, chann
 	}
 	if err := s.freshness.Set(a); err != nil {
 		return policy.ActiveBundle{}, err
+	}
+	if s.invalidate != nil {
+		s.invalidate(tenant.String())
 	}
 	return a, nil
 }

@@ -44,6 +44,8 @@ func TestPolicyActivationAndRollbackAppendVersions(t *testing.T) {
 	fresh, _ := policy.NewFreshness(time.Minute, func() time.Time { return now })
 	store, _ := NewPolicyStore(pool, tx, fresh)
 	tenant, actor, b1, b2 := mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t)
+	var invalidated []string
+	store.SetCacheInvalidator(func(got string) { invalidated = append(invalidated, got) })
 	slug := "pol002-" + tenant.String()
 	_, err = pool.Exec(ctx, `INSERT INTO tenants(id,slug,display_name,created_at,updated_at) VALUES($1,$2,$2,$3,$3)`, tenant.String(), slug, now)
 	if err != nil {
@@ -86,6 +88,9 @@ func TestPolicyActivationAndRollbackAppendVersions(t *testing.T) {
 	}
 	if a1.Version != 1 || a2.Version != 2 || a3.Version != 3 {
 		t.Fatalf("versions: %d %d %d", a1.Version, a2.Version, a3.Version)
+	}
+	if len(invalidated) != 3 || invalidated[0] != tenant.String() || invalidated[1] != tenant.String() || invalidated[2] != tenant.String() {
+		t.Fatalf("cache invalidations=%v", invalidated)
 	}
 	var activeCount int
 	if err := pool.QueryRow(ctx, `SELECT count(*) FROM policy_activations WHERE tenant_id=$1 AND channel='stable' AND deactivated_at IS NULL`, tenant.String()).Scan(&activeCount); err != nil || activeCount != 1 {

@@ -46,3 +46,12 @@ the minimum of policy output, deployment maximum, and remaining security-state
 freshness; zero-TTL decisions are never cached. Misses, timeouts, authentication
 failures, malformed or forged values, and write errors bypass Valkey and use
 OPA. Cache failure cannot create an authorization result.
+
+Each evaluator also has a bounded 1,024-entry process-local cache in front of
+Valkey. A successful policy activation/rollback or accepted revocation stream
+or reconciliation observation synchronously advances that tenant's local cache
+generation and removes its local entries. The generation is included in the
+hashed Valkey key alongside policy and epoch versions, so earlier external
+entries become unreachable immediately and expire under their original bounded
+TTL. Invalidation never depends on listing or deleting remote keys, and a
+Valkey outage cannot preserve reachability of an invalidated decision.

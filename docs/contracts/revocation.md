@@ -93,6 +93,9 @@ regression fails closed rather than refreshing the observation.
 - Cache keys include policy version, relevant epoch vector, subject, tenant, action, resource, normalized input digest, and contract version.
 - Effective TTL is the minimum of policy-returned TTL, token expiry, policy artifact validity, operation-specific revocation freshness remaining, and deployment maximum. The operation bound and all applicable epoch dimensions are cache-key inputs.
 - Push events invalidate matching keys or make them unreachable through epoch-versioned keys.
+- Accepted stream and reconciliation observations synchronously clear the
+  tenant's bounded instance-local decisions and advance the generation included
+  in hashed Valkey keys. Policy activation and rollback use the same hook.
 - Valkey/local cache loss is safe; it cannot generate a new ALLOW.
 - A denied result may be cached only within policy and incident-response constraints; global epoch changes invalidate both outcomes.
 

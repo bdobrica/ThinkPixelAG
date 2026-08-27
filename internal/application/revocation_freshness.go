@@ -41,10 +41,23 @@ type revocationFreshnessState struct {
 // Keeping it separate from the wall clock prevents NTP or administrator clock
 // changes from extending an authorization freshness window.
 type RevocationFreshnessTracker struct {
-	mu      sync.RWMutex
-	clock   domain.Clock
-	elapsed func() time.Duration
-	states  map[domain.ID]revocationFreshnessState
+	mu           sync.RWMutex
+	clock        domain.Clock
+	elapsed      func() time.Duration
+	states       map[domain.ID]revocationFreshnessState
+	invalidators []func(string)
+}
+
+// AddCacheInvalidator registers a synchronous notification invoked after a
+// revocation observation is accepted. Notifications run outside the tracker
+// lock and should only update disposable cache state.
+func (t *RevocationFreshnessTracker) AddCacheInvalidator(invalidate func(string)) {
+	if t == nil || invalidate == nil {
+		return
+	}
+	t.mu.Lock()
+	t.invalidators = append(t.invalidators, invalidate)
+	t.mu.Unlock()
 }
 
 func NewRevocationFreshnessTracker(clock domain.Clock) (*RevocationFreshnessTracker, error) {
@@ -81,19 +94,22 @@ func (t *RevocationFreshnessTracker) record(tenant domain.ID, sequence int64, ep
 	}
 
 	t.mu.Lock()
-	defer t.mu.Unlock()
 	previous, exists := t.states[tenant]
 	if exists {
 		if elapsed < previous.observedElapsed {
+			t.mu.Unlock()
 			return ErrMonotonicClockRegression
 		}
 		if sequence < previous.lastAppliedSequence || epochs.Security < previous.lastAppliedEpochs.Security {
+			t.mu.Unlock()
 			return ErrFreshnessRegression
 		}
 		if !stream && epochRegresses(epochs, previous.lastAppliedEpochs) {
+			t.mu.Unlock()
 			return ErrFreshnessRegression
 		}
 		if sequence == previous.lastAppliedSequence && epochAdvances(epochs, previous.lastAppliedEpochs) {
+			t.mu.Unlock()
 			return ErrFreshnessRegression
 		}
 	}
@@ -106,6 +122,11 @@ func (t *RevocationFreshnessTracker) record(tenant domain.ID, sequence int64, ep
 		previous.lastReconciliation = wall
 	}
 	t.states[tenant] = previous
+	invalidators := append([]func(string){}, t.invalidators...)
+	t.mu.Unlock()
+	for _, invalidate := range invalidators {
+		invalidate(tenant.String())
+	}
 	return nil
 }
 

@@ -24,7 +24,7 @@ func (r *revocationRepoStub) CreateRevocation(_ context.Context, v domain.Revoca
 func (r *revocationRepoStub) LiftRevocation(_ context.Context, v domain.RevocationLift, _ ports.RevocationEvidence) (domain.RevocationResult, error) {
 	r.lifted = v
 	r.calls++
-	return domain.RevocationResult{RevocationID: v.RevocationID, State: domain.RevocationLifted}, nil
+	return domain.RevocationResult{RevocationID: v.RevocationID, Revocation: r.created, State: domain.RevocationLifted}, nil
 }
 
 type revocationPolicyStub struct {
@@ -46,6 +46,8 @@ func TestRevocationServiceAuthorizesCreateAndLift(t *testing.T) {
 	repo := &revocationRepoStub{}
 	eval := &revocationPolicyStub{allow: true}
 	service, _ := NewRevocationService(repo, eval, fixedClock{now: now})
+	var invalidated []string
+	service.SetCacheInvalidator(func(tenant string) { invalidated = append(invalidated, tenant) })
 	command := ChangeRevocation{TenantID: tenant, PrincipalID: actor, RequestID: request, Scope: domain.RevocationGlobal, Target: "all", ReasonCode: "security.emergency", EffectiveAt: now, Roles: []string{"governance-admin"}, SecurityState: policy.SecurityState{Authoritative: true}}
 	if _, err := service.Create(context.Background(), command); err != nil {
 		t.Fatal(err)
@@ -62,8 +64,14 @@ func TestRevocationServiceAuthorizesCreateAndLift(t *testing.T) {
 	if repo.lifted.RevocationID != revocation || eval.input.Action != "revocations.lift" {
 		t.Fatalf("lift not propagated: %+v", repo.lifted)
 	}
+	if len(invalidated) != 2 || invalidated[0] != "" || invalidated[1] != "" {
+		t.Fatalf("global cache invalidations=%v", invalidated)
+	}
 	eval.allow = false
 	if _, err := service.Create(context.Background(), command); domain.ErrorCodeOf(err) != domain.CodeForbidden || repo.calls != 2 {
 		t.Fatalf("deny err=%v calls=%d", err, repo.calls)
+	}
+	if len(invalidated) != 2 {
+		t.Fatalf("denied change invalidated cache: %v", invalidated)
 	}
 }

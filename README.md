@@ -10,7 +10,7 @@ The engineering foundation and Phases 2 through 5 are complete. Phase 3 provides
 authentication plus a fail-closed OPA policy boundary, signed bundle activation
 lifecycle, and baseline Rego.
 The policy boundary includes adversarial golden tests and an optional
-integrity-protected, epoch/version-bound Valkey decision cache.
+integrity-protected, epoch/version/generation-bound local and Valkey decision cache.
 The agent registry now provides validated tenant-scoped creation, optimistic
 metadata/lifecycle updates, and list/describe application and persistence
 boundaries. Agent implementations are registered as immutable canonical

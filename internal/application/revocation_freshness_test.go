@@ -146,3 +146,20 @@ func TestRevocationFreshnessIsTenantScopedAndConcurrent(t *testing.T) {
 		t.Fatal("tenant freshness state was not isolated")
 	}
 }
+
+func TestRevocationFreshnessInvalidatesCacheAfterAcceptedObservation(t *testing.T) {
+	clock := &freshnessTestClock{wall: time.Date(2026, 8, 27, 10, 0, 0, 0, time.UTC)}
+	tracker, _ := NewRevocationFreshnessTrackerWithElapsed(clock, clock.monotonic)
+	tenant := applicationID(t)
+	var invalidated []string
+	tracker.AddCacheInvalidator(func(got string) { invalidated = append(invalidated, got) })
+	if err := tracker.RecordStreamReceipt(tenant, 1, domain.EpochVector{Security: 1, TenantRevocation: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := tracker.RecordStreamReceipt(tenant, 0, domain.EpochVector{}); err == nil {
+		t.Fatal("accepted regressing observation")
+	}
+	if len(invalidated) != 1 || invalidated[0] != tenant.String() {
+		t.Fatalf("cache invalidations=%v", invalidated)
+	}
+}

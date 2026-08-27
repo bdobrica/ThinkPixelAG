@@ -16,6 +16,7 @@ type RevocationService struct {
 	repository ports.RevocationRepository
 	evaluator  policy.Evaluator
 	clock      domain.Clock
+	invalidate func(string)
 }
 type ChangeRevocation struct {
 	TenantID                                               domain.ID
@@ -33,7 +34,13 @@ func NewRevocationService(r ports.RevocationRepository, e policy.Evaluator, c do
 	if r == nil || e == nil || c == nil {
 		return nil, errors.New("revocation service requires repository, policy evaluator, and clock")
 	}
-	return &RevocationService{r, e, c}, nil
+	return &RevocationService{repository: r, evaluator: e, clock: c}, nil
+}
+
+// SetCacheInvalidator wires committed revocation changes to decision caches.
+// An empty tenant denotes a global invalidation.
+func (s *RevocationService) SetCacheInvalidator(invalidate func(string)) {
+	s.invalidate = invalidate
 }
 
 func (s *RevocationService) Create(ctx context.Context, c ChangeRevocation) (domain.RevocationResult, error) {
@@ -66,7 +73,11 @@ func (s *RevocationService) Create(ctx context.Context, c ChangeRevocation) (dom
 		return domain.RevocationResult{}, domain.WrapError(domain.CodeInvalidArgument, "revocation is invalid", err)
 	}
 	evidence.PolicyDecisionID = decision
-	return s.repository.CreateRevocation(ctx, candidate, evidence)
+	result, err := s.repository.CreateRevocation(ctx, candidate, evidence)
+	if err == nil {
+		s.invalidateResult(result)
+	}
+	return result, err
 }
 func (s *RevocationService) Lift(ctx context.Context, c ChangeRevocation) (domain.RevocationResult, error) {
 	now, err := domain.RequireUTC(s.clock.Now())
@@ -82,7 +93,22 @@ func (s *RevocationService) Lift(ctx context.Context, c ChangeRevocation) (domai
 		return domain.RevocationResult{}, domain.WrapError(domain.CodeInvalidArgument, "revocation lift is invalid", err)
 	}
 	evidence.PolicyDecisionID = decision
-	return s.repository.LiftRevocation(ctx, lift, evidence)
+	result, err := s.repository.LiftRevocation(ctx, lift, evidence)
+	if err == nil {
+		s.invalidateResult(result)
+	}
+	return result, err
+}
+
+func (s *RevocationService) invalidateResult(result domain.RevocationResult) {
+	if s.invalidate == nil {
+		return
+	}
+	tenant := ""
+	if result.Revocation.TenantID != nil {
+		tenant = result.Revocation.TenantID.String()
+	}
+	s.invalidate(tenant)
 }
 func (s *RevocationService) authorize(ctx context.Context, c ChangeRevocation, action string, now time.Time) (domain.ID, ports.RevocationEvidence, error) {
 	did, err := domain.NewID()
