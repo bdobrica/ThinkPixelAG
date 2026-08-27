@@ -64,6 +64,14 @@ or epoch regression and derive the gateway identity from the verified token.
 
 Age is based on monotonic elapsed time since a successful authoritative observation, not wall-clock subtraction alone. Configuration may tighten defaults. Loosening requires policy/approval and cannot weaken the high-risk-write invariant.
 
+Each process keeps tenant-scoped freshness state in memory: the last fully
+applied sequence and epoch vector, last stream receipt, last successful
+reconciliation, and age since the newer authoritative observation. UTC receipt
+timestamps are diagnostic only. The age uses a process-lifetime monotonic clock,
+so wall-clock correction cannot make stale state appear newer. A process restart
+begins without authoritative state, and a sequence, epoch, or monotonic-clock
+regression fails closed rather than refreshing the observation.
+
 ## Cache rules
 
 - Cache keys include policy version, relevant epoch vector, subject, tenant, action, resource, normalized input digest, and contract version.

@@ -124,7 +124,10 @@ sequence/security-epoch cursor, bounded writes, and heartbeats. A retention
 gap produces `410 Gone` before streaming (or a terminal `gap` event after
 headers), and `POST /v1/trusted/revocations/reconcile` returns an authoritative
 bounded delta or content-addressed active snapshot while monotonically
-persisting the authenticated gateway's checkpoint. Authoritative policy
+persisting the authenticated gateway's checkpoint. Each instance can retain a
+tenant-scoped local freshness view of the last applied sequence/epochs, stream
+receipt, and reconciliation; security age uses process-monotonic elapsed time
+and starts unknown after restart. Authoritative policy
 evaluation checks global, tenant, principal, run, agent/version, tool, skill,
 and policy scopes before delegating to OPA; worker mutations use the same
 authority boundary. Other administrative APIs for agent/version
