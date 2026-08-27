@@ -85,6 +85,44 @@ func TestFreshnessEvaluatorFailsClosedWithoutStateOrHealthyClock(t *testing.T) {
 	}
 }
 
+func TestFreshnessEvaluatorFailsClosedDuringLagGapAndPartitionThenRecovers(t *testing.T) {
+	tenant := applicationID(t)
+	clock := &freshnessTestClock{wall: time.Date(2026, 8, 27, 10, 0, 0, 0, time.UTC)}
+	tracker, _ := NewRevocationFreshnessTrackerWithElapsed(clock, clock.monotonic)
+	spy := &freshnessEvaluatorSpy{ttl: 10}
+	evaluator, _ := NewFreshnessEnforcingEvaluator(spy, tracker, DefaultRevocationFreshnessPolicy(15*time.Second))
+	input := freshnessInput(tenant, "runs.cancel", "medium")
+
+	if err := tracker.RecordReconciliation(tenant, 4, domain.EpochVector{Security: 4}); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := evaluator.Decide(context.Background(), input); err != nil || !got.Decision.Allow {
+		t.Fatalf("initial decision=%+v err=%v", got, err)
+	}
+	if err := tracker.RecordAuthoritativeHead(tenant, 5); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := evaluator.Decide(context.Background(), input); err != nil || got.Decision.Allow || spy.calls != 1 {
+		t.Fatalf("lag did not fail closed: decision=%+v calls=%d err=%v", got, spy.calls, err)
+	}
+	if err := tracker.RecordGap(tenant, 6); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := evaluator.Decide(context.Background(), input); err != nil || got.Decision.Allow || spy.calls != 1 {
+		t.Fatalf("gap did not fail closed: decision=%+v calls=%d err=%v", got, spy.calls, err)
+	}
+	if err := tracker.RecordReconciliation(tenant, 6, domain.EpochVector{Security: 6}); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := evaluator.Decide(context.Background(), input); err != nil || !got.Decision.Allow || spy.calls != 2 || spy.input.SecurityState.GlobalEpoch != 6 {
+		t.Fatalf("reconciliation recovery=%+v calls=%d state=%+v err=%v", got, spy.calls, spy.input.SecurityState, err)
+	}
+	clock.advance(31*time.Second, 31*time.Second)
+	if got, err := evaluator.Decide(context.Background(), input); err != nil || got.Decision.Allow || spy.calls != 2 {
+		t.Fatalf("partition did not expire normal-write trust: decision=%+v calls=%d err=%v", got, spy.calls, err)
+	}
+}
+
 func TestFreshnessEvaluatorRequiresLiveZeroTTLForHighRiskWrites(t *testing.T) {
 	tenant := applicationID(t)
 	clock := &freshnessTestClock{wall: time.Now().UTC()}

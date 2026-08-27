@@ -44,3 +44,26 @@ func TestRevocationEvaluatorEnforcesScopeAndEpochs(t *testing.T) {
 		t.Fatalf("stale result=%+v called=%v err=%v", got, next.called, err)
 	}
 }
+
+func TestRevocationEvaluatorGlobalRevocationDeniesEveryTenant(t *testing.T) {
+	tenantA, _ := domain.NewID()
+	tenantB, _ := domain.NewID()
+	actor, _ := domain.NewID()
+	revocationID, _ := domain.NewID()
+	now := time.Now().UTC()
+	next := &evaluatorStub{}
+	wrapper, _ := NewRevocationEvaluator(next, authorityStub{ports.RevocationAuthorityState{
+		Epochs: domain.EpochVector{Security: 9},
+		Active: []domain.Revocation{{ID: revocationID, ActorPrincipalID: actor, Scope: domain.RevocationGlobal, Target: "global", ReasonCode: "security.compromise", EffectiveAt: now, CreatedAt: now}},
+	}}, func() time.Time { return now })
+	for _, tenant := range []domain.ID{tenantA, tenantB} {
+		in := Input{DecisionID: "decision-" + tenant.String(), Subject: Subject{TenantID: tenant.String(), PrincipalID: actor.String()}, SecurityState: SecurityState{Authoritative: true}}
+		got, err := wrapper.Decide(context.Background(), in)
+		if err != nil || got.Decision.Allow || got.Decision.ReasonCodes[0] != "policy.revoked" {
+			t.Fatalf("tenant %s result=%+v err=%v", tenant, got, err)
+		}
+	}
+	if next.called {
+		t.Fatal("global revocation reached downstream policy")
+	}
+}

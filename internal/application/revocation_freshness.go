@@ -13,6 +13,7 @@ import (
 var (
 	ErrInvalidFreshnessObservation = errors.New("invalid revocation freshness observation")
 	ErrFreshnessRegression         = errors.New("revocation freshness must not regress")
+	ErrFreshnessGap                = errors.New("revocation freshness sequence gap")
 	ErrMonotonicClockRegression    = errors.New("revocation freshness monotonic clock regressed")
 )
 
@@ -181,6 +182,24 @@ func (t *RevocationFreshnessTracker) record(tenant domain.ID, sequence int64, ep
 			t.mu.Unlock()
 			return ErrFreshnessRegression
 		}
+		if stream && previous.hasObservation && sequence == previous.lastAppliedSequence {
+			// Delivery is at least once. An exact duplicate is already applied,
+			// but must not extend the freshness window during a partition.
+			t.mu.Unlock()
+			return nil
+		}
+		if stream && previous.hasObservation && sequence > previous.lastAppliedSequence+1 {
+			// Do not apply across a missing sequence. Preserve the last fully
+			// applied state and require an authoritative reconciliation.
+			if sequence > previous.authoritativeSequence {
+				previous.authoritativeSequence = sequence
+			}
+			previous.gap = true
+			t.states[tenant] = previous
+			t.gapEvents++
+			t.mu.Unlock()
+			return ErrFreshnessGap
+		}
 	}
 	previous.lastAppliedSequence = sequence
 	previous.hasObservation = true
@@ -222,6 +241,10 @@ func (t *RevocationFreshnessTracker) Snapshot(tenant domain.ID) RevocationFreshn
 	out.LastStreamReceipt = state.lastStreamReceipt
 	out.LastReconciliation = state.lastReconciliation
 	out.HasAuthoritativeState = true
+	if state.gap || state.authoritativeSequence > state.lastAppliedSequence {
+		out.HasAuthoritativeState = false
+		return out
+	}
 	if now < state.observedElapsed {
 		out.MonotonicClockHealthy = false
 		out.HasAuthoritativeState = false

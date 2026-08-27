@@ -216,3 +216,40 @@ func TestRevocationFreshnessInvalidatesCacheAfterAcceptedObservation(t *testing.
 		t.Fatalf("cache invalidations=%v", invalidated)
 	}
 }
+
+func TestRevocationFreshnessDuplicateAndGapFailClosedUntilReconciled(t *testing.T) {
+	clock := &freshnessTestClock{wall: time.Date(2026, 8, 27, 10, 0, 0, 0, time.UTC)}
+	tracker, _ := NewRevocationFreshnessTrackerWithElapsed(clock, clock.monotonic)
+	tenant := applicationID(t)
+	epochs := domain.EpochVector{Security: 1, TenantRevocation: 1}
+	invalidations := 0
+	tracker.AddCacheInvalidator(func(string) { invalidations++ })
+	if err := tracker.RecordStreamReceipt(tenant, 10, epochs); err != nil {
+		t.Fatal(err)
+	}
+	clock.advance(20*time.Second, 20*time.Second)
+	if err := tracker.RecordStreamReceipt(tenant, 10, epochs); err != nil {
+		t.Fatalf("duplicate delivery was not idempotent: %v", err)
+	}
+	if got := tracker.Snapshot(tenant); got.Age != 20*time.Second || !got.HasAuthoritativeState || invalidations != 1 {
+		t.Fatalf("duplicate refreshed authority or cache: state=%+v invalidations=%d", got, invalidations)
+	}
+	if err := tracker.RecordStreamReceipt(tenant, 12, domain.EpochVector{Security: 3}); !errors.Is(err, ErrFreshnessGap) {
+		t.Fatalf("dropped sequence error = %v", err)
+	}
+	if got := tracker.Snapshot(tenant); got.HasAuthoritativeState || got.LastAppliedSequence != 10 || invalidations != 1 {
+		t.Fatalf("gap was applied or remained trusted: state=%+v invalidations=%d", got, invalidations)
+	}
+	if err := tracker.RecordStreamReceipt(tenant, 11, domain.EpochVector{Security: 2}); err != nil {
+		t.Fatal(err)
+	}
+	if got := tracker.Snapshot(tenant); got.HasAuthoritativeState {
+		t.Fatalf("stream delivery cleared unresolved gap: %+v", got)
+	}
+	if err := tracker.RecordReconciliation(tenant, 12, domain.EpochVector{Security: 3, TenantRevocation: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if got := tracker.Snapshot(tenant); !got.HasAuthoritativeState || got.LastAppliedSequence != 12 || got.Age != 0 {
+		t.Fatalf("reconciliation did not restore authority: %+v", got)
+	}
+}

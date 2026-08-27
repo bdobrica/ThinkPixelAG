@@ -224,6 +224,33 @@ func TestCachedEvaluatorUsesOperationFreshnessBudget(t *testing.T) {
 		t.Fatalf("sensitive-read freshness TTL=%s", cache.ttl)
 	}
 }
+
+func TestCachedEvaluatorExpiredAllowCannotReappearDuringRecovery(t *testing.T) {
+	now := time.Date(2026, 8, 27, 10, 0, 0, 0, time.UTC)
+	cache := &memoryCache{values: map[string][]byte{}}
+	next := &fakeEvaluator{decision: allowDecision()}
+	e, _ := NewCachedEvaluator(next, cache, func() (string, int64, bool) { return "sha256:policy", 7, true }, 30*time.Second, func() time.Time { return now })
+	in := cacheInput("before-partition")
+	in.SecurityState.AgeSeconds = 29
+	if got, err := e.Decide(context.Background(), in); err != nil || !got.Decision.Allow || cache.ttl != time.Second {
+		t.Fatalf("initial decision=%+v ttl=%s err=%v", got, cache.ttl, err)
+	}
+	now = now.Add(2 * time.Second)
+	next.decision.Allow = false
+	next.decision.ReasonCodes = []string{"global.revoked"}
+	next.decision.DecisionTTLSeconds = 0
+	in.DecisionID = "after-recovery"
+	in.SecurityState = SecurityState{GlobalEpoch: 2, FreshnessMaxAgeSeconds: 30}
+	got, err := e.Decide(context.Background(), in)
+	if err != nil || got.Decision.Allow || got.Metadata.CacheStatus != "miss" || next.calls != 2 {
+		t.Fatalf("expired ALLOW survived recovery: result=%+v calls=%d err=%v", got, next.calls, err)
+	}
+	in.DecisionID = "replay-after-recovery"
+	got, err = e.Decide(context.Background(), in)
+	if err != nil || got.Decision.Allow || next.calls != 3 {
+		t.Fatalf("zero-TTL recovery denial was cached: result=%+v calls=%d err=%v", got, next.calls, err)
+	}
+}
 func TestAuthorizationDigestNormalizesSets(t *testing.T) {
 	a, b := cacheInput("a"), cacheInput("b")
 	a.Subject.Roles = []string{"z", "a", "a"}
