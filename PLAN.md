@@ -295,6 +295,16 @@ results are recorded in `docs/contracts/resource-accounting.md`,
 
 Implement scoped revocation, epochs, ordered durable log, resumable push stream, gateway reconciliation/checkpoints, cache invalidation, and fail-closed freshness gates. Exit when disconnect/gap/staleness scenarios meet declared security behavior.
 
+Status: **Completed 2026-08-27.** Every supported scope advances atomic ordered
+epochs and distribution evidence; authenticated gateways resume or reconcile
+from durable state; instance-local monotonic freshness, risk-class gates,
+versioned caches, readiness, and metrics fail closed across restart, lag, gaps,
+partitions, and recovery. The real-PostgreSQL authenticated SSE path delivered
+100 committed changes to a connected gateway at p99 22.463 ms against the
+5-second RC objective, and the full clean-tree gate passed. The normative model,
+gateway consumer behavior, measurement boundary, and qualification results are
+recorded in `docs/contracts/revocation.md` and `docs/phase-6-evidence.md`.
+
 ### Phase 7 — Evidence and self-protection
 
 Complete privileged policy separation, approval hooks for high-impact operations, signed artifact verification, KMS abstraction, evidence export, redaction, and break-glass workflow documentation. Exit when privileged changes are attributable and independently exportable, and bypass attempts fail.
