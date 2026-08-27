@@ -128,6 +128,29 @@ reconciliation applies the complete sequence/epoch state, clears the gap, and
 restores bounded serving. Cache expiry and epoch/generation changes ensure an
 ALLOW from before recovery cannot reappear transiently afterward.
 
+## Gateway integration
+
+The gateway persists its last fully applied cursor and epoch vector atomically
+with its local revocation view. The service-side checkpoint is operational
+evidence of delivery or reconciliation and regression protection; it is not a
+substitute for the gateway's durable apply boundary. On restart the gateway is
+unknown until it observes current authority, even when it can load a checkpoint.
+
+Consumers apply only contiguous events, replay exact duplicates without
+refreshing security age, and reconcile on a `410 Gone`, terminal `gap` event,
+decode failure, or locally detected discontinuity. A reconciliation delta is
+applied in order; a snapshot replaces the active local view after its digest,
+authoritative sequence, and epochs are accepted. Only that complete apply may
+clear a gap and restore bounded serving. Disconnects do not reset age: the
+gateway may serve only within the applicable monotonic freshness window, while
+high-risk writes continue to require live authority.
+
+The Phase 6 single-connected-gateway measurement includes database commit,
+polling, SSE encoding/delivery, and client decoding. Production fanout to the
+capacity target, reconnect storms, and cross-zone behavior remain Phase 8 load
+qualification. Results and the complete consumer sequence are recorded in
+`docs/phase-6-evidence.md`.
+
 ## Required scenarios
 
 Tests cover concurrent increments, global/tenant/run/agent/tool/skill/policy revocation, lift/expiry, duplicate and out-of-order delivery, dropped sequence, retention gap, stream reconnect, process restart, clock adjustment, cache expiry, partition beyond each freshness bound, snapshot reconciliation, and recovery without transient stale ALLOW.

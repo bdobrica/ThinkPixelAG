@@ -148,6 +148,16 @@ stream delivery never refreshes the trust window. These conditions never affect
 registration, policy promotion, resource extensions, and trusted metering are
 isolated by authorization policy and documented in OpenAPI.
 
+Gateways persist their last fully applied cursor and epoch vector atomically
+with their local revocation view; the service checkpoint alone is not proof of
+application. They reconcile on retention loss, a stream gap, decode failure, or
+local discontinuity and restore bounded serving only after applying the complete
+authoritative delta or snapshot. The measured Phase 6 single-connected-gateway
+path delivered 100 committed changes at p99 22.463 ms against the 5-second RC
+objective; production fanout and reconnect capacity remain Phase 8 work. See
+[`docs/phase-6-evidence.md`](docs/phase-6-evidence.md) for the measurement and
+consumer protocol.
+
 Authorized resource extensions are additive, approval-referenced ledger actions. They can add consumable capacity or move an existing deadline forward without rewriting the original grant, and a run requester cannot extend its own run even if it also holds an administrative role.
 
 Phase 3 implements authenticated public agent list/description handlers and the
