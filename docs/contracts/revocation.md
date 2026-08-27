@@ -20,7 +20,7 @@ An implementation may add scope-specific epochs. Each is a nonnegative, monotoni
 4. writes audit and outbox records;
 5. commits atomically.
 
-An administrative lift is a new change, never deletion, and increments epochs. Log consumers order by sequence, treat duplicate sequence/event IDs idempotently, and regard a missing sequence outside documented filtering as a gap requiring reconciliation.
+An administrative lift is a new change, never deletion, and increments epochs. Log consumers order by sequence, treat duplicate sequence/event IDs idempotently without refreshing the security-state age, and regard a missing sequence outside documented filtering as a gap requiring reconciliation. A consumer preserves its last fully applied state across that gap; later stream events cannot clear it.
 
 ## Evaluation
 
@@ -120,6 +120,13 @@ applied sequence, or an unresolved gap. Successful reconciliation clears a gap
 only after applying its authoritative sequence and epochs. The HTTP readiness
 composition retains database/startup/drain ownership while adding this security
 probe; liveness deliberately does not compose it.
+
+The same lag and gap conditions fail closed at the bounded authorization
+boundary, so an instance cannot continue serving from an otherwise unexpired
+local ALLOW while it knows it is incomplete. Only a successful authoritative
+reconciliation applies the complete sequence/epoch state, clears the gap, and
+restores bounded serving. Cache expiry and epoch/generation changes ensure an
+ALLOW from before recovery cannot reappear transiently afterward.
 
 ## Required scenarios
 

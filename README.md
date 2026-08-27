@@ -141,7 +141,10 @@ sequence lag, unresolved gaps, gap incidents, tracked-tenant count, and freshnes
 health on `/metrics` without tenant labels. A composable readiness probe rejects
 governed traffic when any tracked tenant is unknown after restart, behind a known
 authority head, in gap recovery, beyond the configured serving age, or affected
-by monotonic-clock regression; these conditions never affect `/livez`. Other administrative APIs for agent/version
+by monotonic-clock regression. Lag and gaps also deny bounded authorization
+until authoritative reconciliation applies the complete state; exact duplicate
+stream delivery never refreshes the trust window. These conditions never affect
+`/livez`. Other administrative APIs for agent/version
 registration, policy promotion, resource extensions, and trusted metering are
 isolated by authorization policy and documented in OpenAPI.
 
