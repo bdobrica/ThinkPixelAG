@@ -140,7 +140,7 @@ func TestPhase3RegistrySecurityWorkflow(t *testing.T) {
 	}
 
 	resolver, _ := application.NewVersionResolver(repository, cachedEvaluator, clock)
-	resolve := application.ResolveAgentVersion{RunID: newE2EID(t), TenantID: tenantID, AgentID: agentID, PrincipalID: invokerID, RequestID: newE2EID(t), RequestedConstraints: map[string]any{"max_tokens": float64(80)}, AuthorityConstraints: map[string]any{"max_tokens": float64(50)}, SecurityState: policy.SecurityState{TenantPolicyEpoch: 1}}
+	resolve := application.ResolveAgentVersion{RunID: newE2EID(t), TenantID: tenantID, AgentID: agentID, PrincipalID: invokerID, RequestID: newE2EID(t), RequestedConstraints: map[string]any{"max_tokens": float64(80)}, AuthorityConstraints: map[string]any{"max_tokens": float64(50)}, SecurityState: policy.SecurityState{TenantPolicyEpoch: 1, FreshnessMaxAgeSeconds: 30}}
 	if _, err := resolver.Resolve(ctx, resolve); domain.ErrorCodeOf(err) != domain.CodeForbidden {
 		t.Fatalf("role-free resolution error = %v", err)
 	}
