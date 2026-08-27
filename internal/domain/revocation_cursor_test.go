@@ -17,7 +17,11 @@ func TestRevocationCursorAuthenticatedAndTenantBound(t *testing.T) {
 	if _, err = codec.Decode(encoded, other); err == nil {
 		t.Fatal("cross-tenant cursor accepted")
 	}
-	tampered := encoded[:len(encoded)-1] + "A"
+	replacement := byte('A')
+	if encoded[len(encoded)-1] == replacement {
+		replacement = 'B'
+	}
+	tampered := encoded[:len(encoded)-1] + string(replacement)
 	if _, err = codec.Decode(tampered, tenant); err == nil {
 		t.Fatal("tampered cursor accepted")
 	}
