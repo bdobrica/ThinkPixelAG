@@ -43,6 +43,16 @@ The SSE stream is the initial protocol. It provides event ID/sequence, epoch vec
 
 The reconciliation endpoint authenticates/authorizes a gateway, accepts its last sequence and epoch vector, and returns a bounded ordered delta or content-addressed snapshot plus authoritative sequence/epochs. Gateway checkpoints record last applied epoch/sequence, last stream receipt, and last successful reconciliation.
 
+The implemented cursor is HMAC-authenticated and binds tenant, global sequence,
+and security epoch. `Last-Event-ID` and `after` resume it; the sequence-only
+`after_sequence` parameter exists only for initial compatibility bootstrap.
+The service reads at most 256 changes per poll and places a deadline on every
+write, so a slow consumer cannot create an unbounded application buffer. The
+logical retention window is enforced at every read. Reconciliation returns at
+most 10,000 ordered changes; a larger delta or expired cursor switches to a
+deterministically ordered SHA-256 snapshot. Checkpoint upserts reject sequence
+or epoch regression and derive the gateway identity from the verified token.
+
 ## Freshness classes
 
 | Operation class | Default maximum age | Behavior |

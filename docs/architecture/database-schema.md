@@ -139,7 +139,12 @@ Checked updates reject 64-bit overflow. The same transaction appends the
 immutable change, database-ordered log record with its resulting epoch vector,
 privileged audit evidence, and replay-safe outbox event. A lift is a new change,
 never deletion or epoch reversal. Gateway checkpoints persist the last fully
-applied order and freshness observations.
+applied order and freshness observations. Their conflict update is conditional
+on every stored sequence/epoch being less than or equal to the submitted
+vector, preventing a stale replica from rolling durable gateway state back.
+Distribution reads merge tenant and global log rows in the database identity
+order, enforce a time retention boundary, and reconstruct authoritative active
+state from the latest immutable change plus effective/expiry time.
 
 ## Delivery primitives
 

@@ -91,7 +91,12 @@ func ValidateRevocationLift(v RevocationLift) (RevocationLift, error) {
 	return v, nil
 }
 
-type EpochVector struct{ Security, TenantPolicy, TenantRevocation, AgentRevocation int64 }
+type EpochVector struct {
+	Security         int64 `json:"security_epoch"`
+	TenantPolicy     int64 `json:"tenant_policy_epoch"`
+	TenantRevocation int64 `json:"tenant_revocation_epoch"`
+	AgentRevocation  int64 `json:"agent_revocation_epoch"`
+}
 type RevocationResult struct {
 	RevocationID ID
 	Revocation   Revocation

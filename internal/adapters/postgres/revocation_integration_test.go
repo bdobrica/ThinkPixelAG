@@ -4,6 +4,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -118,6 +119,35 @@ func TestRevocationAtomicEvidenceAndConcurrentMonotonicEpochs(t *testing.T) {
 	}
 	if changes != n+1 || logs != n+1 || audits != n+1 || outbox != n+1 {
 		t.Fatalf("atomic evidence changes=%d logs=%d audits=%d outbox=%d", changes, logs, audits, outbox)
+	}
+	distributed, err := repos.RevocationChanges(ctx, tenant, 0, 100, now.Add(-time.Hour))
+	if err != nil || len(distributed) != n+1 {
+		t.Fatalf("distributed changes=%d err=%v", len(distributed), err)
+	}
+	for i := 1; i < len(distributed); i++ {
+		if distributed[i].Sequence <= distributed[i-1].Sequence {
+			t.Fatalf("distribution is not ordered: %+v", distributed)
+		}
+	}
+	snapshot, err := repos.RevocationSnapshot(ctx, tenant, now.Add(3*time.Second))
+	if err != nil || snapshot.Sequence != distributed[len(distributed)-1].Sequence || len(snapshot.Active) != n-1 || snapshot.Epochs.Security != baseline+n+1 {
+		t.Fatalf("snapshot=%+v err=%v", snapshot, err)
+	}
+	reconciledAt := now.Add(4 * time.Second)
+	checkpoint := ports.GatewayCheckpoint{TenantID: tenant, GatewayPrincipalID: actor, LastSequence: snapshot.Sequence, Epochs: snapshot.Epochs, LastReconciledAt: &reconciledAt, UpdatedAt: reconciledAt}
+	if err = repos.SaveGatewayCheckpoint(ctx, checkpoint); err != nil {
+		t.Fatal(err)
+	}
+	checkpoint.LastSequence--
+	checkpoint.UpdatedAt = checkpoint.UpdatedAt.Add(time.Second)
+	if err = repos.SaveGatewayCheckpoint(ctx, checkpoint); domain.ErrorCodeOf(err) != domain.CodeConflict {
+		t.Fatalf("regressing checkpoint error=%v", err)
+	}
+	if _, err = pool.Exec(ctx, `UPDATE revocation_log SET committed_at=$1 WHERE sequence=$2`, now.Add(-2*time.Hour), distributed[0].Sequence); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = repos.RevocationChanges(ctx, tenant, 0, 100, now.Add(-time.Hour)); !errors.Is(err, ports.ErrRevocationCursorGone) {
+		t.Fatalf("expired cursor error=%v", err)
 	}
 }
 func revEvidence(t *testing.T) ports.RevocationEvidence {

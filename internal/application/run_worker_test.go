@@ -6,11 +6,18 @@ import (
 	"time"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
+	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 )
 
 type workerRepositoryStub struct {
 	claimed, heartbeat domain.RunLease
 	operation          domain.WorkerRunOperation
+}
+
+type workerRevocationStub struct{ active []domain.Revocation }
+
+func (s workerRevocationStub) AuthoritativeRevocations(context.Context, domain.ID, domain.ID, time.Time) (ports.RevocationAuthorityState, error) {
+	return ports.RevocationAuthorityState{Active: s.active}, nil
 }
 
 func (stub *workerRepositoryStub) ClaimRun(_ context.Context, tenant, worker, lease domain.ID, _, expires time.Time) (domain.RunLease, error) {
@@ -62,5 +69,21 @@ func TestRunWorkerRejectsExpiredLeaseAndInvalidConfiguration(t *testing.T) {
 	}
 	if _, err := service.Operate(context.Background(), lease, domain.WorkerRunComplete); domain.ErrorCodeOf(err) != domain.CodeConflict {
 		t.Fatalf("operation error=%v", err)
+	}
+}
+
+func TestGovernedRunWorkerRejectsRevokedPrincipalBeforeClaim(t *testing.T) {
+	now := testTime()
+	tenant, worker := applicationID(t), applicationID(t)
+	repo := &workerRepositoryStub{}
+	service, err := NewGovernedRunWorkerService(repo, workerRevocationStub{[]domain.Revocation{{Scope: domain.RevocationPrincipalID, Target: worker.String()}}}, fixedClock{now: now}, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = service.Claim(context.Background(), tenant, worker); domain.ErrorCodeOf(err) != domain.CodeForbidden {
+		t.Fatalf("claim error=%v", err)
+	}
+	if !repo.claimed.LeaseID.IsZero() {
+		t.Fatal("repository called for revoked worker")
 	}
 }

@@ -37,12 +37,13 @@ type Agent struct {
 	Revoked       bool   `json:"revoked,omitempty"`
 }
 type SecurityState struct {
-	GlobalEpoch          int64 `json:"global_epoch"`
-	TenantPolicyEpoch    int64 `json:"tenant_policy_epoch"`
-	AgentRevocationEpoch int64 `json:"agent_revocation_epoch"`
-	AgeSeconds           int64 `json:"age_seconds"`
-	HasGap               bool  `json:"has_gap"`
-	Authoritative        bool  `json:"authoritative"`
+	GlobalEpoch           int64 `json:"global_epoch"`
+	TenantPolicyEpoch     int64 `json:"tenant_policy_epoch"`
+	TenantRevocationEpoch int64 `json:"tenant_revocation_epoch"`
+	AgentRevocationEpoch  int64 `json:"agent_revocation_epoch"`
+	AgeSeconds            int64 `json:"age_seconds"`
+	HasGap                bool  `json:"has_gap"`
+	Authoritative         bool  `json:"authoritative"`
 }
 type RequestContext struct {
 	RequestID      string `json:"request_id"`
@@ -100,7 +101,7 @@ func (in Input) Validate() error {
 	if in.RequestedConstraints == nil || in.AuthorityConstraints == nil || in.Resource.Attributes == nil {
 		return errors.New("policy input maps must be present")
 	}
-	if in.SecurityState.GlobalEpoch < 0 || in.SecurityState.TenantPolicyEpoch < 0 || in.SecurityState.AgentRevocationEpoch < 0 || in.SecurityState.AgeSeconds < 0 {
+	if in.SecurityState.GlobalEpoch < 0 || in.SecurityState.TenantPolicyEpoch < 0 || in.SecurityState.TenantRevocationEpoch < 0 || in.SecurityState.AgentRevocationEpoch < 0 || in.SecurityState.AgeSeconds < 0 {
 		return errors.New("policy security state cannot be negative")
 	}
 	if len(in.Subject.Roles) > 32 || len(in.Action) > 128 || len(in.Resource.ID) > 512 {

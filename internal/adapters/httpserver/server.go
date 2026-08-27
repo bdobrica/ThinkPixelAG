@@ -37,22 +37,23 @@ type ReadinessProbe interface {
 }
 
 type Dependencies struct {
-	Logger             *slog.Logger
-	Metrics            *metrics.Metrics
-	Tracing            *tracing.Tracing
-	Readiness          ReadinessProbe
-	NewID              IDGenerator
-	AgentApprovals     http.Handler
-	AgentDiscovery     http.Handler
-	RunAdmission       http.Handler
-	RunQuery           http.Handler
-	RunSignal          http.Handler
-	RunCancellation    http.Handler
-	RunEvents          http.Handler
-	TrustedUsage       http.Handler
-	ResourceExtension  http.Handler
-	ResourceSettlement http.Handler
-	Revocations        http.Handler
+	Logger                 *slog.Logger
+	Metrics                *metrics.Metrics
+	Tracing                *tracing.Tracing
+	Readiness              ReadinessProbe
+	NewID                  IDGenerator
+	AgentApprovals         http.Handler
+	AgentDiscovery         http.Handler
+	RunAdmission           http.Handler
+	RunQuery               http.Handler
+	RunSignal              http.Handler
+	RunCancellation        http.Handler
+	RunEvents              http.Handler
+	TrustedUsage           http.Handler
+	ResourceExtension      http.Handler
+	ResourceSettlement     http.Handler
+	Revocations            http.Handler
+	RevocationDistribution http.Handler
 }
 
 type Server struct {
@@ -162,6 +163,10 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 	if dependencies.Revocations != nil {
 		mount("POST /v1/admin/revocations", dependencies.Revocations)
 		mount("POST /v1/admin/revocations/{revocation_id}/lift", dependencies.Revocations)
+	}
+	if dependencies.RevocationDistribution != nil {
+		mount("GET /v1/trusted/revocations/events", dependencies.RevocationDistribution)
+		mount("POST /v1/trusted/revocations/reconcile", dependencies.RevocationDistribution)
 	}
 	mux.Handle("/", middleware("unknown", httpConfig, dependencies, http.HandlerFunc(notFound)))
 	return mux

@@ -118,7 +118,16 @@ cursor older than the configured 10,000-event logical retention window returns
 Administrative revocation creation and lift are typed, authenticated,
 authoritatively policy-controlled operations for all supported scopes. Each
 change atomically advances applicable epochs and appends ordered distribution,
-audit, and outbox evidence. Other administrative APIs for agent/version
+audit, and outbox evidence. Trusted gateways consume
+`GET /v1/trusted/revocations/events` with an authenticated tenant-bound
+sequence/security-epoch cursor, bounded writes, and heartbeats. A retention
+gap produces `410 Gone` before streaming (or a terminal `gap` event after
+headers), and `POST /v1/trusted/revocations/reconcile` returns an authoritative
+bounded delta or content-addressed active snapshot while monotonically
+persisting the authenticated gateway's checkpoint. Authoritative policy
+evaluation checks global, tenant, principal, run, agent/version, tool, skill,
+and policy scopes before delegating to OPA; worker mutations use the same
+authority boundary. Other administrative APIs for agent/version
 registration, policy promotion, resource extensions, and trusted metering are
 isolated by authorization policy and documented in OpenAPI.
 

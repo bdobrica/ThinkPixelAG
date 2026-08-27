@@ -22,9 +22,10 @@ func (r *Repositories) ClaimRun(ctx context.Context, tenantID, workerID, leaseID
 	err := r.withWorkerTransaction(ctx, func(db DBTX) error {
 		var runID string
 		var currentFence int64
-		err := db.QueryRow(ctx, `SELECT id::text,fencing_token FROM runs
-WHERE tenant_id=$1 AND state IN ('ADMITTED','RUNNING') AND (lease_expires_at IS NULL OR lease_expires_at <= $2)
-ORDER BY created_at,id FOR UPDATE SKIP LOCKED LIMIT 1`, tenantID.String(), now).Scan(&runID, &currentFence)
+		err := db.QueryRow(ctx, `SELECT r.id::text,r.fencing_token FROM runs r
+WHERE r.tenant_id=$1 AND r.state IN ('ADMITTED','RUNNING') AND (r.lease_expires_at IS NULL OR r.lease_expires_at <= $2)
+AND NOT EXISTS (SELECT 1 FROM revocations v WHERE (v.tenant_id=$1 OR v.tenant_id IS NULL) AND v.effective_at<=$2 AND (v.expires_at IS NULL OR v.expires_at>$2) AND (SELECT change_type FROM revocation_changes c WHERE c.revocation_id=v.id ORDER BY c.changed_at DESC,c.id DESC LIMIT 1)='CREATED' AND (v.scope='GLOBAL' OR (v.scope='TENANT_ID' AND v.target=$1::text) OR (v.scope='PRINCIPAL_ID' AND v.target=$3::text) OR (v.scope='RUN_ID' AND v.target=r.id::text) OR (v.scope='AGENT_ID' AND v.target=r.agent_id::text) OR (v.scope='AGENT_VERSION' AND EXISTS (SELECT 1 FROM agent_versions av WHERE av.tenant_id=r.tenant_id AND av.id=r.agent_version_id AND av.content_digest=v.target))))
+ORDER BY r.created_at,r.id FOR UPDATE OF r SKIP LOCKED LIMIT 1`, tenantID.String(), now, workerID.String()).Scan(&runID, &currentFence)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.ErrRunLeaseUnavailable
 		}

@@ -554,15 +554,23 @@ paths:
       operationId: streamRevocations
       summary: Stream authenticated ordered revocation changes
       parameters:
+        - name: after
+          in: query
+          description: Authenticated tenant-bound sequence/security-epoch cursor; also accepted through Last-Event-ID.
+          schema:
+            type: string
+            maxLength: 512
         - name: after_sequence
           in: query
+          deprecated: true
+          description: Initial sequence-only bootstrap cursor; subsequent resumes use the authenticated SSE event ID.
           schema:
             type: integer
             format: int64
             minimum: 0
       responses:
         '200':
-          description: SSE stream; data contains RevocationLogEntry JSON
+          description: SSE stream with bounded writes, heartbeat comments, authenticated event cursors, and a terminal gap event requiring reconciliation.
           content:
             text/event-stream:
               schema:
