@@ -16,8 +16,23 @@ test_admin_requires_role if {
     not d.allow
 }
 test_stale_denied if {
-    d := authorization.decision with input as object.union(base,{"action":"agents.list","security_state":{"has_gap":false,"age_seconds":31,"authoritative":true}})
+    d := authorization.decision with input as object.union(base,{"action":"agents.list","security_state":{"has_gap":false,"age_seconds":31,"authoritative":false}})
     not d.allow
+}
+
+test_sensitive_read_uses_sixty_second_bound if {
+    allowed := authorization.decision with input as object.union(base,{"action":"runs.read","security_state":{"has_gap":false,"age_seconds":59,"authoritative":false}})
+    allowed.allow
+    denied := authorization.decision with input as object.union(base,{"action":"runs.read","security_state":{"has_gap":false,"age_seconds":61,"authoritative":false}})
+    not denied.allow
+    denied.reason_codes == ["security_state.stale"]
+}
+
+test_normal_write_uses_thirty_second_bound if {
+    allowed := authorization.decision with input as object.union(base,{"action":"runs.cancel","security_state":{"has_gap":false,"age_seconds":30,"authoritative":false}})
+    allowed.allow
+    denied := authorization.decision with input as object.union(base,{"action":"runs.cancel","security_state":{"has_gap":false,"age_seconds":31,"authoritative":false}})
+    not denied.allow
 }
 test_constraints_narrowed if {
     d := authorization.decision with input as object.union(base,{"action":"runs.create","requested_constraints":{"max_tokens":200},"authority_constraints":{"max_tokens":100}})

@@ -48,6 +48,15 @@ func (e *CachedEvaluator) Decide(ctx context.Context, in Input) (Result, error) 
 	if err := in.Validate(); err != nil {
 		return Result{}, err
 	}
+	// Authoritative operations must reach both the revocation authority and
+	// policy evaluator live. Neither an ALLOW nor a DENY is reused or stored.
+	if in.SecurityState.Authoritative {
+		result, err := e.next.Decide(ctx, in)
+		if err == nil {
+			result.Metadata.CacheStatus = "bypass"
+		}
+		return result, err
+	}
 	digest, version, fresh := e.active()
 	if !fresh || digest == "" || version < 1 {
 		return e.next.Decide(ctx, in)
@@ -108,7 +117,11 @@ func (e *CachedEvaluator) ttl(d Decision, in Input) time.Duration {
 		ttl = e.maxTTL
 	}
 	if !in.SecurityState.Authoritative {
-		remaining := time.Duration(30-in.SecurityState.AgeSeconds) * time.Second
+		bound := in.SecurityState.FreshnessMaxAgeSeconds
+		if bound <= 0 {
+			return 0
+		}
+		remaining := time.Duration(bound-in.SecurityState.AgeSeconds) * time.Second
 		if remaining <= 0 {
 			return 0
 		}
@@ -122,7 +135,7 @@ func (e *CachedEvaluator) ttl(d Decision, in Input) time.Duration {
 // CacheKey hashes all components so Valkey keys do not expose tenant,
 // principal, action, or resource identifiers to operational tooling.
 func CacheKey(policyDigest string, version int64, in Input, inputDigest string) string {
-	material := fmt.Sprintf("%s\x00%s\x00%d\x00%d\x00%d\x00%d\x00%s\x00%s\x00%s\x00%s\x00%s", ContractVersion, policyDigest, version, in.SecurityState.GlobalEpoch, in.SecurityState.TenantPolicyEpoch, in.SecurityState.AgentRevocationEpoch, in.Subject.TenantID, in.Subject.PrincipalID, in.Action, in.Resource.Type+":"+in.Resource.ID, inputDigest)
+	material := fmt.Sprintf("%s\x00%s\x00%d\x00%d\x00%d\x00%d\x00%d\x00%d\x00%s\x00%s\x00%s\x00%s\x00%s", ContractVersion, policyDigest, version, in.SecurityState.GlobalEpoch, in.SecurityState.TenantPolicyEpoch, in.SecurityState.TenantRevocationEpoch, in.SecurityState.AgentRevocationEpoch, in.SecurityState.FreshnessMaxAgeSeconds, in.Subject.TenantID, in.Subject.PrincipalID, in.Action, in.Resource.Type+":"+in.Resource.ID, inputDigest)
 	sum := sha256.Sum256([]byte(material))
 	return "thinkpixelag:policy:v1:" + hex.EncodeToString(sum[:])
 }

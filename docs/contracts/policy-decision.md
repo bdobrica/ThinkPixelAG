@@ -38,8 +38,10 @@ The RC contract version is `thinkpixelag.authorization/v1alpha1`; it remains exp
   "security_state": {
     "global_epoch": 12,
     "tenant_policy_epoch": 7,
+    "tenant_revocation_epoch": 9,
     "agent_revocation_epoch": 3,
     "age_seconds": 2,
+    "freshness_max_age_seconds": 30,
     "has_gap": false,
     "authoritative": true
   },
@@ -79,6 +81,10 @@ Each action defines a JSON Schema-compatible resource and constraint shape. Unkn
   failure. The baseline pauses low/medium-risk runs and fails high/critical-risk
   runs.
 - `decision_ttl_seconds` is nonnegative and capped by deployment, identity, policy, and revocation freshness. Zero disables ALLOW caching and is mandatory for high-risk writes.
+- `freshness_max_age_seconds` is injected by the application from the classified
+  operation bound. It is zero for authoritative decisions and is never accepted
+  from a caller. Cache TTL uses its remaining budget after conservatively
+  rounded monotonic `age_seconds`.
 
 ## Initial actions
 

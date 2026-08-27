@@ -51,7 +51,7 @@ func cacheInput(id string) Input {
 	in.DecisionID = id
 	in.Context.RequestID = "request-" + id
 	in.RequestTime = time.Date(2026, 8, 20, 12, 0, 0, 0, time.UTC)
-	in.SecurityState = SecurityState{GlobalEpoch: 1, TenantPolicyEpoch: 2, AgentRevocationEpoch: 3, AgeSeconds: 4}
+	in.SecurityState = SecurityState{GlobalEpoch: 1, TenantPolicyEpoch: 2, TenantRevocationEpoch: 3, AgentRevocationEpoch: 4, AgeSeconds: 4, FreshnessMaxAgeSeconds: 30}
 	return in
 }
 func allowDecision() Decision {
@@ -147,6 +147,44 @@ func TestCachedEvaluatorBoundsFreshnessAndZeroTTL(t *testing.T) {
 		t.Fatal("cached zero-TTL decision")
 	}
 }
+
+func TestCachedEvaluatorBypassesAuthoritativeOperations(t *testing.T) {
+	now := time.Now().UTC()
+	cache := &memoryCache{values: map[string][]byte{}}
+	next := &fakeEvaluator{decision: allowDecision()}
+	e, _ := NewCachedEvaluator(next, cache, func() (string, int64, bool) { return "sha256:policy", 7, true }, time.Minute, func() time.Time { return now })
+	in := cacheInput("live-one")
+	in.SecurityState.Authoritative = true
+	first, err := e.Decide(context.Background(), in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	in.DecisionID = "live-two"
+	second, err := e.Decide(context.Background(), in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.calls != 2 || cache.sets != 0 || first.Metadata.CacheStatus != "bypass" || second.Metadata.CacheStatus != "bypass" {
+		t.Fatalf("authoritative cache use: calls=%d sets=%d first=%+v second=%+v", next.calls, cache.sets, first.Metadata, second.Metadata)
+	}
+}
+
+func TestCachedEvaluatorUsesOperationFreshnessBudget(t *testing.T) {
+	now := time.Now().UTC()
+	cache := &memoryCache{values: map[string][]byte{}}
+	decision := allowDecision()
+	decision.DecisionTTLSeconds = 20
+	e, _ := NewCachedEvaluator(&fakeEvaluator{decision: decision}, cache, func() (string, int64, bool) { return "sha256:policy", 7, true }, time.Minute, func() time.Time { return now })
+	in := cacheInput("sensitive")
+	in.SecurityState.AgeSeconds = 50
+	in.SecurityState.FreshnessMaxAgeSeconds = 60
+	if _, err := e.Decide(context.Background(), in); err != nil {
+		t.Fatal(err)
+	}
+	if cache.ttl != 10*time.Second {
+		t.Fatalf("sensitive-read freshness TTL=%s", cache.ttl)
+	}
+}
 func TestAuthorizationDigestNormalizesSets(t *testing.T) {
 	a, b := cacheInput("a"), cacheInput("b")
 	a.Subject.Roles = []string{"z", "a", "a"}
@@ -174,7 +212,9 @@ func TestCacheKeyBindsEveryAuthorizationDimension(t *testing.T) {
 		{"policy version", func(*Input) {}, "sha256:policy", 8},
 		{"global epoch", func(in *Input) { in.SecurityState.GlobalEpoch++ }, "sha256:policy", 7},
 		{"tenant epoch", func(in *Input) { in.SecurityState.TenantPolicyEpoch++ }, "sha256:policy", 7},
+		{"tenant revocation epoch", func(in *Input) { in.SecurityState.TenantRevocationEpoch++ }, "sha256:policy", 7},
 		{"agent epoch", func(in *Input) { in.SecurityState.AgentRevocationEpoch++ }, "sha256:policy", 7},
+		{"freshness bound", func(in *Input) { in.SecurityState.FreshnessMaxAgeSeconds++ }, "sha256:policy", 7},
 		{"subject", func(in *Input) { in.Subject.PrincipalID = "other" }, "sha256:policy", 7},
 		{"action", func(in *Input) { in.Action = "runs.cancel" }, "sha256:policy", 7},
 		{"resource", func(in *Input) { in.Resource.ID = "other" }, "sha256:policy", 7},

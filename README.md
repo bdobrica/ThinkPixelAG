@@ -127,7 +127,13 @@ bounded delta or content-addressed active snapshot while monotonically
 persisting the authenticated gateway's checkpoint. Each instance can retain a
 tenant-scoped local freshness view of the last applied sequence/epochs, stream
 receipt, and reconciliation; security age uses process-monotonic elapsed time
-and starts unknown after restart. Authoritative policy
+and starts unknown after restart. A risk-classifying boundary replaces
+caller-provided security state with that local view: high-risk, resource, and
+administrative writes bypass decision caches for live authoritative revocation
+and policy evaluation; normal writes default to 30 seconds, sensitive reads to
+60 seconds, and low-risk reads use an explicit finite deployment bound.
+Configuration can tighten the defaults but cannot loosen them, and cache TTL is
+capped by the remaining monotonic freshness window. Authoritative policy
 evaluation checks global, tenant, principal, run, agent/version, tool, skill,
 and policy scopes before delegating to OPA; worker mutations use the same
 authority boundary. Other administrative APIs for agent/version

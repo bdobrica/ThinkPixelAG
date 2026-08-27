@@ -64,6 +64,22 @@ or epoch regression and derive the gateway identity from the verified token.
 
 Age is based on monotonic elapsed time since a successful authoritative observation, not wall-clock subtraction alone. Configuration may tighten defaults. Loosening requires policy/approval and cannot weaken the high-risk-write invariant.
 
+The application classifies the action before consulting a decision cache.
+`agents.list` is low-risk; agent descriptions and run/event reads are
+sensitive; run signal/cancel and low/medium-risk admission or worker lifecycle
+are normal writes. High/critical-risk admission or worker lifecycle, resource
+metering/settlement/extension, governance changes, and every unknown action are
+high-risk writes. Unknown actions deliberately take the live path so a newly
+introduced mutation cannot silently inherit cacheable behavior.
+
+Caller-provided security-state fields are never trusted. For bounded classes,
+the application replaces them with the tenant tracker snapshot, rounds
+monotonic age upward to whole seconds, and denies before policy evaluation when
+state is unknown, the monotonic clock is unhealthy, or the class bound has
+expired. High-risk writes instead mark evaluation authoritative; the cache
+bypasses reads and writes, the revocation authority is queried live, and an
+ALLOW with nonzero TTL is rejected as an invalid security result.
+
 Each process keeps tenant-scoped freshness state in memory: the last fully
 applied sequence and epoch vector, last stream receipt, last successful
 reconciliation, and age since the newer authoritative observation. UTC receipt
@@ -75,7 +91,7 @@ regression fails closed rather than refreshing the observation.
 ## Cache rules
 
 - Cache keys include policy version, relevant epoch vector, subject, tenant, action, resource, normalized input digest, and contract version.
-- Effective TTL is the minimum of policy-returned TTL, token expiry, policy artifact validity, revocation freshness remaining, and deployment maximum.
+- Effective TTL is the minimum of policy-returned TTL, token expiry, policy artifact validity, operation-specific revocation freshness remaining, and deployment maximum. The operation bound and all applicable epoch dimensions are cache-key inputs.
 - Push events invalidate matching keys or make them unreachable through epoch-versioned keys.
 - Valkey/local cache loss is safe; it cannot generate a new ALLOW.
 - A denied result may be cached only within policy and incident-response constraints; global epoch changes invalidate both outcomes.

@@ -42,8 +42,12 @@ type SecurityState struct {
 	TenantRevocationEpoch int64 `json:"tenant_revocation_epoch"`
 	AgentRevocationEpoch  int64 `json:"agent_revocation_epoch"`
 	AgeSeconds            int64 `json:"age_seconds"`
-	HasGap                bool  `json:"has_gap"`
-	Authoritative         bool  `json:"authoritative"`
+	// FreshnessMaxAgeSeconds is the application-enforced operation bound. It
+	// is zero only for live authoritative decisions and prevents a cache from
+	// outliving the freshness class that admitted the lookup.
+	FreshnessMaxAgeSeconds int64 `json:"freshness_max_age_seconds"`
+	HasGap                 bool  `json:"has_gap"`
+	Authoritative          bool  `json:"authoritative"`
 }
 type RequestContext struct {
 	RequestID      string `json:"request_id"`
@@ -101,7 +105,7 @@ func (in Input) Validate() error {
 	if in.RequestedConstraints == nil || in.AuthorityConstraints == nil || in.Resource.Attributes == nil {
 		return errors.New("policy input maps must be present")
 	}
-	if in.SecurityState.GlobalEpoch < 0 || in.SecurityState.TenantPolicyEpoch < 0 || in.SecurityState.TenantRevocationEpoch < 0 || in.SecurityState.AgentRevocationEpoch < 0 || in.SecurityState.AgeSeconds < 0 {
+	if in.SecurityState.GlobalEpoch < 0 || in.SecurityState.TenantPolicyEpoch < 0 || in.SecurityState.TenantRevocationEpoch < 0 || in.SecurityState.AgentRevocationEpoch < 0 || in.SecurityState.AgeSeconds < 0 || in.SecurityState.FreshnessMaxAgeSeconds < 0 {
 		return errors.New("policy security state cannot be negative")
 	}
 	if len(in.Subject.Roles) > 32 || len(in.Action) > 128 || len(in.Resource.ID) > 512 {
