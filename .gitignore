@@ -26,3 +26,7 @@ go.work.sum
 
 # Repository-local build and pinned tool binaries
 .cache/
+
+# Instruction files
+/AUDIT_SUMMARY.md
+/ALIGNMENT.md
