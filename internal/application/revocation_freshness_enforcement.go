@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
@@ -96,24 +95,17 @@ func (e *FreshnessEnforcingEvaluator) maxAge(class FreshnessClass) time.Duration
 }
 
 func ClassifyFreshness(in policy.Input) FreshnessClass {
-	action := strings.ToLower(strings.TrimSpace(in.Action))
-	switch action {
-	case "agents.list":
+	agentRisk := ""
+	if in.Agent != nil {
+		agentRisk = in.Agent.RiskClass
+	}
+	switch policy.ClassifyAction(in.Action, agentRisk) {
+	case policy.ActionRiskLowRead:
 		return FreshnessLowRiskRead
-	case "agents.describe", "runs.read", "runs.events.read":
+	case policy.ActionRiskSensitiveRead:
 		return FreshnessSensitiveRead
-	case "runs.signal", "runs.cancel":
+	case policy.ActionRiskNormalWrite:
 		return FreshnessNormalWrite
-	case "runs.create":
-		if in.Agent != nil && (strings.EqualFold(in.Agent.RiskClass, string(domain.AgentRiskLow)) || strings.EqualFold(in.Agent.RiskClass, string(domain.AgentRiskMedium))) {
-			return FreshnessNormalWrite
-		}
-		return FreshnessHighRiskWrite
-	case "runs.claim", "runs.heartbeat", "runs.complete":
-		if in.Agent != nil && (strings.EqualFold(in.Agent.RiskClass, string(domain.AgentRiskLow)) || strings.EqualFold(in.Agent.RiskClass, string(domain.AgentRiskMedium))) {
-			return FreshnessNormalWrite
-		}
-		return FreshnessHighRiskWrite
 	default:
 		// Unknown and administrative/resource actions take the conservative
 		// live path. New writes cannot silently inherit a cacheable class.

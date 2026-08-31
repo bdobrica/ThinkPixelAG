@@ -66,7 +66,7 @@ func TestLoadOIDCTrustBounds(t *testing.T) {
 	t.Parallel()
 	environment := validEnvironment()
 	environment["THINKPIXELAG_OIDC_ALGORITHMS"] = "RS256,ES256"
-	environment["THINKPIXELAG_OIDC_ROLE_MAPPINGS"] = "admins=governance-admin,users=agent-invoker"
+	environment["THINKPIXELAG_OIDC_ROLE_MAPPINGS"] = "policy-operators=policy-admin,users=agent-invoker"
 	environment["THINKPIXELAG_OIDC_JWKS_MAX_TTL"] = "30m"
 	c, err := load([]string{"--oidc-clock-skew=15s", "--oidc-tenant-claim=organization_id"}, environment)
 	if err != nil {

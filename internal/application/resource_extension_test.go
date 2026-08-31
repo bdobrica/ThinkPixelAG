@@ -49,7 +49,7 @@ func TestResourceExtensionAuthorizesAndPreventsSelfExtension(t *testing.T) {
 	service, _ := NewResourceExtensionService(repo, eval, fixedClock{now: now})
 	amount, _ := domain.NewDecimal(10, 0)
 	quantity, _ := domain.NewQuantity(amount, "llm_tokens")
-	command := ExtendResources{TenantID: ids[1], PrincipalID: ids[6], RequestID: ids[7], RunID: ids[0], Roles: []string{"governance-admin"}, IdempotencyKey: "extend-1", ReasonCode: "budget.increase", ApprovalReference: "CAB-42", Additions: []domain.ResourceExtensionAmount{{Name: "llm_tokens", Quantity: quantity}}, SecurityState: policy.SecurityState{Authoritative: true}}
+	command := ExtendResources{TenantID: ids[1], PrincipalID: ids[6], RequestID: ids[7], RunID: ids[0], Roles: []string{"resource-admin"}, IdempotencyKey: "extend-1", ReasonCode: "budget.increase", ApprovalReference: "CAB-42", Additions: []domain.ResourceExtensionAmount{{Name: "llm_tokens", Quantity: quantity}}, SecurityState: policy.SecurityState{Authoritative: true}}
 	if _, err := service.Extend(context.Background(), command); err != nil {
 		t.Fatal(err)
 	}

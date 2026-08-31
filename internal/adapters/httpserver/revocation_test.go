@@ -34,7 +34,7 @@ func TestRevocationHandlerUsesAuthenticatedAuthority(t *testing.T) {
 	tenant, _ := domain.NewID()
 	actor, _ := domain.NewID()
 	app := &revocationAppStub{}
-	handler, err := RevocationHandler(&fakeVerifier{principal: oidc.Principal{ID: actor.String(), TenantID: tenant.String(), Roles: []string{"governance-admin"}, Issuer: "https://issuer.test"}}, app, RevocationHTTPConfig{})
+	handler, err := RevocationHandler(&fakeVerifier{principal: oidc.Principal{ID: actor.String(), TenantID: tenant.String(), Roles: []string{"revocation-admin"}, Issuer: "https://issuer.test"}}, app, RevocationHTTPConfig{})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -72,25 +72,25 @@ test_revoked_agent_denied if {
     not d.allow
 }
 
-test_governance_admin_allowed if {
-    d := authorization.decision with input as object.union(base,{"action":"policies.activate","subject":{"tenant_id":"t","roles":["governance-admin"]}})
+test_policy_admin_allowed if {
+    d := authorization.decision with input as object.union(base,{"action":"policies.activate","subject":{"tenant_id":"t","roles":["policy-admin"]}})
     d.allow
     d.decision_ttl_seconds == 0
 }
 
-test_revocation_changes_require_authoritative_governance_admin if {
-    create := authorization.decision with input as object.union(base,{"action":"revocations.create","subject":{"tenant_id":"t","roles":["governance-admin"]}})
+test_revocation_changes_require_authoritative_revocation_admin if {
+    create := authorization.decision with input as object.union(base,{"action":"revocations.create","subject":{"tenant_id":"t","roles":["revocation-admin"]}})
     create.allow
-    lift := authorization.decision with input as object.union(base,{"action":"revocations.lift","subject":{"tenant_id":"t","roles":["governance-admin"]}})
+    lift := authorization.decision with input as object.union(base,{"action":"revocations.lift","subject":{"tenant_id":"t","roles":["revocation-admin"]}})
     lift.allow
-    not_authoritative := authorization.decision with input as object.union(base,{"action":"revocations.create","subject":{"tenant_id":"t","roles":["governance-admin"]},"security_state":{"authoritative":false,"age_seconds":0,"has_gap":false}})
+    not_authoritative := authorization.decision with input as object.union(base,{"action":"revocations.create","subject":{"tenant_id":"t","roles":["revocation-admin"]},"security_state":{"authoritative":false,"age_seconds":0,"has_gap":false}})
     not not_authoritative.allow
 }
 
 test_version_pin_requires_governance_admin if {
     denied := authorization.decision with input as object.union(base,{"action":"versions.pin"})
     not denied.allow
-    allowed := authorization.decision with input as object.union(base,{"action":"versions.pin","subject":{"tenant_id":"t","roles":["governance-admin"]}})
+    allowed := authorization.decision with input as object.union(base,{"action":"versions.pin","subject":{"tenant_id":"t","roles":["registry-admin"]}})
     allowed.allow
     allowed.decision_ttl_seconds == 0
 }
@@ -98,34 +98,42 @@ test_version_pin_requires_governance_admin if {
 test_version_rollback_requires_governance_admin if {
     denied := authorization.decision with input as object.union(base,{"action":"versions.rollback"})
     not denied.allow
-    allowed := authorization.decision with input as object.union(base,{"action":"versions.rollback","subject":{"tenant_id":"t","roles":["governance-admin"]}})
+    allowed := authorization.decision with input as object.union(base,{"action":"versions.rollback","subject":{"tenant_id":"t","roles":["registry-admin"]}})
     allowed.allow
 }
 
-test_workload_role_cannot_administer if {
-    d := authorization.decision with input as object.union(base,{"action":"policies.activate","subject":{"tenant_id":"t","roles":["trusted-workload"]}})
-    not d.allow
+test_roles_cannot_cross_privilege_boundaries if {
+    registry_to_policy := authorization.decision with input as object.union(base,{"action":"policies.activate","subject":{"tenant_id":"t","roles":["registry-admin"]}})
+    not registry_to_policy.allow
+    policy_to_revocation := authorization.decision with input as object.union(base,{"action":"revocations.create","subject":{"tenant_id":"t","roles":["policy-admin"]}})
+    not policy_to_revocation.allow
+    revocation_to_registry := authorization.decision with input as object.union(base,{"action":"versions.approve","subject":{"tenant_id":"t","roles":["revocation-admin"]}})
+    not revocation_to_registry.allow
+    umbrella_admin := authorization.decision with input as object.union(base,{"action":"policies.activate","subject":{"tenant_id":"t","roles":["governance-admin"]}})
+    not umbrella_admin.allow
+    workload_to_meter := authorization.decision with input as object.union(base,{"action":"resources.meter","subject":{"tenant_id":"t","roles":["trusted-workload"]}})
+    not workload_to_meter.allow
 }
 
 test_trusted_workload_allowed_to_settle if {
-    d := authorization.decision with input as object.union(base,{"action":"resources.settle","subject":{"tenant_id":"t","roles":["trusted-workload"]}})
+    d := authorization.decision with input as object.union(base,{"action":"resources.settle","subject":{"tenant_id":"t","roles":["trusted-settler"]}})
     d.allow
     d.decision_ttl_seconds == 0
 }
 
 test_extension_requires_governance_admin_and_separate_actor if {
     resource := {"tenant_id":"t","attributes":{"requested_by":"runner"}}
-    allowed := authorization.decision with input as object.union(base,{"action":"resources.extend","subject":{"principal_id":"admin","tenant_id":"t","roles":["governance-admin"]},"resource":resource})
+    allowed := authorization.decision with input as object.union(base,{"action":"resources.extend","subject":{"principal_id":"admin","tenant_id":"t","roles":["resource-admin"]},"resource":resource})
     allowed.allow
     allowed.reason_codes == ["resource.extension.approved"]
-    self := authorization.decision with input as object.union(base,{"action":"resources.extend","subject":{"principal_id":"runner","tenant_id":"t","roles":["governance-admin"]},"resource":resource})
+    self := authorization.decision with input as object.union(base,{"action":"resources.extend","subject":{"principal_id":"runner","tenant_id":"t","roles":["resource-admin"]},"resource":resource})
     not self.allow
 }
 
 test_metering_policy_selects_budget_exhaustion_disposition if {
-    low := authorization.decision with input as object.union(base,{"action":"resources.meter","subject":{"tenant_id":"t","roles":["trusted-workload"]},"agent":{"approved":true,"revoked":false,"risk_class":"low"}})
+    low := authorization.decision with input as object.union(base,{"action":"resources.meter","subject":{"tenant_id":"t","roles":["trusted-meter"]},"agent":{"approved":true,"revoked":false,"risk_class":"low"}})
     low.obligations == [{"type":"budget.pause_on_exhaustion","mandatory":false}]
-    high := authorization.decision with input as object.union(base,{"action":"resources.meter","subject":{"tenant_id":"t","roles":["trusted-workload"]},"agent":{"approved":true,"revoked":false,"risk_class":"high"}})
+    high := authorization.decision with input as object.union(base,{"action":"resources.meter","subject":{"tenant_id":"t","roles":["trusted-meter"]},"agent":{"approved":true,"revoked":false,"risk_class":"high"}})
     high.obligations == [{"type":"budget.fail_on_exhaustion","mandatory":false}]
 }
 

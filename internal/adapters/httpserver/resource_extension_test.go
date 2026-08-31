@@ -27,7 +27,7 @@ func (s *extensionHTTPStub) Extend(_ context.Context, command application.Extend
 func TestResourceExtensionBindsPrivilegedActorAndApproval(t *testing.T) {
 	tenant, actor, run := mustHTTPID(t), mustHTTPID(t), mustHTTPID(t)
 	service := &extensionHTTPStub{}
-	handler, _ := ResourceExtensionHandler(&fakeVerifier{principal: oidc.Principal{ID: actor.String(), TenantID: tenant.String(), Issuer: "https://issuer.example", Roles: []string{"governance-admin"}}}, service, ResourceExtensionHTTPConfig{})
+	handler, _ := ResourceExtensionHandler(&fakeVerifier{principal: oidc.Principal{ID: actor.String(), TenantID: tenant.String(), Issuer: "https://issuer.example", Roles: []string{"resource-admin"}}}, service, ResourceExtensionHTTPConfig{})
 	request := httptest.NewRequest(http.MethodPost, "/v1/admin/runs/"+run.String()+"/resource-extensions", strings.NewReader(`{"additions":[{"name":"llm_tokens","class":"consumable","unit":"llm_tokens","quantity":25}],"deadline_extension_seconds":30,"reason_code":"budget.increase","approval_reference":"CAB-42"}`))
 	request.SetPathValue("run_id", run.String())
 	request.Header.Set("Authorization", "Bearer valid")

@@ -42,7 +42,7 @@ func TestResourceSettlementAuthorizesTrustedTerminalAction(t *testing.T) {
 	repo := &settlementRepoStub{target: ports.ResourceSettlementTarget{Run: ports.RunAccessRecord{Run: run, AgentRiskClass: domain.AgentRiskLow, AgentOwnerID: ids[4]}, ChildRunID: ids[0]}}
 	eval := &settlementPolicyStub{}
 	service, _ := NewResourceSettlementService(repo, eval, fixedClock{now: now})
-	_, err := service.Settle(context.Background(), SettleReservation{TenantID: ids[1], PrincipalID: ids[5], RequestID: ids[6], ReservationID: ids[7], Roles: []string{"trusted-workload"}, IdempotencyKey: "settle-1", TerminalRunState: "COMPLETED", SecurityState: policy.SecurityState{Authoritative: true}})
+	_, err := service.Settle(context.Background(), SettleReservation{TenantID: ids[1], PrincipalID: ids[5], RequestID: ids[6], ReservationID: ids[7], Roles: []string{"trusted-settler"}, IdempotencyKey: "settle-1", TerminalRunState: "COMPLETED", SecurityState: policy.SecurityState{Authoritative: true}})
 	if err != nil {
 		t.Fatal(err)
 	}

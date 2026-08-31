@@ -93,7 +93,7 @@ type Result struct {
 }
 
 var reasonCodes = map[string]bool{
-	"agent.discover.allowed": true, "agent.invoke.allowed": true, "run.access.allowed": true, "workload.operation.allowed": true, "governance.operation.allowed": true,
+	"agent.discover.allowed": true, "agent.invoke.allowed": true, "run.access.allowed": true, "workload.operation.allowed": true, "governance.operation.allowed": true, "resource.extension.approved": true,
 	"identity.invalid": true, "tenant.mismatch": true, "resource.not_visible": true, "agent.not_approved": true, "agent.revoked": true, "principal.revoked": true, "policy.revoked": true,
 	"security_state.stale": true, "security_state.gap": true, "constraint.expands_authority": true, "approval.required": true, "action.not_permitted": true, "contract.invalid": true,
 }

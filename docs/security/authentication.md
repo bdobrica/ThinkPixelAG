@@ -25,6 +25,15 @@ and output is de-duplicated and sorted. Ordinary tenant/principal/role and
 `X-Forwarded-*` identity headers are rejected. Request schemas must omit tenant
 fields; the shared tenant-hint guard rejects them even when they match the token.
 
+Internal roles are deliberately non-hierarchical. Caller access uses
+`agent-invoker`; service identities use the separate `trusted-workload`,
+`trusted-meter`, `trusted-settler`, and `trusted-gateway` roles. Administrative
+identity is split into `registry-admin`, `resource-admin`, `policy-admin`, and
+`revocation-admin`. There is no umbrella administrator or service role. A
+principal that needs more than one capability must receive every role explicitly
+through the trusted OIDC mapping, and policy evaluates the role required for the
+specific action.
+
 Operational probes remain anonymous and contain no tenant data. Every future
 public, trusted, and administrative route must apply bearer authentication
 before policy authorization. Tokens and Authorization headers must never enter

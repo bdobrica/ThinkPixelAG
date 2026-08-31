@@ -48,7 +48,7 @@ func TestRevocationServiceAuthorizesCreateAndLift(t *testing.T) {
 	service, _ := NewRevocationService(repo, eval, fixedClock{now: now})
 	var invalidated []string
 	service.SetCacheInvalidator(func(tenant string) { invalidated = append(invalidated, tenant) })
-	command := ChangeRevocation{TenantID: tenant, PrincipalID: actor, RequestID: request, Scope: domain.RevocationGlobal, Target: "all", ReasonCode: "security.emergency", EffectiveAt: now, Roles: []string{"governance-admin"}, SecurityState: policy.SecurityState{Authoritative: true}}
+	command := ChangeRevocation{TenantID: tenant, PrincipalID: actor, RequestID: request, Scope: domain.RevocationGlobal, Target: "all", ReasonCode: "security.emergency", EffectiveAt: now, Roles: []string{"revocation-admin"}, SecurityState: policy.SecurityState{Authoritative: true}}
 	if _, err := service.Create(context.Background(), command); err != nil {
 		t.Fatal(err)
 	}

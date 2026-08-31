@@ -37,7 +37,7 @@ func TestPolicyAgentApprovalAuthorizerRequiresExplicitAllow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	request := AgentVersionDecisionAuthorization{TenantID: applicationID(t), ActorPrincipalID: applicationID(t), AgentID: applicationID(t), VersionDigest: "sha256:" + strings.Repeat("a", 64), Decision: domain.DecisionDeprecate, Roles: []string{"governance-admin"}, RequestID: applicationID(t)}
+	request := AgentVersionDecisionAuthorization{TenantID: applicationID(t), ActorPrincipalID: applicationID(t), AgentID: applicationID(t), VersionDigest: "sha256:" + strings.Repeat("a", 64), Decision: domain.DecisionDeprecate, Roles: []string{"registry-admin"}, RequestID: applicationID(t)}
 	if _, err := authorizer.AuthorizeAgentVersionDecision(context.Background(), request); err != nil {
 		t.Fatal(err)
 	}

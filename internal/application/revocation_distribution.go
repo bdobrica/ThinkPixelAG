@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
+	"github.com/bdobrica/ThinkPixelAG/internal/policy"
 	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 )
 
@@ -17,6 +18,7 @@ const maxRevocationDelta = 10000
 
 type RevocationDistribution struct {
 	repository ports.RevocationDistributionRepository
+	evaluator  policy.Evaluator
 	clock      domain.Clock
 	retention  time.Duration
 }
@@ -36,25 +38,44 @@ type RevocationReconciliation struct {
 	ReconciledAt          time.Time                  `json:"reconciled_at"`
 }
 
-func NewRevocationDistribution(repository ports.RevocationDistributionRepository, clock domain.Clock, retention time.Duration) (*RevocationDistribution, error) {
-	if repository == nil || clock == nil || retention <= 0 {
-		return nil, errors.New("revocation distribution requires repository, clock, and retention")
+func NewRevocationDistribution(repository ports.RevocationDistributionRepository, evaluator policy.Evaluator, clock domain.Clock, retention time.Duration) (*RevocationDistribution, error) {
+	if repository == nil || evaluator == nil || clock == nil || retention <= 0 {
+		return nil, errors.New("revocation distribution requires repository, policy evaluator, clock, and retention")
 	}
-	return &RevocationDistribution{repository, clock, retention}, nil
+	return &RevocationDistribution{repository, evaluator, clock, retention}, nil
 }
-func authorizeGateway(tenant, principal domain.ID, roles []string) error {
+func (s *RevocationDistribution) authorizeGateway(ctx context.Context, tenant, principal domain.ID, roles []string) error {
 	if tenant.IsZero() || principal.IsZero() {
 		return domain.NewError(domain.CodeUnauthenticated, "verified gateway identity is invalid")
 	}
-	for _, r := range roles {
-		if r == "trusted-workload" || r == "gateway" {
-			return nil
-		}
+	now, err := domain.RequireUTC(s.clock.Now())
+	if err != nil {
+		return domain.NewError(domain.CodeInternal, "revocation distribution clock is invalid")
 	}
-	return domain.NewError(domain.CodeForbidden, "gateway revocation access is not authorized")
+	decisionID, err := domain.NewID()
+	if err != nil {
+		return domain.NewError(domain.CodeInternal, "could not generate gateway authorization identifier")
+	}
+	roles = policy.NormalizeStrings(roles)
+	result, err := s.evaluator.Decide(ctx, policy.Input{
+		ContractVersion: policy.ContractVersion, DecisionID: decisionID.String(), RequestTime: now,
+		Subject: policy.Subject{PrincipalID: principal.String(), TenantID: tenant.String(), PrincipalType: "gateway", Roles: roles},
+		Action:  "revocations.reconcile", Resource: policy.Resource{Type: "revocation", ID: tenant.String(), TenantID: tenant.String(), Attributes: map[string]any{}},
+		RequestedConstraints: map[string]any{}, AuthorityConstraints: map[string]any{}, SecurityState: policy.SecurityState{Authoritative: true}, Context: policy.RequestContext{RequestID: decisionID.String()},
+	})
+	if err != nil {
+		return domain.WrapError(domain.CodeUnavailable, "gateway authorization policy is unavailable", err).WithRetryable()
+	}
+	if result.Decision.DecisionID != decisionID.String() {
+		return domain.NewError(domain.CodeUnavailable, "gateway authorization policy returned invalid evidence").WithRetryable()
+	}
+	if !result.Decision.Allow {
+		return domain.NewError(domain.CodeForbidden, "gateway revocation access is not authorized")
+	}
+	return nil
 }
 func (s *RevocationDistribution) Changes(ctx context.Context, tenant, gateway domain.ID, roles []string, after int64, limit int) ([]ports.RevocationLogEntry, error) {
-	if err := authorizeGateway(tenant, gateway, roles); err != nil {
+	if err := s.authorizeGateway(ctx, tenant, gateway, roles); err != nil {
 		return nil, err
 	}
 	now, err := domain.RequireUTC(s.clock.Now())
@@ -64,7 +85,7 @@ func (s *RevocationDistribution) Changes(ctx context.Context, tenant, gateway do
 	return s.repository.RevocationChanges(ctx, tenant, after, limit, now.Add(-s.retention))
 }
 func (s *RevocationDistribution) CheckpointStream(ctx context.Context, tenant, gateway domain.ID, roles []string, sequence int64, epochs domain.EpochVector) error {
-	if err := authorizeGateway(tenant, gateway, roles); err != nil {
+	if err := s.authorizeGateway(ctx, tenant, gateway, roles); err != nil {
 		return err
 	}
 	now, err := domain.RequireUTC(s.clock.Now())
@@ -75,7 +96,7 @@ func (s *RevocationDistribution) CheckpointStream(ctx context.Context, tenant, g
 }
 func (s *RevocationDistribution) Reconcile(ctx context.Context, c ReconcileRevocations) (RevocationReconciliation, error) {
 	var out RevocationReconciliation
-	if err := authorizeGateway(c.TenantID, c.GatewayPrincipalID, c.Roles); err != nil {
+	if err := s.authorizeGateway(ctx, c.TenantID, c.GatewayPrincipalID, c.Roles); err != nil {
 		return out, err
 	}
 	if c.LastSequence < 0 {

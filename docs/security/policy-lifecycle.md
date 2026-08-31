@@ -30,6 +30,13 @@ risk-sensitive authoritative checks, stale/gapped security state, and numeric
 constraint narrowing. `make test-policy` compiles and tests it with the pinned
 OPA version.
 
+The action-risk catalog is closed and shared with application freshness
+enforcement. Policy grants service actions only to their dedicated workload,
+meter, settlement, or gateway roles and grants administrative actions only to
+their dedicated registry, resource, policy, or revocation roles. These roles
+are non-hierarchical; cross-role escalation tests are part of the golden policy
+suite. Unknown actions deny and take the authoritative freshness path.
+
 Server-selected versions use `runs.create`. Explicit historical pins require a
 separate authoritative, zero-TTL `versions.pin` governance decision, and use of
 a deprecated rollback candidate requires `versions.rollback`. The controlled

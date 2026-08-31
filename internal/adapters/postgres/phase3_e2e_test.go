@@ -123,7 +123,7 @@ func TestPhase3RegistrySecurityWorkflow(t *testing.T) {
 	if _, err := approvalService.Decide(ctx, decision); domain.ErrorCodeOf(err) != domain.CodeForbidden {
 		t.Fatalf("role-free approval error = %v", err)
 	}
-	decision.ID, decision.RequestID, decision.Roles = newE2EID(t), newE2EID(t), []string{"governance-admin"}
+	decision.ID, decision.RequestID, decision.Roles = newE2EID(t), newE2EID(t), []string{"registry-admin"}
 	approval, err := approvalService.Decide(ctx, decision)
 	if err != nil {
 		t.Fatal(err)
@@ -296,7 +296,7 @@ func (e *e2ePolicyEvaluator) Decide(_ context.Context, input policy.Input) (poli
 	if input.Subject.TenantID == input.Resource.TenantID && !input.SecurityState.HasGap && input.SecurityState.AgeSeconds <= 30 {
 		switch input.Action {
 		case "versions.approve":
-			allowed = roles["governance-admin"] && input.SecurityState.Authoritative
+			allowed = roles["registry-admin"] && input.SecurityState.Authoritative
 			if allowed {
 				reason = "governance.operation.allowed"
 			}

@@ -126,7 +126,7 @@ func TestPhase5ResourceLifecycleWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	receipt, err := usageService.Record(ctx, application.RecordTrustedUsage{TenantID: tenant, ProducerID: worker, RequestID: newE2EID(t), RunID: child.RunID, Roles: []string{"trusted-workload"}, Issuer: "https://res013.test", SourceEventID: "child-exhaustion", ResourceName: "llm_tokens", Unit: "llm_tokens", Quantity: 60, ObservedAt: now.Add(-time.Second), SecurityState: policy.SecurityState{Authoritative: true}})
+	receipt, err := usageService.Record(ctx, application.RecordTrustedUsage{TenantID: tenant, ProducerID: worker, RequestID: newE2EID(t), RunID: child.RunID, Roles: []string{"trusted-meter"}, Issuer: "https://res013.test", SourceEventID: "child-exhaustion", ResourceName: "llm_tokens", Unit: "llm_tokens", Quantity: 60, ObservedAt: now.Add(-time.Second), SecurityState: policy.SecurityState{Authoritative: true}})
 	if err != nil || receipt.Duplicate {
 		t.Fatalf("exhaustion receipt=%+v error=%v", receipt, err)
 	}
@@ -142,7 +142,7 @@ func TestPhase5ResourceLifecycleWorkflow(t *testing.T) {
 	if err != nil || !extended.Resumed || extended.EnvelopeVersion != 2 {
 		t.Fatalf("extension=%+v error=%v", extended, err)
 	}
-	if _, err := usageService.Record(ctx, application.RecordTrustedUsage{TenantID: tenant, ProducerID: worker, RequestID: newE2EID(t), RunID: child.RunID, Roles: []string{"trusted-workload"}, Issuer: "https://res013.test", SourceEventID: "child-extension-consumption", ResourceName: "llm_tokens", Unit: "llm_tokens", Quantity: 20, ObservedAt: now, SecurityState: policy.SecurityState{Authoritative: true}}); err != nil {
+	if _, err := usageService.Record(ctx, application.RecordTrustedUsage{TenantID: tenant, ProducerID: worker, RequestID: newE2EID(t), RunID: child.RunID, Roles: []string{"trusted-meter"}, Issuer: "https://res013.test", SourceEventID: "child-extension-consumption", ResourceName: "llm_tokens", Unit: "llm_tokens", Quantity: 20, ObservedAt: now, SecurityState: policy.SecurityState{Authoritative: true}}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := pool.Exec(ctx, `UPDATE runs SET state='COMPLETED',state_version=state_version+1,updated_at=$3,terminal_at=$3 WHERE tenant_id=$1 AND id=$2 AND state='PAUSED_FOR_BUDGET'`, tenant.String(), child.RunID.String(), now.Add(time.Second)); err != nil {
@@ -152,7 +152,7 @@ func TestPhase5ResourceLifecycleWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	settled, err := settlementService.Settle(ctx, application.SettleReservation{TenantID: tenant, PrincipalID: worker, RequestID: newE2EID(t), ReservationID: reservation.ID, Roles: []string{"trusted-workload"}, Issuer: "https://res013.test", IdempotencyKey: "res013-settlement", TerminalRunState: "COMPLETED", SecurityState: policy.SecurityState{Authoritative: true}})
+	settled, err := settlementService.Settle(ctx, application.SettleReservation{TenantID: tenant, PrincipalID: worker, RequestID: newE2EID(t), ReservationID: reservation.ID, Roles: []string{"trusted-settler"}, Issuer: "https://res013.test", IdempotencyKey: "res013-settlement", TerminalRunState: "COMPLETED", SecurityState: policy.SecurityState{Authoritative: true}})
 	if err != nil || settled.Duplicate || len(settled.Consumed) != 1 || settled.Consumed[0].Value != 60 || settled.Returned[0].Value != 0 {
 		t.Fatalf("settlement=%+v error=%v", settled, err)
 	}

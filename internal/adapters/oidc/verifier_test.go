@@ -62,7 +62,7 @@ func newProvider(t *testing.T) (*httptest.Server, *providerState) {
 }
 
 func testConfig(issuer string) config.OIDCConfig {
-	return config.OIDCConfig{IssuerURL: issuer, Audience: "thinkpixelag", Algorithms: "RS256", TenantClaim: "tenant_id", RolesClaim: "groups", RoleMappings: "external-admin=governance-admin,invoke=agent-invoker", DiscoveryTimeout: time.Second, JWKSMinTTL: time.Second, JWKSMaxTTL: time.Minute, JWKSStaleTTL: time.Hour, ClockSkew: time.Second, MaxTokenAge: time.Hour}
+	return config.OIDCConfig{IssuerURL: issuer, Audience: "thinkpixelag", Algorithms: "RS256", TenantClaim: "tenant_id", RolesClaim: "groups", RoleMappings: "external-admin=policy-admin,invoke=agent-invoker", DiscoveryTimeout: time.Second, JWKSMinTTL: time.Second, JWKSMaxTTL: time.Minute, JWKSStaleTTL: time.Hour, ClockSkew: time.Second, MaxTokenAge: time.Hour}
 }
 
 func claims(issuer string, now time.Time) map[string]any {
@@ -97,7 +97,7 @@ func TestVerifyMapsOnlyConfiguredIdentity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if p.ID != "principal-1" || p.TenantID != "tenant-1" || fmt.Sprint(p.Roles) != "[agent-invoker governance-admin]" {
+	if p.ID != "principal-1" || p.TenantID != "tenant-1" || fmt.Sprint(p.Roles) != "[agent-invoker policy-admin]" {
 		t.Fatalf("principal = %#v", p)
 	}
 }

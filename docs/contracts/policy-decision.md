@@ -86,20 +86,38 @@ Each action defines a JSON Schema-compatible resource and constraint shape. Unkn
   from a caller. Cache TTL uses its remaining budget after conservatively
   rounded monotonic `age_seconds`.
 
-## Initial actions
+## Action risk and least-privilege roles
 
-| Action | Resource | Risk baseline |
-|---|---|---|
-| `agents.list`, `agents.describe` | agent/catalog | low/sensitive read by returned fields |
-| `runs.create` | agent/version | normal or high-risk write by agent risk |
-| `runs.read`, `runs.events.read` | run | sensitive read |
-| `runs.signal`, `runs.cancel` | run | normal write |
-| `runs.claim`, `runs.heartbeat`, `runs.complete` | run lease | normal/high-risk workload write |
-| `resources.meter`, `resources.settle` | run/reservation | high-risk write |
-| `resources.extend` | envelope | high-impact administrative write |
-| `agents.manage`, `versions.approve` | registry/version | high-impact administrative write |
-| `policies.manage`, `policies.activate` | policy | high-impact administrative write |
-| `revocations.manage`, `revocations.reconcile` | revocation/gateway | high-impact write or trusted gateway read |
+The action catalog is closed. The service classifies unknown actions as
+`privileged_write`, and the baseline policy denies them. High/critical agent
+operations are promoted from `normal_write` to `privileged_write`. Roles do not
+inherit from one another, and holding one administrative or service role grants
+no action assigned to another role.
+
+| Action | Resource | Risk | Required role |
+|---|---|---|---|
+| `agents.list` | catalog | `low_read` | `agent-invoker` |
+| `agents.describe` | agent | `sensitive_read` | `agent-invoker` |
+| `runs.create` | agent/version | `normal_write`; `privileged_write` for high/critical agents | `agent-invoker` |
+| `runs.read`, `runs.events.read` | run | `sensitive_read` | `agent-invoker` |
+| `runs.signal`, `runs.cancel` | run | `normal_write` | `agent-invoker` |
+| `runs.claim`, `runs.heartbeat`, `runs.complete` | run lease | `normal_write`; `privileged_write` for high/critical agents | `trusted-workload` |
+| `resources.meter` | run | `privileged_write` | `trusted-meter` |
+| `resources.settle` | reservation | `privileged_write` | `trusted-settler` |
+| `revocations.reconcile` | revocation state | `privileged_write` | `trusted-gateway` |
+| `resources.extend` | envelope | `privileged_write` | `resource-admin` |
+| `agents.manage`, `versions.approve`, `versions.pin`, `versions.rollback` | registry/version | `privileged_write` | `registry-admin` |
+| `policies.manage`, `policies.activate` | policy | `privileged_write` | `policy-admin` |
+| `revocations.manage`, `revocations.create`, `revocations.lift` | revocation | `privileged_write` | `revocation-admin` |
+
+The current HTTP mapping is likewise explicit: `/v1/agents` and
+`/v1/runs/...` use caller actions, `/v1/trusted/runs/.../usage` uses
+`resources.meter`, `/v1/trusted/reservations/.../settle` uses
+`resources.settle`, `/v1/trusted/revocations/...` uses
+`revocations.reconcile`, and each `/v1/admin/...` route uses its corresponding
+resource-, registry-, policy-, or revocation-administration action. Operational
+probes remain outside this protected action catalog as documented in the
+architecture.
 
 ## Reason-code registry
 

@@ -43,7 +43,7 @@ production-shaped load and resilience work.
 ## Gateway integration behavior
 
 A conforming gateway uses only a verified token mapped to its tenant and the
-`gateway` or `trusted-workload` role. It must implement this sequence:
+`trusted-gateway` role. It must implement this sequence:
 
 1. Start without trusted local freshness after every process restart. Load its
    own last fully applied cursor and epoch vector, but do not serve governed
@@ -116,4 +116,3 @@ REV-001 through REV-011 satisfy the Phase 6 exit condition: connected gateways
 receive ordered changes within the declared propagation objective, gaps and
 partitions cannot silently extend trust, authoritative reconciliation restores
 complete state, and bounded serving resumes without exposing a stale ALLOW.
-

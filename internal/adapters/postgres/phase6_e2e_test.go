@@ -19,6 +19,7 @@ import (
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc"
 	"github.com/bdobrica/ThinkPixelAG/internal/application"
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
+	"github.com/bdobrica/ThinkPixelAG/internal/policy"
 	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -80,7 +81,7 @@ func TestPhase6ConnectedGatewayPropagationSLO(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	distribution, err := application.NewRevocationDistribution(repositories, domain.SystemClock{}, time.Hour)
+	distribution, err := application.NewRevocationDistribution(repositories, phase6GatewayEvaluator{}, domain.SystemClock{}, time.Hour)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +90,7 @@ func TestPhase6ConnectedGatewayPropagationSLO(t *testing.T) {
 		t.Fatal(err)
 	}
 	handler, err := httpserver.RevocationDistributionHandler(
-		e2eVerifier{principal: oidc.Principal{ID: gateway.String(), TenantID: tenant.String(), Issuer: "https://rev011.test", Roles: []string{"gateway"}}},
+		e2eVerifier{principal: oidc.Principal{ID: gateway.String(), TenantID: tenant.String(), Issuer: "https://rev011.test", Roles: []string{"trusted-gateway"}}},
 		distribution,
 		cursorCodec,
 		httpserver.RevocationStreamOptions{HeartbeatInterval: 10 * time.Millisecond, PollInterval: 5 * time.Millisecond, WriteTimeout: time.Second},
@@ -158,6 +159,16 @@ func TestPhase6ConnectedGatewayPropagationSLO(t *testing.T) {
 	if p99 > phase6PropagationSLO {
 		t.Fatalf("connected gateway propagation p99=%s exceeds %s", p99, phase6PropagationSLO)
 	}
+}
+
+type phase6GatewayEvaluator struct{}
+
+func (phase6GatewayEvaluator) Decide(_ context.Context, in policy.Input) (policy.Result, error) {
+	allow := false
+	for _, role := range in.Subject.Roles {
+		allow = allow || role == "trusted-gateway"
+	}
+	return policy.Result{Decision: policy.Decision{ContractVersion: policy.ContractVersion, DecisionID: in.DecisionID, Allow: allow, ReasonCodes: []string{"workload.operation.allowed"}, ResolvedConstraints: map[string]any{}, Obligations: []policy.Obligation{}}}, nil
 }
 
 type phase6GatewayReceipt struct {
