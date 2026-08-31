@@ -51,6 +51,7 @@ type Config struct {
 	Telemetry   TelemetryConfig
 	Valkey      ValkeyConfig
 	OIDC        OIDCConfig
+	Signing     SigningConfig
 }
 
 type HTTPConfig struct {
@@ -121,6 +122,14 @@ type OIDCConfig struct {
 	MaxTokenAge      time.Duration
 }
 
+// SigningConfig contains only a managed provider and opaque key reference.
+// Private-key bytes and filesystem paths are deliberately not configurable.
+type SigningConfig struct {
+	Provider  string
+	KeyID     string
+	Algorithm string
+}
+
 // Defaults returns safe, non-secret defaults. Required trust and persistence
 // settings intentionally remain empty and are rejected by Validate.
 func Defaults() Config {
@@ -167,6 +176,7 @@ func Defaults() Config {
 			JWKSMaxTTL: time.Hour, JWKSStaleTTL: 6 * time.Hour,
 			ClockSkew: 30 * time.Second, MaxTokenAge: 24 * time.Hour,
 		},
+		Signing: SigningConfig{Provider: "disabled", Algorithm: "ED25519"},
 	}
 }
 
@@ -199,7 +209,8 @@ type safeConfig struct {
 		CacheIntegrityKeyConfigured bool          `json:"cache_integrity_key_configured"`
 		Timeout                     time.Duration `json:"timeout"`
 	} `json:"valkey"`
-	OIDC OIDCConfig `json:"oidc"`
+	OIDC    OIDCConfig    `json:"oidc"`
+	Signing SigningConfig `json:"signing"`
 }
 
 func (c Config) safe() safeConfig {
@@ -227,6 +238,7 @@ func (c Config) safe() safeConfig {
 	out.Valkey.CacheIntegrityKeyConfigured = c.Valkey.CacheIntegrityKey.IsSet()
 	out.Valkey.Timeout = c.Valkey.Timeout
 	out.OIDC = c.OIDC
+	out.Signing = c.Signing
 	return out
 }
 

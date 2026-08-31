@@ -62,6 +62,9 @@ var knownEnvironment = map[string]func(*Config, string) error{
 	"THINKPIXELAG_OIDC_JWKS_STALE_TTL":               setDuration(func(c *Config) *time.Duration { return &c.OIDC.JWKSStaleTTL }),
 	"THINKPIXELAG_OIDC_CLOCK_SKEW":                   setDuration(func(c *Config) *time.Duration { return &c.OIDC.ClockSkew }),
 	"THINKPIXELAG_OIDC_MAX_TOKEN_AGE":                setDuration(func(c *Config) *time.Duration { return &c.OIDC.MaxTokenAge }),
+	"THINKPIXELAG_SIGNING_PROVIDER":                  setString(func(c *Config) *string { return &c.Signing.Provider }),
+	"THINKPIXELAG_SIGNING_KEY_ID":                    setString(func(c *Config) *string { return &c.Signing.KeyID }),
+	"THINKPIXELAG_SIGNING_ALGORITHM":                 setString(func(c *Config) *string { return &c.Signing.Algorithm }),
 }
 
 // Load reads process environment and command-line arguments, then validates the
@@ -164,6 +167,9 @@ func applyFlags(c *Config, args []string) error {
 	fs.DurationVar(&c.OIDC.JWKSStaleTTL, "oidc-jwks-stale-ttl", c.OIDC.JWKSStaleTTL, "maximum cached-key outage allowance")
 	fs.DurationVar(&c.OIDC.ClockSkew, "oidc-clock-skew", c.OIDC.ClockSkew, "JWT time validation clock skew")
 	fs.DurationVar(&c.OIDC.MaxTokenAge, "oidc-max-token-age", c.OIDC.MaxTokenAge, "maximum JWT lifetime")
+	fs.StringVar(&c.Signing.Provider, "signing-provider", c.Signing.Provider, "signing provider: disabled, kms, or hsm")
+	fs.StringVar(&c.Signing.KeyID, "signing-key-id", c.Signing.KeyID, "opaque managed signing-key resource identifier")
+	fs.StringVar(&c.Signing.Algorithm, "signing-algorithm", c.Signing.Algorithm, "signing algorithm: ED25519, ECDSA_SHA256, or RSA_PSS_SHA256")
 
 	if err := fs.Parse(args); err != nil {
 		return fmt.Errorf("parse flags: %w", err)

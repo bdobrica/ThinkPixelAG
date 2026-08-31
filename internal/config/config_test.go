@@ -252,6 +252,53 @@ func TestValidateProductionTransport(t *testing.T) {
 	}
 }
 
+func TestSigningConfigurationRequiresManagedProductionKey(t *testing.T) {
+	t.Parallel()
+	c := Defaults()
+	c.Database.URL = NewSecret("postgres://db.example/service")
+	c.OIDC.IssuerURL = "https://id.example/issuer"
+	c.OIDC.Audience = "thinkpixelag"
+	c.Environment = EnvironmentProduction
+	if err := c.Validate(); err == nil || !strings.Contains(err.Error(), "production requires a kms or hsm provider") {
+		t.Fatalf("Validate() error = %v, want managed signing provider failure", err)
+	}
+	c.Signing = SigningConfig{Provider: "kms", KeyID: "arn:example:kms:key/policy", Algorithm: "ECDSA_SHA256"}
+	if err := c.Validate(); err != nil {
+		t.Fatalf("valid managed signing configuration: %v", err)
+	}
+}
+
+func TestLoadManagedSigningReference(t *testing.T) {
+	t.Parallel()
+	environment := validEnvironment()
+	environment["THINKPIXELAG_ENVIRONMENT"] = "production"
+	environment["THINKPIXELAG_SIGNING_PROVIDER"] = "hsm"
+	environment["THINKPIXELAG_SIGNING_KEY_ID"] = "pkcs11:object=policy-signing-key"
+	environment["THINKPIXELAG_SIGNING_ALGORITHM"] = "RSA_PSS_SHA256"
+	c, err := load(nil, environment)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Signing.Provider != "hsm" || c.Signing.KeyID != "pkcs11:object=policy-signing-key" || c.Signing.Algorithm != "RSA_PSS_SHA256" {
+		t.Fatalf("signing config = %#v", c.Signing)
+	}
+}
+
+func TestSigningConfigurationRejectsPrivateKeyAndFileInputs(t *testing.T) {
+	t.Parallel()
+	base := validEnvironment()
+	base["THINKPIXELAG_SIGNING_PROVIDER"] = "kms"
+	base["THINKPIXELAG_SIGNING_KEY_ID"] = "/secrets/private.pem"
+	if _, err := load(nil, base); err == nil || !strings.Contains(err.Error(), "file references") {
+		t.Fatalf("load() error = %v, want file-key rejection", err)
+	}
+	delete(base, "THINKPIXELAG_SIGNING_KEY_ID")
+	base["THINKPIXELAG_SIGNING_PRIVATE_KEY_FILE"] = "/secrets/private.pem"
+	if _, err := load(nil, base); err == nil || !strings.Contains(err.Error(), "unknown environment variable") {
+		t.Fatalf("load() error = %v, want unknown private-key setting", err)
+	}
+}
+
 func TestSecretSafeRendering(t *testing.T) {
 	t.Parallel()
 	c := Defaults()

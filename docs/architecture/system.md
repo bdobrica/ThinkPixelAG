@@ -93,6 +93,9 @@ A revocation transaction records the scope, advances applicable epochs, appends 
 - API, migration job, and background-worker roles use distinct database grants where practical.
 - Policy approval, global revocation, emergency resource extension, signing, and evidence administration must not collapse into one standing administrator credential.
 - Production signing keys are non-exportable and managed through KMS/HSM.
+  Configuration contains only provider, algorithm, and opaque key resource ID;
+  signing uses a SHA-256 digest and returned signatures are bound to an
+  inspected immutable key version.
 - The independent evidence sink is administered outside the governance application-admin path.
 
 ## Failure posture

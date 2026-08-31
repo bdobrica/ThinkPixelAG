@@ -140,9 +140,40 @@ func (c Config) Validate() error {
 	if !validRoleMappings(c.OIDC.RoleMappings) {
 		problems = append(problems, "OIDC role mappings must be unique comma-separated external=internal pairs")
 	}
+	if err := validateSigning(c.Signing, c.Environment); err != nil {
+		problems = append(problems, "signing: "+err.Error())
+	}
 
 	if len(problems) != 0 {
 		return newValidationError(problems)
+	}
+	return nil
+}
+
+func validateSigning(signing SigningConfig, environment Environment) error {
+	if signing.Provider != "disabled" && signing.Provider != "kms" && signing.Provider != "hsm" {
+		return fmt.Errorf("provider must be disabled, kms, or hsm")
+	}
+	if signing.Algorithm != "ED25519" && signing.Algorithm != "ECDSA_SHA256" && signing.Algorithm != "RSA_PSS_SHA256" {
+		return fmt.Errorf("algorithm is not supported")
+	}
+	if signing.Provider == "disabled" {
+		if signing.KeyID != "" {
+			return fmt.Errorf("key ID requires a managed provider")
+		}
+		if environment == EnvironmentProduction {
+			return fmt.Errorf("production requires a kms or hsm provider")
+		}
+		return nil
+	}
+	if signing.KeyID == "" || strings.TrimSpace(signing.KeyID) != signing.KeyID || len(signing.KeyID) > 512 || strings.IndexFunc(signing.KeyID, unicode.IsControl) >= 0 {
+		return fmt.Errorf("managed key ID must be 1 through 512 canonical bytes")
+	}
+	lowerKeyID := strings.ToLower(signing.KeyID)
+	if strings.HasPrefix(lowerKeyID, "file:") || strings.HasPrefix(lowerKeyID, "/") ||
+		strings.HasPrefix(lowerKeyID, "./") || strings.HasPrefix(lowerKeyID, "../") ||
+		strings.Contains(lowerKeyID, "-----begin") {
+		return fmt.Errorf("private keys and file references are not configurable")
 	}
 	return nil
 }

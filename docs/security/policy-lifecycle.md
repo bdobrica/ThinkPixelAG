@@ -20,9 +20,11 @@ with a bounded age. Evaluation fails closed if that metadata is absent or
 stale. Database activation success precedes the local update; if the local
 update fails, the instance remains unable to authorize until reconciliation.
 Decision evidence carries bundle digest/version and evaluation duration, not
-raw policy input. Phase 6 will additionally bind freshness to revocation stream
-state, and Phase 7 will supply managed KMS/HSM verifier implementations and
-approval workflows for privileged promotions.
+raw policy input. Revocation freshness is bound to the action-risk catalog.
+Managed signing and verification use digest-based, key-version-bound ports and
+reject exportable or software-protected production keys as defined by the
+[managed signing contract](../contracts/managed-signing.md). SEC-004 binds
+those signatures to versioned privileged artifacts.
 
 The baseline Rego denies by default. It covers discovery/invocation, lifecycle
 and trusted workload operations, governance administration, tenant equality,
