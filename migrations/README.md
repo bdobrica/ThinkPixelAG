@@ -54,6 +54,8 @@ The initial schema is split along durable consistency boundaries:
   updated atomically with each ledger action.
 - `014` binds terminal settlements to policy evidence and idempotency content,
   and makes the established settlement ledger immutable.
+- `015` adds append-only governance approval requests, independent provider-
+  verified decisions, and exactly-once digest-bound consumption records.
 
 Tenant-owned relationships use composite foreign keys containing `tenant_id` so
 a database write cannot connect rows across tenants. Frequently used access

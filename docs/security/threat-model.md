@@ -38,7 +38,7 @@ We assume enterprise identity, Kubernetes control plane, PostgreSQL, and managed
 | T12 | Idempotency key reused with different request | unintended action replay | scope key by tenant/principal/route and normalized request hash; conflict on mismatch | concurrent replay tests |
 | T13 | Identifier enumeration reveals another tenant | confidentiality loss | authorize before detail disclosure; enumeration-safe not-found | cross-tenant contract tests |
 | T14 | SSRF/internal client reaches admin endpoints | privilege escalation | authentication and per-action policy on every route; egress controls; strict URL configuration | authorization/security tests |
-| T15 | Admin unilaterally rolls back global revocation/policy | governance compromise | JIT strong identity, four-eyes state, monotonic epochs, independent evidence | approval-bypass tests/game day |
+| T15 | Admin unilaterally changes trust roots, global revocation/policy, emergency authority, or privileged agent classes | governance compromise | JIT strong identity, digest-bound four-eyes state, single-use approval, monotonic epochs, independent evidence | approval-bypass tests/game day |
 | T16 | Shared/exported signing key compromise | forged trusted assertions | KMS/HSM non-exportable keys, separated grants, rotation, key-bound evidence | configuration checks/rotation drill |
 | T17 | Audit event lost or altered with transaction | repudiation | audit/outbox in business transaction, immutable IDs/integrity metadata, independent sink | crash/replay and sink verification |
 | T18 | Sensitive request/policy content leaks through telemetry | data/credential exposure | classification, allowlisted fields, redaction, no raw bodies/objectives | telemetry capture tests |
@@ -63,6 +63,7 @@ We assume enterprise identity, Kubernetes control plane, PostgreSQL, and managed
 - No cached decision creates a new ALLOW beyond its policy/revocation validity.
 - No concurrency schedule can expand resource balances or decrement epochs.
 - Privileged actions are attributable; defined high-impact actions require a second independent approval.
+- Four-eyes approvals are provider-verified, expire, bind the exact proposed-action digest, and cannot be self-approved or reused; see [the governance approval contract](../contracts/governance-approvals.md).
 - Required evidence survives API/publisher crashes and can be reconciled by event ID.
 - Critical/high exploitable findings and undocumented fail-open behavior block release-candidate status.
 

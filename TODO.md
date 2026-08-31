@@ -117,7 +117,7 @@ Status notation: `[ ]` pending, `[x]` implemented and verified. Add completion m
 ## Phase 7 — Governance self-protection and independent evidence
 
 - [x] SEC-001 Classify endpoints/actions by risk and enforce separate least-privilege service/admin roles through policy. — completed 2026-08-31, evidence: closed fail-conservative action-risk catalog shared with revocation freshness; non-hierarchical caller/workload/meter/settler/gateway and registry/resource/policy/revocation role policy; gateway distribution policy authorization; contract/security documentation; 24-case OPA suite, unit tests, and e2e-tag compile
-- [ ] SEC-002 Implement approval-provider interfaces and four-eyes state for trust-root rotation, global revocation changes, policy bypass/rollback, emergency expansion, and privileged agent classes.
+- [x] SEC-002 Implement approval-provider interfaces and four-eyes state for trust-root rotation, global revocation changes, policy bypass/rollback, emergency expansion, and privileged agent classes. — completed 2026-08-31, evidence: closed protected-action catalog; replaceable challenge/assertion provider port; independent digest-bound, expiring, single-use state machine; append-only PostgreSQL requests/decisions/consumptions; domain/application/schema tests and contract/security documentation
 - [ ] SEC-003 Implement signer/verifier abstractions compatible with managed KMS/HSM and ensure production private keys are non-exportable/not file-configured.
 - [ ] SEC-004 Require signed/versioned policy and privileged configuration artifacts and reject digest/signature/version mismatch.
 - [ ] SEC-005 Finalize evidence event schemas for policy, revocation, resource overrides, approvals, key lifecycle, version approvals, and break-glass actions.

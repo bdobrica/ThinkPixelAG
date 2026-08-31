@@ -70,6 +70,17 @@ decisions are serialized by locking the version row, then the decision, audit
 event, and outbox event are inserted atomically. A trigger also rejects direct
 updates or deletes of that decision history.
 
+## Governance approvals
+
+`governance_approval_requests`, `governance_approval_decisions`, and
+`governance_approval_consumptions` preserve the four-eyes workflow as separate
+append-only facts. Composite tenant foreign keys prevent cross-tenant
+attachment, a database check rejects requester/approver equality, and primary
+keys permit at most one decision and one consumption per request. The proposed
+action's SHA-256 digest is repeated at consumption so the authoritative action
+transaction can reject substitution and replay. Mutation-rejection triggers
+protect all three evidence tables from direct update or deletion.
+
 ## Runs and resolution
 
 `runs.state_version` supports optimistic state transitions, while worker leases
