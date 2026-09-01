@@ -34,6 +34,12 @@ principal that needs more than one capability must receive every role explicitly
 through the trusted OIDC mapping, and policy evaluates the role required for the
 specific action.
 
+Break-glass is not a role. Activation uses a replaceable strong-authentication
+verifier and requires provider-verified phishing-resistant MFA within five
+minutes, exact digest-bound four-eyes approval, and a maximum fifteen-minute
+grant. Raw step-up assertions and grant credentials are not persisted. See
+[the break-glass workflow contract](../contracts/break-glass.md).
+
 Operational probes remain anonymous and contain no tenant data. Every future
 public, trusted, and administrative route must apply bearer authentication
 before policy authorization. Tokens and Authorization headers must never enter

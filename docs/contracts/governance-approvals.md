@@ -48,3 +48,7 @@ same authoritative transaction as the action and its audit/outbox evidence.
 SEC-002 supplies this domain, provider, and persistence boundary; the owning
 action tickets wire their transactions to it rather than accepting legacy
 free-form `approval_reference` values.
+
+Break-glass activation consumes a `POLICY_BYPASS` or
+`GLOBAL_REVOCATION_CHANGE` approval in the same transaction as the narrow grant
+and its independent evidence. See [the break-glass contract](break-glass.md).

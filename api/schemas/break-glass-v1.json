@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thinkpixel.example/schemas/break-glass-v1.json",
+  "title": "ThinkPixelAG Break-glass Grant v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "session_id", "tenant_id", "principal_id", "approval_id", "scope", "resource_type", "resource_id", "reason_code", "grant_digest", "expires_at"],
+  "properties": {
+    "schema_version": { "const": "thinkpixelag.break-glass/v1" },
+    "session_id": { "$ref": "#/$defs/id" },
+    "tenant_id": { "$ref": "#/$defs/id" },
+    "principal_id": { "$ref": "#/$defs/id" },
+    "approval_id": { "$ref": "#/$defs/id" },
+    "scope": { "enum": ["POLICY_RECOVERY", "REVOCATION_RECOVERY"] },
+    "resource_type": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "resource_id": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "reason_code": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "grant_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "expires_at": { "type": "string", "format": "date-time" }
+  },
+  "$defs": { "id": { "type": "string", "format": "uuid" } }
+}

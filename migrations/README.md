@@ -61,6 +61,9 @@ The initial schema is split along durable consistency boundaries:
   they cannot cross the stronger activation boundary without re-promotion.
 - `017` adds per-sink serialized evidence checkpoints and append-only,
   hash-linked authenticated sink receipts without making the sink authoritative.
+- `018` adds immutable, narrowly scoped, maximum fifteen-minute emergency
+  grants and append-only lifecycle evidence. Activation consumes an exact
+  digest-bound governance approval; raw emergency credentials are never stored.
 
 Tenant-owned relationships use composite foreign keys containing `tenant_id` so
 a database write cannot connect rows across tenants. Frequently used access

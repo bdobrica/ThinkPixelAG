@@ -35,6 +35,8 @@ func TestReleasedMigrationChecksumsArePresent(t *testing.T) {
 		"014_harden_resource_settlements.sql",
 		"015_create_governance_approvals.sql",
 		"016_bind_signed_policy_artifacts.sql",
+		"017_create_evidence_delivery_state.sql",
+		"018_create_break_glass.sql",
 	} {
 		if !strings.Contains(string(contents), migration) {
 			t.Errorf("checksum manifest does not cover %s", migration)
@@ -124,6 +126,7 @@ func TestPhaseTwoSchemaContracts(t *testing.T) {
 		{file: "015_create_governance_approvals.sql", required: []string{"CREATE TABLE governance_approval_requests", "CREATE TABLE governance_approval_decisions", "CREATE TABLE governance_approval_consumptions", "requester_principal_id <> approver_principal_id", "governance_approval_requests_append_only"}},
 		{file: "016_bind_signed_policy_artifacts.sql", required: []string{"artifact_revision", "signer_key_version", "signature_algorithm", "policy_bundles_signed_metadata_complete", "policy_bundles_artifact_revision_unique", "validation_status = 'REJECTED'"}},
 		{file: "017_create_evidence_delivery_state.sql", required: []string{"CREATE TABLE evidence_sink_checkpoints", "CREATE TABLE evidence_delivery_receipts", "last_event_hash", "evidence_delivery_receipts_immutable"}},
+		{file: "018_create_break_glass.sql", required: []string{"CREATE TABLE break_glass_grants", "CREATE TABLE break_glass_events", "interval '15 minutes'", "break_glass_grants_immutable", "break_glass_events_immutable"}},
 	}
 
 	dir := projectMigrationsDir(t)

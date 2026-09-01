@@ -309,7 +309,7 @@ recorded in `docs/contracts/revocation.md` and `docs/phase-6-evidence.md`.
 
 Complete privileged policy separation, approval hooks for high-impact operations, signed artifact verification, KMS abstraction, evidence export, redaction, and break-glass workflow documentation. Exit when privileged changes are attributable and independently exportable, and bypass attempts fail.
 
-Progress through SEC-006 (2026-09-01): privileged actions have closed
+Progress through SEC-007 (2026-09-01): privileged actions have closed
 least-privilege roles and digest-bound four-eyes approvals; managed KMS/HSM
 ports keep private keys non-exportable; and a closed, versioned privileged
 artifact envelope now binds payload digest, class, schema/revision, and managed
@@ -319,8 +319,13 @@ category-specific policy, revocation, resource-override, approval, key,
 version-approval, and break-glass data. A separately configured authenticated
 HTTPS sink now receives stable-ID replayable deliveries with a deterministic
 per-sink SHA-256 chain; strict receipts commit append-only beside a fenced,
-monotonic checkpoint. Break-glass workflow enforcement, workload identity/mTLS
-hooks, redaction, and final adversarial review remain.
+monotonic checkpoint. Break-glass is now a
+closed policy/revocation-recovery capability rather than a standing role:
+fresh provider-verified phishing-resistant MFA and an exact four-eyes digest
+produce a credential-digest-only grant for at most fifteen minutes. Every
+activation, use, expiry, and revocation commits append-only lifecycle evidence
+and an independent export record atomically. Workload identity/mTLS hooks,
+redaction, and final adversarial review remain.
 
 ### Phase 8 — Production packaging and operations
 

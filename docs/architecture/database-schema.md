@@ -206,6 +206,12 @@ fenced statement; lease takeover reuses the unadvanced predecessor and stable
 outbox ID, so a crash after remote acceptance safely replays the identical
 hash-linked delivery.
 
+Break-glass grants are immutable tenant/principal/resource-bound records with
+a consumed digest-bound governance approval, credential digest, opaque strong-
+authentication reference, and database-enforced maximum fifteen-minute
+validity. Append-only lifecycle rows record activation, use, expiry, and
+revocation; every lifecycle insert and its export outbox event commit together.
+
 ## Migration and compatibility rules
 
 The files are contiguous Tern migrations and include reverse SQL for local
