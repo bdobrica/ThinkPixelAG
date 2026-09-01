@@ -25,14 +25,12 @@ import (
 
 	"github.com/bdobrica/ThinkPixelAG/internal/config"
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
+	"github.com/bdobrica/ThinkPixelAG/internal/identity"
 )
 
 const maxDocumentBytes = 1 << 20
 
-type Principal struct {
-	ID, TenantID, Issuer string
-	Roles                []string
-}
+type Principal = identity.Principal
 
 type Verifier interface {
 	Verify(context.Context, string) (Principal, error)

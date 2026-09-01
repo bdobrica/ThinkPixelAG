@@ -309,7 +309,7 @@ recorded in `docs/contracts/revocation.md` and `docs/phase-6-evidence.md`.
 
 Complete privileged policy separation, approval hooks for high-impact operations, signed artifact verification, KMS abstraction, evidence export, redaction, and break-glass workflow documentation. Exit when privileged changes are attributable and independently exportable, and bypass attempts fail.
 
-Progress through SEC-007 (2026-09-01): privileged actions have closed
+Progress through SEC-008 (2026-09-01): privileged actions have closed
 least-privilege roles and digest-bound four-eyes approvals; managed KMS/HSM
 ports keep private keys non-exportable; and a closed, versioned privileged
 artifact envelope now binds payload digest, class, schema/revision, and managed
@@ -324,8 +324,14 @@ closed policy/revocation-recovery capability rather than a standing role:
 fresh provider-verified phishing-resistant MFA and an exact four-eyes digest
 produce a credential-digest-only grant for at most fifteen minutes. Every
 activation, use, expiry, and revocation commits append-only lifecycle evidence
-and an independent export record atomically. Workload identity/mTLS hooks,
-redaction, and final adversarial review remain.
+and an independent export record atomically. Trusted service routes now have a
+closed v1 deployment binding from an exact verified client-certificate URI SAN
+to one workload principal, tenant, and least-privilege service-role set. Their
+middleware rejects bearer and forwarding identity, while policy independently
+requires workload principal type, exact action role, tenant/resource binding,
+and authoritative freshness. Explicit local/test transport exceptions cannot
+derive authority from caller input. Redaction and final adversarial review
+remain.
 
 ### Phase 8 — Production packaging and operations
 

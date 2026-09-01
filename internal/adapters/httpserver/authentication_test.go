@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -19,6 +20,10 @@ type fakeVerifier struct {
 
 func (v *fakeVerifier) Verify(_ context.Context, token string) (oidc.Principal, error) {
 	v.token = token
+	return v.principal, v.err
+}
+
+func (v *fakeVerifier) VerifyWorkload(_ context.Context, _ *tls.ConnectionState) (oidc.Principal, error) {
 	return v.principal, v.err
 }
 
@@ -89,5 +94,31 @@ func TestAuthenticateBearerFailuresAndTenantBodyHint(t *testing.T) {
 	}
 	if err := RejectTenantHint(ctx, ""); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestAuthenticateWorkloadRejectsBearerAndForwardedIdentity(t *testing.T) {
+	verifier := &fakeVerifier{principal: oidc.Principal{ID: "workload", TenantID: "tenant", Issuer: "mtls", Roles: []string{"trusted-meter"}}}
+	handler := requestID(AuthenticateWorkload(verifier, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		principal, ok := PrincipalFromContext(r.Context())
+		if !ok || principal.Issuer != "mtls" {
+			t.Fatalf("principal=%+v ok=%v", principal, ok)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})), func() (string, error) { return fixedRequestID, nil })
+	request := httptest.NewRequest(http.MethodPost, "/v1/trusted/example", nil)
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
+	}
+	for name, value := range map[string]string{"Authorization": "Bearer user", "X-Forwarded-User": "forged"} {
+		request = httptest.NewRequest(http.MethodPost, "/v1/trusted/example", nil)
+		request.Header.Set(name, value)
+		response = httptest.NewRecorder()
+		handler.ServeHTTP(response, request)
+		if response.Code != http.StatusUnauthorized {
+			t.Errorf("%s status=%d", name, response.Code)
+		}
 	}
 }

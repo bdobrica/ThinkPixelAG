@@ -107,7 +107,6 @@ func TestPhase6ConnectedGatewayPropagationSLO(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	request.Header.Set("Authorization", "Bearer valid")
 	response, err := server.Client().Do(request)
 	if err != nil {
 		t.Fatal(err)

@@ -51,7 +51,6 @@ func TestRevocationSSEEmitsAuthenticatedCursorAndPersistsReceipt(t *testing.T) {
 	codec, _ := domain.NewRevocationCursorCodec([]byte("01234567890123456789012345678901"))
 	handler, _ := RevocationDistributionHandler(&fakeVerifier{principal: oidc.Principal{ID: gateway.String(), TenantID: tenant.String(), Roles: []string{"trusted-gateway"}}}, stub, codec, RevocationStreamOptions{HeartbeatInterval: time.Second, PollInterval: time.Millisecond, WriteTimeout: time.Second})
 	req := httptest.NewRequest(http.MethodGet, "/v1/trusted/revocations/events", nil).WithContext(ctx)
-	req.Header.Set("Authorization", "Bearer token")
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, req)
 	if response.Code != http.StatusOK || stub.checkpoint != 5 || !strings.Contains(response.Body.String(), "event: revocation.CREATED") || !strings.Contains(response.Body.String(), "security_epoch") {
@@ -66,7 +65,6 @@ func TestRevocationSSESignalsExpiredCursor(t *testing.T) {
 	codec, _ := domain.NewRevocationCursorCodec([]byte("01234567890123456789012345678901"))
 	handler, _ := RevocationDistributionHandler(&fakeVerifier{principal: oidc.Principal{ID: gateway.String(), TenantID: tenant.String(), Roles: []string{"trusted-gateway"}}}, stub, codec, RevocationStreamOptions{HeartbeatInterval: time.Second, PollInterval: time.Second, WriteTimeout: time.Second})
 	req := httptest.NewRequest(http.MethodGet, "/v1/trusted/revocations/events", nil)
-	req.Header.Set("Authorization", "Bearer token")
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, req)
 	if response.Code != http.StatusGone {

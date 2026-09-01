@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc"
 	"github.com/bdobrica/ThinkPixelAG/internal/application"
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
 	"github.com/bdobrica/ThinkPixelAG/internal/ports"
@@ -25,11 +24,11 @@ type RevocationDistributionService interface {
 }
 type RevocationStreamOptions struct{ HeartbeatInterval, PollInterval, WriteTimeout time.Duration }
 
-func RevocationDistributionHandler(verifier oidc.Verifier, service RevocationDistributionService, codec *domain.RevocationCursorCodec, options RevocationStreamOptions) (http.Handler, error) {
+func RevocationDistributionHandler(verifier WorkloadVerifier, service RevocationDistributionService, codec *domain.RevocationCursorCodec, options RevocationStreamOptions) (http.Handler, error) {
 	if verifier == nil || service == nil || codec == nil || options.HeartbeatInterval <= 0 || options.PollInterval <= 0 || options.WriteTimeout <= 0 {
 		return nil, errors.New("revocation distribution endpoint dependencies are unavailable")
 	}
-	return AuthenticateBearer(verifier, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return AuthenticateWorkload(verifier, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		p, ok := PrincipalFromContext(r.Context())
 		if !ok {
 			writeProblem(w, r, ProblemFromError(domain.NewError(domain.CodeUnauthenticated, "verified identity is required")))

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thinkpixel.dev/schemas/workload-identity-v1.json",
+  "title": "ThinkPixelAG workload identity bindings v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "bindings"],
+  "properties": {
+    "contract_version": {"const": "thinkpixelag.workload-identity/v1"},
+    "bindings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["uri_san", "principal_id", "tenant_id", "roles"],
+        "properties": {
+          "uri_san": {"type": "string", "format": "uri", "minLength": 1, "maxLength": 2048},
+          "principal_id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "tenant_id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "roles": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "uniqueItems": true,
+            "items": {"enum": ["trusted-workload", "trusted-meter", "trusted-settler", "trusted-gateway"]}
+          }
+        }
+      }
+    }
+  }
+}

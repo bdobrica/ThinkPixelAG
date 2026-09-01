@@ -2,14 +2,46 @@ package httpserver
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 	"strings"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc"
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
+	"github.com/bdobrica/ThinkPixelAG/internal/identity"
 )
 
 type principalKey struct{}
+
+// WorkloadVerifier maps a certificate chain already verified by the TLS
+// listener to one explicitly configured service identity. Implementations must
+// not derive authority from source addresses or caller-controlled headers.
+type WorkloadVerifier interface {
+	VerifyWorkload(context.Context, *tls.ConnectionState) (identity.Principal, error)
+}
+
+// AuthenticateWorkload protects service-to-service routes. Bearer credentials
+// are deliberately rejected so a user token cannot be replayed into a trusted
+// workload endpoint.
+func AuthenticateWorkload(verifier WorkloadVerifier, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if verifier == nil {
+			writeProblem(writer, request, ProblemFromError(domain.NewError(domain.CodeUnavailable, "workload identity verification is unavailable").WithRetryable()))
+			return
+		}
+		if hasIdentityHint(request.Header) || len(request.Header.Values("Authorization")) != 0 {
+			writeProblem(writer, request, ProblemFromError(domain.NewError(domain.CodeUnauthenticated, "workload identity must come from the authenticated transport")))
+			return
+		}
+		principal, err := verifier.VerifyWorkload(request.Context(), request.TLS)
+		if err != nil {
+			writeProblem(writer, request, ProblemFromError(err))
+			return
+		}
+		ctx := context.WithValue(request.Context(), principalKey{}, principal)
+		next.ServeHTTP(writer, request.WithContext(ctx))
+	})
+}
 
 // AuthenticateBearer protects a route and places only verified identity in its context.
 func AuthenticateBearer(verifier oidc.Verifier, next http.Handler) http.Handler {
@@ -46,8 +78,8 @@ func AuthenticateBearer(verifier oidc.Verifier, next http.Handler) http.Handler 
 }
 
 // PrincipalFromContext returns identity produced by AuthenticateBearer.
-func PrincipalFromContext(ctx context.Context) (oidc.Principal, bool) {
-	p, ok := ctx.Value(principalKey{}).(oidc.Principal)
+func PrincipalFromContext(ctx context.Context) (identity.Principal, bool) {
+	p, ok := ctx.Value(principalKey{}).(identity.Principal)
 	return p, ok
 }
 

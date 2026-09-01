@@ -14,6 +14,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [Signed privileged artifacts](contracts/signed-artifacts.md)
 - [Privileged evidence events](contracts/evidence-events.md)
 - [Break-glass workflow](contracts/break-glass.md)
+- [Workload identity and service authorization](contracts/workload-identity.md)
 - [OpenAPI contract](../api/openapi/thinkpixelag.yaml)
 - [Run lifecycle API examples](api/run-lifecycle.md)
 - [Configuration reference](configuration.md)

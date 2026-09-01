@@ -28,7 +28,6 @@ func TestResourceSettlementBindsAuthenticatedActor(t *testing.T) {
 	handler, _ := ResourceSettlementHandler(&fakeVerifier{principal: oidc.Principal{ID: actor.String(), TenantID: tenant.String(), Roles: []string{"trusted-settler"}}}, service, ResourceSettlementHTTPConfig{})
 	req := httptest.NewRequest(http.MethodPost, "/v1/trusted/reservations/"+reservation.String()+"/settle", strings.NewReader(`{"terminal_run_state":"COMPLETED"}`))
 	req.SetPathValue("reservation_id", reservation.String())
-	req.Header.Set("Authorization", "Bearer token")
 	req.Header.Set("Idempotency-Key", "settle-1")
 	req = req.WithContext(context.WithValue(req.Context(), requestIDKey{}, requestID.String()))
 	rr := httptest.NewRecorder()

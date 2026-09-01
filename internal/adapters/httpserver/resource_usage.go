@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc"
 	"github.com/bdobrica/ThinkPixelAG/internal/application"
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
 	"github.com/bdobrica/ThinkPixelAG/internal/policy"
@@ -27,11 +26,11 @@ type trustedUsageBody struct {
 	ObservedAt    time.Time `json:"observed_at"`
 }
 
-func TrustedUsageHandler(verifier oidc.Verifier, service TrustedUsageApplication, config TrustedUsageHTTPConfig) (http.Handler, error) {
+func TrustedUsageHandler(verifier WorkloadVerifier, service TrustedUsageApplication, config TrustedUsageHTTPConfig) (http.Handler, error) {
 	if verifier == nil || service == nil {
 		return nil, errors.New("trusted usage endpoint dependencies are invalid")
 	}
-	return AuthenticateBearer(verifier, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return AuthenticateWorkload(verifier, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		principal, ok := PrincipalFromContext(r.Context())
 		if !ok {
 			writeProblem(w, r, ProblemFromError(domain.NewError(domain.CodeUnauthenticated, "verified identity is required")))

@@ -32,8 +32,11 @@ checkpoint.
 Sink endpoint and credentials are deployment configuration, not governance
 authority. Production deployments MUST use HTTPS and an independently
 administered credential; bearer credentials are excluded from event bodies,
-receipts, logs, and safe configuration rendering. Workload identity/mTLS hooks
-remain SEC-008. Sink loss retains the transactional outbox and stops checkpoint
+receipts, logs, and safe configuration rendering. The sink may replace bearer
+authentication with the same
+[`thinkpixelag.workload-identity/v1`](workload-identity.md) mTLS hook used by
+trusted inbound routes; either adapter remains independently configured. Sink
+loss retains the transactional outbox and stops checkpoint
 progress; it does not roll back the already committed governance mutation.
 
 Every event has a stable UUID, closed event type, optional tenant scope,

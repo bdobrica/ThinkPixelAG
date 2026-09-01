@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc"
 	"github.com/bdobrica/ThinkPixelAG/internal/application"
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
 	"github.com/bdobrica/ThinkPixelAG/internal/policy"
@@ -20,11 +19,11 @@ type settlementBody struct {
 	FinalUsageEventIDs []string `json:"final_usage_event_ids"`
 }
 
-func ResourceSettlementHandler(verifier oidc.Verifier, service ResourceSettlementApplication, config ResourceSettlementHTTPConfig) (http.Handler, error) {
+func ResourceSettlementHandler(verifier WorkloadVerifier, service ResourceSettlementApplication, config ResourceSettlementHTTPConfig) (http.Handler, error) {
 	if verifier == nil || service == nil {
 		return nil, errors.New("resource settlement endpoint dependencies are invalid")
 	}
-	return AuthenticateBearer(verifier, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return AuthenticateWorkload(verifier, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		principal, ok := PrincipalFromContext(r.Context())
 		if !ok {
 			writeProblem(w, r, ProblemFromError(domain.NewError(domain.CodeUnauthenticated, "verified identity is required")))

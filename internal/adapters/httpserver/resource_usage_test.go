@@ -32,7 +32,6 @@ func TestTrustedUsageBindsProducerToAuthenticatedIdentity(t *testing.T) {
 	body := `{"producer_id":"` + producer.String() + `","source_event_id":"evt-1","resource_name":"llm_tokens","unit":"llm_tokens","quantity":2,"observed_at":"2026-08-26T10:00:00Z"}`
 	request := httptest.NewRequest(http.MethodPost, "/v1/trusted/runs/"+runID.String()+"/usage", strings.NewReader(body))
 	request.SetPathValue("run_id", runID.String())
-	request.Header.Set("Authorization", "Bearer valid")
 	request = request.WithContext(context.WithValue(request.Context(), requestIDKey{}, mustHTTPID(t).String()))
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -42,7 +41,6 @@ func TestTrustedUsageBindsProducerToAuthenticatedIdentity(t *testing.T) {
 	other := mustHTTPID(t)
 	request = httptest.NewRequest(http.MethodPost, "/", strings.NewReader(strings.Replace(body, producer.String(), other.String(), 1)))
 	request.SetPathValue("run_id", runID.String())
-	request.Header.Set("Authorization", "Bearer valid")
 	request = request.WithContext(context.WithValue(request.Context(), requestIDKey{}, mustHTTPID(t).String()))
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)

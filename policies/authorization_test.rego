@@ -116,7 +116,7 @@ test_roles_cannot_cross_privilege_boundaries if {
 }
 
 test_trusted_workload_allowed_to_settle if {
-    d := authorization.decision with input as object.union(base,{"action":"resources.settle","subject":{"tenant_id":"t","roles":["trusted-settler"]}})
+    d := authorization.decision with input as object.union(base,{"action":"resources.settle","subject":{"tenant_id":"t","principal_type":"workload","roles":["trusted-settler"]}})
     d.allow
     d.decision_ttl_seconds == 0
 }
@@ -131,10 +131,22 @@ test_extension_requires_governance_admin_and_separate_actor if {
 }
 
 test_metering_policy_selects_budget_exhaustion_disposition if {
-    low := authorization.decision with input as object.union(base,{"action":"resources.meter","subject":{"tenant_id":"t","roles":["trusted-meter"]},"agent":{"approved":true,"revoked":false,"risk_class":"low"}})
+    low := authorization.decision with input as object.union(base,{"action":"resources.meter","subject":{"tenant_id":"t","principal_type":"workload","roles":["trusted-meter"]},"agent":{"approved":true,"revoked":false,"risk_class":"low"}})
     low.obligations == [{"type":"budget.pause_on_exhaustion","mandatory":false}]
-    high := authorization.decision with input as object.union(base,{"action":"resources.meter","subject":{"tenant_id":"t","roles":["trusted-meter"]},"agent":{"approved":true,"revoked":false,"risk_class":"high"}})
+    high := authorization.decision with input as object.union(base,{"action":"resources.meter","subject":{"tenant_id":"t","principal_type":"workload","roles":["trusted-meter"]},"agent":{"approved":true,"revoked":false,"risk_class":"high"}})
     high.obligations == [{"type":"budget.fail_on_exhaustion","mandatory":false}]
+}
+
+test_service_role_requires_workload_principal_type if {
+    d := authorization.decision with input as object.union(base,{"action":"resources.settle","subject":{"tenant_id":"t","principal_type":"human","roles":["trusted-settler"]}})
+    not d.allow
+}
+
+test_gateway_role_requires_gateway_principal_type if {
+    allowed := authorization.decision with input as object.union(base,{"action":"revocations.reconcile","subject":{"tenant_id":"t","principal_type":"gateway","roles":["trusted-gateway"]}})
+    allowed.allow
+    denied := authorization.decision with input as object.union(base,{"action":"revocations.reconcile","subject":{"tenant_id":"t","principal_type":"workload","roles":["trusted-gateway"]}})
+    not denied.allow
 }
 
 test_unknown_action_denied if {

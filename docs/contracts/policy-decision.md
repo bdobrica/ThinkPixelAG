@@ -119,6 +119,12 @@ resource-, registry-, policy-, or revocation-administration action. Operational
 probes remain outside this protected action catalog as documented in the
 architecture.
 
+Trusted worker and metering actions additionally require
+`subject.principal_type` to be `workload`; revocation distribution requires
+`gateway`. A service-role string on any other principal type, or a certificate
+without the action's exact role, is denied. The authenticated principal is supplied by the
+[`thinkpixelag.workload-identity/v1`](workload-identity.md) boundary.
+
 ## Reason-code registry
 
 Codes use `domain.subject.outcome` and reveal no hidden tenant/resource existence. Initial families are:

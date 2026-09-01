@@ -4,6 +4,7 @@ package postgres
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -236,6 +237,10 @@ func (v e2eVerifier) Verify(_ context.Context, token string) (oidc.Principal, er
 	if token != "valid" {
 		return oidc.Principal{}, domain.NewError(domain.CodeUnauthenticated, "access token is invalid")
 	}
+	return v.principal, nil
+}
+
+func (v e2eVerifier) VerifyWorkload(_ context.Context, _ *tls.ConnectionState) (oidc.Principal, error) {
 	return v.principal, nil
 }
 

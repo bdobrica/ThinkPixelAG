@@ -41,6 +41,13 @@ grant. Raw step-up assertions and grant credentials are not persisted. See
 [the break-glass workflow contract](../contracts/break-glass.md).
 
 Operational probes remain anonymous and contain no tenant data. Every future
-public, trusted, and administrative route must apply bearer authentication
-before policy authorization. Tokens and Authorization headers must never enter
+public and administrative route must apply bearer authentication before policy
+authorization. Tokens and Authorization headers must never enter
 logs, traces, metrics, policy input, or client-visible error detail.
+
+Trusted service routes instead use the separate
+[workload identity contract](../contracts/workload-identity.md). Their verified
+client-certificate URI SAN maps through deployment-owned configuration to one
+workload principal, tenant, and closed service-role set. They reject bearer
+credentials and still require action-specific policy authorization; network
+location and certificate possession alone grant no action.
