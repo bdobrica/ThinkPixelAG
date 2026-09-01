@@ -52,6 +52,7 @@ type Config struct {
 	Valkey      ValkeyConfig
 	OIDC        OIDCConfig
 	Signing     SigningConfig
+	Evidence    EvidenceConfig
 }
 
 type HTTPConfig struct {
@@ -130,6 +131,16 @@ type SigningConfig struct {
 	Algorithm string
 }
 
+// EvidenceConfig identifies an independently administered authenticated sink.
+// The bearer token is redacted by the same Secret boundary as other credentials.
+type EvidenceConfig struct {
+	SinkID           string
+	Endpoint         string
+	BearerToken      Secret
+	Timeout          time.Duration
+	MaxResponseBytes int64
+}
+
 // Defaults returns safe, non-secret defaults. Required trust and persistence
 // settings intentionally remain empty and are rejected by Validate.
 func Defaults() Config {
@@ -176,7 +187,8 @@ func Defaults() Config {
 			JWKSMaxTTL: time.Hour, JWKSStaleTTL: 6 * time.Hour,
 			ClockSkew: 30 * time.Second, MaxTokenAge: 24 * time.Hour,
 		},
-		Signing: SigningConfig{Provider: "disabled", Algorithm: "ED25519"},
+		Signing:  SigningConfig{Provider: "disabled", Algorithm: "ED25519"},
+		Evidence: EvidenceConfig{Timeout: 5 * time.Second, MaxResponseBytes: 64 << 10},
 	}
 }
 
@@ -209,8 +221,15 @@ type safeConfig struct {
 		CacheIntegrityKeyConfigured bool          `json:"cache_integrity_key_configured"`
 		Timeout                     time.Duration `json:"timeout"`
 	} `json:"valkey"`
-	OIDC    OIDCConfig    `json:"oidc"`
-	Signing SigningConfig `json:"signing"`
+	OIDC     OIDCConfig    `json:"oidc"`
+	Signing  SigningConfig `json:"signing"`
+	Evidence struct {
+		SinkID                string        `json:"sink_id"`
+		Endpoint              string        `json:"endpoint"`
+		BearerTokenConfigured bool          `json:"bearer_token_configured"`
+		Timeout               time.Duration `json:"timeout"`
+		MaxResponseBytes      int64         `json:"max_response_bytes"`
+	} `json:"evidence"`
 }
 
 func (c Config) safe() safeConfig {
@@ -239,6 +258,11 @@ func (c Config) safe() safeConfig {
 	out.Valkey.Timeout = c.Valkey.Timeout
 	out.OIDC = c.OIDC
 	out.Signing = c.Signing
+	out.Evidence.SinkID = c.Evidence.SinkID
+	out.Evidence.Endpoint = c.Evidence.Endpoint
+	out.Evidence.BearerTokenConfigured = c.Evidence.BearerToken.IsSet()
+	out.Evidence.Timeout = c.Evidence.Timeout
+	out.Evidence.MaxResponseBytes = c.Evidence.MaxResponseBytes
 	return out
 }
 

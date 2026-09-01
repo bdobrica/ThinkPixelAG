@@ -299,6 +299,24 @@ func TestSigningConfigurationRejectsPrivateKeyAndFileInputs(t *testing.T) {
 	}
 }
 
+func TestEvidenceSinkConfigurationAndRedaction(t *testing.T) {
+	c := Defaults()
+	c.Database.URL = NewSecret("postgres://db.example/service")
+	c.OIDC.IssuerURL = "https://id.example/issuer"
+	c.OIDC.Audience = "thinkpixelag"
+	c.Evidence = EvidenceConfig{SinkID: "independent-compliance", Endpoint: "https://evidence.example/v1/events", BearerToken: NewSecret("sink-secret"), Timeout: time.Second, MaxResponseBytes: 4096}
+	if err := c.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if rendered := c.String(); strings.Contains(rendered, "sink-secret") || !strings.Contains(rendered, `"bearer_token_configured":true`) {
+		t.Fatalf("unsafe evidence configuration: %s", rendered)
+	}
+	c.Evidence.Endpoint = "http://evidence.example/v1/events"
+	if err := c.Validate(); err == nil {
+		t.Fatal("plaintext evidence sink accepted")
+	}
+}
+
 func TestSecretSafeRendering(t *testing.T) {
 	t.Parallel()
 	c := Defaults()

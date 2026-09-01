@@ -123,6 +123,7 @@ func TestPhaseTwoSchemaContracts(t *testing.T) {
 		{file: "014_harden_resource_settlements.sql", required: []string{"policy_decision_id", "idempotency_key", "resource_settlements_immutable", "resource_settlement_items_immutable"}},
 		{file: "015_create_governance_approvals.sql", required: []string{"CREATE TABLE governance_approval_requests", "CREATE TABLE governance_approval_decisions", "CREATE TABLE governance_approval_consumptions", "requester_principal_id <> approver_principal_id", "governance_approval_requests_append_only"}},
 		{file: "016_bind_signed_policy_artifacts.sql", required: []string{"artifact_revision", "signer_key_version", "signature_algorithm", "policy_bundles_signed_metadata_complete", "policy_bundles_artifact_revision_unique", "validation_status = 'REJECTED'"}},
+		{file: "017_create_evidence_delivery_state.sql", required: []string{"CREATE TABLE evidence_sink_checkpoints", "CREATE TABLE evidence_delivery_receipts", "last_event_hash", "evidence_delivery_receipts_immutable"}},
 	}
 
 	dir := projectMigrationsDir(t)

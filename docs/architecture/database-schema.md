@@ -197,6 +197,15 @@ jitter; permanent failures and exhausted attempts become poison messages with
 a controlled error code and dead-letter timestamp. They remain stored for
 operator inspection/replay rather than blocking later messages.
 
+Independent evidence export maintains one `evidence_sink_checkpoints` row per
+configured sink. Its finite claim token and event reference serialize that
+sink's sequence and SHA-256 predecessor without coupling separate sinks.
+`evidence_delivery_receipts` is append-only and unique by both sink/event and
+sink/sequence. A validated receipt insert and checkpoint advance occur in one
+fenced statement; lease takeover reuses the unadvanced predecessor and stable
+outbox ID, so a crash after remote acceptance safely replays the identical
+hash-linked delivery.
+
 ## Migration and compatibility rules
 
 The files are contiguous Tern migrations and include reverse SQL for local

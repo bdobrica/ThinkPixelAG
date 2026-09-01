@@ -59,6 +59,8 @@ The initial schema is split along durable consistency boundaries:
 - `016` binds policy payload digests to artifact/contract revisions and managed
   signing-key version/algorithm metadata; legacy validations are rejected so
   they cannot cross the stronger activation boundary without re-promotion.
+- `017` adds per-sink serialized evidence checkpoints and append-only,
+  hash-linked authenticated sink receipts without making the sink authoritative.
 
 Tenant-owned relationships use composite foreign keys containing `tenant_id` so
 a database write cannot connect rows across tenants. Frequently used access

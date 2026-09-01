@@ -65,6 +65,11 @@ var knownEnvironment = map[string]func(*Config, string) error{
 	"THINKPIXELAG_SIGNING_PROVIDER":                  setString(func(c *Config) *string { return &c.Signing.Provider }),
 	"THINKPIXELAG_SIGNING_KEY_ID":                    setString(func(c *Config) *string { return &c.Signing.KeyID }),
 	"THINKPIXELAG_SIGNING_ALGORITHM":                 setString(func(c *Config) *string { return &c.Signing.Algorithm }),
+	"THINKPIXELAG_EVIDENCE_SINK_ID":                  setString(func(c *Config) *string { return &c.Evidence.SinkID }),
+	"THINKPIXELAG_EVIDENCE_ENDPOINT":                 setString(func(c *Config) *string { return &c.Evidence.Endpoint }),
+	"THINKPIXELAG_EVIDENCE_BEARER_TOKEN":             setSecret(func(c *Config) *Secret { return &c.Evidence.BearerToken }),
+	"THINKPIXELAG_EVIDENCE_TIMEOUT":                  setDuration(func(c *Config) *time.Duration { return &c.Evidence.Timeout }),
+	"THINKPIXELAG_EVIDENCE_MAX_RESPONSE_BYTES":       setInt64(func(c *Config) *int64 { return &c.Evidence.MaxResponseBytes }),
 }
 
 // Load reads process environment and command-line arguments, then validates the
@@ -170,6 +175,10 @@ func applyFlags(c *Config, args []string) error {
 	fs.StringVar(&c.Signing.Provider, "signing-provider", c.Signing.Provider, "signing provider: disabled, kms, or hsm")
 	fs.StringVar(&c.Signing.KeyID, "signing-key-id", c.Signing.KeyID, "opaque managed signing-key resource identifier")
 	fs.StringVar(&c.Signing.Algorithm, "signing-algorithm", c.Signing.Algorithm, "signing algorithm: ED25519, ECDSA_SHA256, or RSA_PSS_SHA256")
+	fs.StringVar(&c.Evidence.SinkID, "evidence-sink-id", c.Evidence.SinkID, "stable independent evidence sink identifier")
+	fs.StringVar(&c.Evidence.Endpoint, "evidence-endpoint", c.Evidence.Endpoint, "authenticated evidence export endpoint")
+	fs.DurationVar(&c.Evidence.Timeout, "evidence-timeout", c.Evidence.Timeout, "evidence export request timeout")
+	fs.Int64Var(&c.Evidence.MaxResponseBytes, "evidence-max-response-bytes", c.Evidence.MaxResponseBytes, "maximum evidence receipt size")
 
 	if err := fs.Parse(args); err != nil {
 		return fmt.Errorf("parse flags: %w", err)

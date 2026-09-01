@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thinkpixel.example/schemas/evidence-delivery-v1.json",
+  "title": "ThinkPixelAG Evidence Delivery v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "sink_id", "sequence", "event_id", "event_hash", "event"],
+  "properties": {
+    "version": { "const": "thinkpixelag.evidence-delivery/v1" },
+    "sink_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "event_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "previous_hash": { "$ref": "#/$defs/digest" },
+    "event_hash": { "$ref": "#/$defs/digest" },
+    "event": { "type": "object" }
+  },
+  "allOf": [
+    { "if": { "properties": { "sequence": { "const": 1 } }, "required": ["sequence"] }, "then": { "not": { "required": ["previous_hash"] } }, "else": { "required": ["previous_hash"] } }
+  ],
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" } }
+}

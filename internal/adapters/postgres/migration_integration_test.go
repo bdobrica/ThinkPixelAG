@@ -26,7 +26,7 @@ func TestMigrationQualification(t *testing.T) {
 
 	t.Run("empty database and access paths", func(t *testing.T) {
 		conn := newMigrationTestDatabase(t, databaseURL)
-		migrateAndRequireVersion(t, ctx, conn, sources, 16)
+		migrateAndRequireVersion(t, ctx, conn, sources, 17)
 		assertQualifiedSchema(t, ctx, conn)
 	})
 
@@ -40,7 +40,7 @@ func TestMigrationQualification(t *testing.T) {
 		if _, err := conn.Exec(ctx, `INSERT INTO tenants (id, slug, display_name, created_at, updated_at) VALUES ($1, $2, 'prior fixture', $3, $3)`, tenantID, "prior-"+strings.ReplaceAll(tenantID, "-", ""), now); err != nil {
 			t.Fatal(err)
 		}
-		migrateAndRequireVersion(t, ctx, conn, sources, 16)
+		migrateAndRequireVersion(t, ctx, conn, sources, 17)
 		var displayName string
 		if err := conn.QueryRow(ctx, `SELECT display_name FROM tenants WHERE id = $1`, tenantID).Scan(&displayName); err != nil {
 			t.Fatalf("prior row was not preserved: %v", err)
@@ -66,7 +66,7 @@ func TestMigrationQualification(t *testing.T) {
 		if _, err := conn.Exec(ctx, `INSERT INTO policy_bundles (id,tenant_id,channel,content_digest,contract_version,bundle,signature,signer_key_id,validation_status,created_by,created_at) VALUES ($1,$2,'stable','sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','thinkpixelag.authorization/v1alpha1','x','x','legacy-key','VALIDATED',$3,$4)`, bundleID, tenantID, principalID, now); err != nil {
 			t.Fatal(err)
 		}
-		migrateAndRequireVersion(t, ctx, conn, sources, 16)
+		migrateAndRequireVersion(t, ctx, conn, sources, 17)
 		var status string
 		var revision *int64
 		if err := conn.QueryRow(ctx, `SELECT validation_status,artifact_revision FROM policy_bundles WHERE id=$1`, bundleID).Scan(&status, &revision); err != nil {
@@ -109,7 +109,7 @@ func TestMigrationQualification(t *testing.T) {
 
 func assertQualifiedSchema(t *testing.T, ctx context.Context, conn *pgx.Conn) {
 	t.Helper()
-	for _, table := range []string{"tenants", "runs", "resource_reservations", "revocation_log", "outbox_messages"} {
+	for _, table := range []string{"tenants", "runs", "resource_reservations", "revocation_log", "outbox_messages", "evidence_sink_checkpoints", "evidence_delivery_receipts"} {
 		assertTableExists(t, ctx, conn, table)
 	}
 

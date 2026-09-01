@@ -54,6 +54,7 @@ func (c Config) Validate() error {
 		"trace batch timeout":        c.Telemetry.TraceBatchTimeout,
 		"valkey timeout":             c.Valkey.Timeout,
 		"oidc discovery timeout":     c.OIDC.DiscoveryTimeout,
+		"evidence timeout":           c.Evidence.Timeout,
 	} {
 		if value <= 0 || value > maxTimeout {
 			problems = append(problems, fmt.Sprintf("%s must be greater than zero and at most %s", name, maxTimeout))
@@ -143,9 +144,35 @@ func (c Config) Validate() error {
 	if err := validateSigning(c.Signing, c.Environment); err != nil {
 		problems = append(problems, "signing: "+err.Error())
 	}
+	if err := validateEvidenceSink(c.Evidence, c.Environment); err != nil {
+		problems = append(problems, "evidence: "+err.Error())
+	}
 
 	if len(problems) != 0 {
 		return newValidationError(problems)
+	}
+	return nil
+}
+
+func validateEvidenceSink(evidence EvidenceConfig, _ Environment) error {
+	configured := evidence.SinkID != "" || evidence.Endpoint != "" || evidence.BearerToken.IsSet()
+	if !configured {
+		return nil
+	}
+	if strings.TrimSpace(evidence.SinkID) != evidence.SinkID || evidence.SinkID == "" || len(evidence.SinkID) > 256 || strings.IndexFunc(evidence.SinkID, unicode.IsControl) >= 0 {
+		return fmt.Errorf("sink ID must be 1 through 256 canonical bytes")
+	}
+	if err := validateHTTPURL(evidence.Endpoint, true); err != nil {
+		return fmt.Errorf("endpoint: %w", err)
+	}
+	if urlScheme(evidence.Endpoint) != "https" {
+		return fmt.Errorf("endpoint must use https")
+	}
+	if !evidence.BearerToken.IsSet() || strings.ContainsAny(evidence.BearerToken.Value(), "\r\n") {
+		return fmt.Errorf("bearer token is required and must not contain line breaks")
+	}
+	if evidence.MaxResponseBytes < 1 || evidence.MaxResponseBytes > 1<<20 {
+		return fmt.Errorf("maximum response bytes must be from 1 through 1048576")
 	}
 	return nil
 }
