@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thinkpixel.example/schemas/evidence-event-v1.json",
+  "title": "ThinkPixelAG privileged evidence event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "event_type", "actor", "action", "outcome", "reason_codes", "occurred_at", "data"],
+  "properties": {
+    "schema_version": { "const": "thinkpixelag.evidence/v1" },
+    "id": { "$ref": "#/$defs/id" },
+    "event_type": { "enum": ["POLICY", "REVOCATION", "RESOURCE_OVERRIDE", "APPROVAL", "KEY_LIFECYCLE", "VERSION_APPROVAL", "BREAK_GLASS"] },
+    "tenant_id": { "$ref": "#/$defs/id" },
+    "actor": {
+      "type": "object", "additionalProperties": false, "required": ["type", "id"],
+      "properties": { "type": { "enum": ["PRINCIPAL", "WORKLOAD", "SYSTEM"] }, "id": { "$ref": "#/$defs/ref" } }
+    },
+    "action": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "outcome": { "enum": ["SUCCEEDED", "DENIED", "FAILED"] },
+    "reason_codes": { "type": "array", "minItems": 1, "maxItems": 16, "items": { "type": "string", "minLength": 1, "maxLength": 128 } },
+    "request_id": { "$ref": "#/$defs/id" },
+    "trace_id": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+    "policy_decision_id": { "$ref": "#/$defs/id" },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "data": { "type": "object" }
+  },
+  "allOf": [
+    { "if": { "properties": { "event_type": { "enum": ["POLICY", "RESOURCE_OVERRIDE"] } } }, "then": { "properties": { "data": { "$ref": "#/$defs/artifact" } } } },
+    { "if": { "properties": { "event_type": { "const": "POLICY" } } }, "then": { "properties": { "data": { "properties": { "artifact_kind": { "const": "POLICY_BUNDLE" } } } } } },
+    { "if": { "properties": { "event_type": { "const": "RESOURCE_OVERRIDE" } } }, "then": { "properties": { "data": { "properties": { "artifact_kind": { "const": "RESOURCE_OVERRIDE_CONFIG" } } } } } },
+    { "if": { "properties": { "event_type": { "const": "REVOCATION" } } }, "then": { "properties": { "data": { "$ref": "#/$defs/revocation" } } } },
+    { "if": { "properties": { "event_type": { "const": "APPROVAL" } } }, "then": { "properties": { "data": { "$ref": "#/$defs/approval" } } } },
+    { "if": { "properties": { "event_type": { "const": "KEY_LIFECYCLE" } } }, "then": { "properties": { "data": { "$ref": "#/$defs/key" } } } },
+    { "if": { "properties": { "event_type": { "const": "VERSION_APPROVAL" } } }, "then": { "properties": { "data": { "$ref": "#/$defs/versionApproval" } } } },
+    { "if": { "properties": { "event_type": { "const": "BREAK_GLASS" } } }, "then": { "properties": { "data": { "$ref": "#/$defs/breakGlass" } } } }
+  ],
+  "$defs": {
+    "id": { "type": "string", "format": "uuid" },
+    "ref": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_id", "artifact_kind", "format_version", "revision", "payload_digest", "key_id", "key_version", "signature_algorithm"],
+      "properties": { "artifact_id": { "$ref": "#/$defs/ref" }, "artifact_kind": { "enum": ["POLICY_BUNDLE", "RESOURCE_OVERRIDE_CONFIG"] }, "format_version": { "type": "string", "minLength": 1, "maxLength": 128 }, "revision": { "type": "integer", "minimum": 1 }, "payload_digest": { "$ref": "#/$defs/digest" }, "prior_digest": { "$ref": "#/$defs/digest" }, "key_id": { "$ref": "#/$defs/ref" }, "key_version": { "type": "string", "minLength": 1, "maxLength": 256 }, "signature_algorithm": { "enum": ["ED25519", "ECDSA_SHA256", "RSA_PSS_SHA256"] }, "approval_id": { "$ref": "#/$defs/ref" } }
+    },
+    "revocation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["revocation_id", "change", "scope", "target", "security_epoch"],
+      "properties": { "revocation_id": { "$ref": "#/$defs/ref" }, "change": { "enum": ["CREATED", "LIFTED", "EXPIRED"] }, "scope": { "type": "string", "minLength": 1, "maxLength": 128 }, "target": { "$ref": "#/$defs/ref" }, "security_epoch": { "type": "integer", "minimum": 0 }, "tenant_policy_epoch": { "type": "integer", "minimum": 0 }, "tenant_revocation_epoch": { "type": "integer", "minimum": 0 }, "agent_revocation_epoch": { "type": "integer", "minimum": 0 }, "approval_id": { "$ref": "#/$defs/ref" } }
+    },
+    "approval": {
+      "type": "object", "additionalProperties": false,
+      "required": ["approval_id", "action_class", "resource_type", "resource_id", "request_digest", "state", "requester_id", "expires_at"],
+      "properties": { "approval_id": { "$ref": "#/$defs/ref" }, "action_class": { "type": "string", "minLength": 1, "maxLength": 128 }, "resource_type": { "type": "string", "minLength": 1, "maxLength": 128 }, "resource_id": { "$ref": "#/$defs/ref" }, "request_digest": { "$ref": "#/$defs/digest" }, "state": { "enum": ["PENDING", "APPROVED", "REJECTED", "CONSUMED", "EXPIRED"] }, "requester_id": { "$ref": "#/$defs/ref" }, "approver_id": { "$ref": "#/$defs/ref" }, "expires_at": { "type": "string", "format": "date-time" } }
+    },
+    "key": {
+      "type": "object", "additionalProperties": false,
+      "required": ["key_id", "key_version", "algorithm", "protection", "change"],
+      "properties": { "key_id": { "$ref": "#/$defs/ref" }, "key_version": { "type": "string", "minLength": 1, "maxLength": 256 }, "algorithm": { "enum": ["ED25519", "ECDSA_SHA256", "RSA_PSS_SHA256"] }, "protection": { "enum": ["KMS", "HSM"] }, "change": { "enum": ["CREATED", "ENABLED", "DISABLED", "ROTATED", "DESTROY_SCHEDULED", "DESTROYED"] }, "prior_key_version": { "type": "string", "minLength": 1, "maxLength": 256 }, "approval_id": { "$ref": "#/$defs/ref" } }
+    },
+    "versionApproval": {
+      "type": "object", "additionalProperties": false,
+      "required": ["approval_id", "agent_id", "agent_version_id", "content_digest", "decision"],
+      "properties": { "approval_id": { "$ref": "#/$defs/ref" }, "agent_id": { "$ref": "#/$defs/ref" }, "agent_version_id": { "$ref": "#/$defs/ref" }, "content_digest": { "$ref": "#/$defs/digest" }, "decision": { "enum": ["APPROVED", "REJECTED", "DEPRECATED", "REVOKED"] }, "approval_reference": { "$ref": "#/$defs/ref" } }
+    },
+    "breakGlass": {
+      "type": "object", "additionalProperties": false,
+      "required": ["session_id", "scope", "grant_digest", "approval_id", "expires_at", "change"],
+      "properties": { "session_id": { "$ref": "#/$defs/ref" }, "scope": { "$ref": "#/$defs/ref" }, "grant_digest": { "$ref": "#/$defs/digest" }, "approval_id": { "$ref": "#/$defs/ref" }, "expires_at": { "type": "string", "format": "date-time" }, "change": { "enum": ["REQUESTED", "ACTIVATED", "USED", "EXPIRED", "REVOKED"] } }
+    }
+  }
+}

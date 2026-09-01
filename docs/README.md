@@ -12,6 +12,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [Revocation and freshness](contracts/revocation.md)
 - [Policy decision contract](contracts/policy-decision.md)
 - [Signed privileged artifacts](contracts/signed-artifacts.md)
+- [Privileged evidence events](contracts/evidence-events.md)
 - [OpenAPI contract](../api/openapi/thinkpixelag.yaml)
 - [Run lifecycle API examples](api/run-lifecycle.md)
 - [Configuration reference](configuration.md)
