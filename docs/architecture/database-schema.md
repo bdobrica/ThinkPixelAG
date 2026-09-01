@@ -60,6 +60,9 @@ and sponsor principals. `agent_versions` store content-addressed manifests, and
 capabilities and append-only approval decisions reference the matching tenant,
 agent, and version. A partial unique index permits at most one currently active
 policy activation per tenant/channel while activation versions retain history.
+Policy rows persist the signed artifact revision and immutable managed-key
+version/algorithm binding. Reusing a revision in the same tenant/channel is
+rejected, and activation rechecks contract compatibility.
 
 Version manifests, capability declarations, approvals, and policy artifacts are
 treated as immutable history. The schema exposes no update timestamp for these

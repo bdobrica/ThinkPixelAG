@@ -12,8 +12,8 @@ status, purpose, protection, and exportability.
 The digest boundary matches managed KMS and HSM APIs that sign prehashed
 content and avoids sending multi-megabyte artifacts to a provider. The caller
 is responsible for canonicalizing the artifact and computing the digest before
-signing. Artifact-specific signature envelopes and version rules are owned by
-SEC-004.
+signing. Artifact-specific signature envelopes and version rules are defined by
+the [signed privileged artifact contract](signed-artifacts.md).
 
 ## Production invariants
 

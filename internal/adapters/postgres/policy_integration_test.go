@@ -6,12 +6,15 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"errors"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/bdobrica/ThinkPixelAG/internal/artifact"
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
 	"github.com/bdobrica/ThinkPixelAG/internal/policy"
+	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -65,12 +68,13 @@ func TestPolicyActivationAndRollbackAppendVersions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	verifier := policy.Ed25519Verifier{Keys: map[string]ed25519.PublicKey{"test-key": publicKey}}
-	for _, id := range []domain.ID{b1, b2} {
+	verifier := integrationSignatureVerifier{key: publicKey}
+	for index, id := range []domain.ID{b1, b2} {
 		body := []byte(id.String())
-		digest, _ := policy.Digest(body)
-		signature := ed25519.Sign(privateKey, body)
-		if err := store.VerifyAndPersist(ctx, PolicyBundle{ID: id, TenantID: tenant, CreatedBy: actor, Channel: "stable", Digest: digest, ContractVersion: policy.ContractVersion, Bundle: body, Signature: signature, SignerKeyID: "test-key", CreatedAt: now}, verifier, integrationBundleValidator{}); err != nil {
+		revision := uint64(index + 1)
+		signingDigest, digest, _ := artifact.SigningDigest(artifact.PolicyBundle, policy.ContractVersion, revision, body)
+		signature := ed25519.Sign(privateKey, signingDigest.Value)
+		if err := store.VerifyAndPersist(ctx, PolicyBundle{ID: id, TenantID: tenant, CreatedBy: actor, Channel: "stable", Digest: digest, ContractVersion: policy.ContractVersion, ArtifactRevision: revision, Bundle: body, Signature: signature, SignerKeyID: "test-key", SignerKeyVersion: "1", SignatureAlgorithm: ports.SignatureEd25519, CreatedAt: now}, verifier, integrationBundleValidator{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -101,3 +105,12 @@ func TestPolicyActivationAndRollbackAppendVersions(t *testing.T) {
 type integrationBundleValidator struct{}
 
 func (integrationBundleValidator) Validate(context.Context, []byte) error { return nil }
+
+type integrationSignatureVerifier struct{ key ed25519.PublicKey }
+
+func (v integrationSignatureVerifier) Verify(_ context.Context, signature ports.Signature, digest ports.SigningDigest) error {
+	if signature.KeyID != "test-key" || signature.KeyVersion != "1" || signature.Algorithm != ports.SignatureEd25519 || digest.Hash != "SHA-256" || !ed25519.Verify(v.key, digest.Value, signature.Value) {
+		return errors.New("invalid test signature")
+	}
+	return nil
+}

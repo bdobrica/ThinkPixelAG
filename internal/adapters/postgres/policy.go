@@ -8,6 +8,7 @@ import (
 
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
 	"github.com/bdobrica/ThinkPixelAG/internal/policy"
+	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -32,25 +33,29 @@ func (s *PolicyStore) SetCacheInvalidator(invalidate func(string)) {
 }
 
 type PolicyBundle struct {
-	ID, TenantID, CreatedBy                       domain.ID
-	Channel, Digest, ContractVersion, SignerKeyID string
-	Bundle, Signature                             []byte
-	ValidFrom, ValidUntil                         *time.Time
-	CreatedAt                                     time.Time
+	ID, TenantID, CreatedBy          domain.ID
+	Channel, Digest, ContractVersion string
+	ArtifactRevision                 uint64
+	Bundle, Signature                []byte
+	SignerKeyID, SignerKeyVersion    string
+	SignatureAlgorithm               ports.SignatureAlgorithm
+	ValidFrom, ValidUntil            *time.Time
+	CreatedAt                        time.Time
 }
 
-func (s *PolicyStore) VerifyAndPersist(ctx context.Context, b PolicyBundle, verifier policy.SignatureVerifier, validator policy.BundleValidator) error {
-	if err := policy.VerifyBundle(ctx, b.Digest, b.SignerKeyID, b.Bundle, b.Signature, verifier, validator); err != nil {
+func (s *PolicyStore) VerifyAndPersist(ctx context.Context, b PolicyBundle, verifier ports.Verifier, validator policy.BundleValidator) error {
+	signature := ports.Signature{KeyID: b.SignerKeyID, KeyVersion: b.SignerKeyVersion, Algorithm: b.SignatureAlgorithm, Value: b.Signature}
+	if err := policy.VerifyBundle(ctx, b.ArtifactRevision, b.ContractVersion, b.Digest, b.Bundle, signature, verifier, validator); err != nil {
 		return err
 	}
 	return s.persistVerified(ctx, b)
 }
 
 func (s *PolicyStore) persistVerified(ctx context.Context, b PolicyBundle) error {
-	if b.ID.IsZero() || b.TenantID.IsZero() || b.CreatedBy.IsZero() || b.Channel == "" || b.ContractVersion != policy.ContractVersion || b.Digest == "" || len(b.Bundle) == 0 || len(b.Signature) == 0 || b.SignerKeyID == "" {
+	if b.ID.IsZero() || b.TenantID.IsZero() || b.CreatedBy.IsZero() || b.Channel == "" || b.ContractVersion != policy.ContractVersion || b.ArtifactRevision == 0 || b.Digest == "" || len(b.Bundle) == 0 || len(b.Signature) == 0 || b.SignerKeyID == "" || b.SignerKeyVersion == "" || !b.SignatureAlgorithm.Valid() {
 		return errors.New("invalid verified policy bundle")
 	}
-	_, err := s.db.Exec(ctx, `INSERT INTO policy_bundles (id,tenant_id,channel,content_digest,contract_version,bundle,signature,signer_key_id,validation_status,valid_from,valid_until,created_by,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'VALIDATED',$9,$10,$11,$12)`, b.ID.String(), b.TenantID.String(), b.Channel, b.Digest, b.ContractVersion, b.Bundle, b.Signature, b.SignerKeyID, b.ValidFrom, b.ValidUntil, b.CreatedBy.String(), b.CreatedAt)
+	_, err := s.db.Exec(ctx, `INSERT INTO policy_bundles (id,tenant_id,channel,content_digest,contract_version,artifact_revision,bundle,signature,signer_key_id,signer_key_version,signature_algorithm,validation_status,valid_from,valid_until,created_by,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'VALIDATED',$12,$13,$14,$15)`, b.ID.String(), b.TenantID.String(), b.Channel, b.Digest, b.ContractVersion, b.ArtifactRevision, b.Bundle, b.Signature, b.SignerKeyID, b.SignerKeyVersion, string(b.SignatureAlgorithm), b.ValidFrom, b.ValidUntil, b.CreatedBy.String(), b.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("persist policy bundle: %w", err)
 	}
@@ -59,13 +64,17 @@ func (s *PolicyStore) persistVerified(ctx context.Context, b PolicyBundle) error
 func (s *PolicyStore) Activate(ctx context.Context, tenant, bundle, actor domain.ID, channel, reason string, now time.Time) (policy.ActiveBundle, error) {
 	var active policy.ActiveBundle
 	err := s.tx.WithinTransaction(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable}, func(ctx context.Context, tx DBTX) error {
-		var digest, status string
+		var digest, status, contractVersion string
+		var artifactRevision int64
 		var from, until *time.Time
-		if err := tx.QueryRow(ctx, `SELECT content_digest,validation_status,valid_from,valid_until FROM policy_bundles WHERE tenant_id=$1 AND id=$2 AND channel=$3 FOR UPDATE`, tenant.String(), bundle.String(), channel).Scan(&digest, &status, &from, &until); err != nil {
+		if err := tx.QueryRow(ctx, `SELECT content_digest,validation_status,contract_version,artifact_revision,valid_from,valid_until FROM policy_bundles WHERE tenant_id=$1 AND id=$2 AND channel=$3 FOR UPDATE`, tenant.String(), bundle.String(), channel).Scan(&digest, &status, &contractVersion, &artifactRevision, &from, &until); err != nil {
 			return fmt.Errorf("select policy bundle: %w", err)
 		}
 		if status != "VALIDATED" && status != "APPROVED" {
 			return errors.New("policy bundle is not validated")
+		}
+		if contractVersion != policy.ContractVersion || artifactRevision < 1 {
+			return errors.New("policy bundle artifact version is incompatible")
 		}
 		if from != nil && now.Before(*from) || until != nil && !now.Before(*until) {
 			return errors.New("policy bundle is outside validity window")

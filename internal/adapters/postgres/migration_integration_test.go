@@ -26,7 +26,7 @@ func TestMigrationQualification(t *testing.T) {
 
 	t.Run("empty database and access paths", func(t *testing.T) {
 		conn := newMigrationTestDatabase(t, databaseURL)
-		migrateAndRequireVersion(t, ctx, conn, sources, 14)
+		migrateAndRequireVersion(t, ctx, conn, sources, 16)
 		assertQualifiedSchema(t, ctx, conn)
 	})
 
@@ -40,7 +40,7 @@ func TestMigrationQualification(t *testing.T) {
 		if _, err := conn.Exec(ctx, `INSERT INTO tenants (id, slug, display_name, created_at, updated_at) VALUES ($1, $2, 'prior fixture', $3, $3)`, tenantID, "prior-"+strings.ReplaceAll(tenantID, "-", ""), now); err != nil {
 			t.Fatal(err)
 		}
-		migrateAndRequireVersion(t, ctx, conn, sources, 14)
+		migrateAndRequireVersion(t, ctx, conn, sources, 16)
 		var displayName string
 		if err := conn.QueryRow(ctx, `SELECT display_name FROM tenants WHERE id = $1`, tenantID).Scan(&displayName); err != nil {
 			t.Fatalf("prior row was not preserved: %v", err)
@@ -49,6 +49,32 @@ func TestMigrationQualification(t *testing.T) {
 			t.Fatalf("preserved display name = %q", displayName)
 		}
 		assertTableExists(t, ctx, conn, "outbox_messages")
+	})
+
+	t.Run("legacy policy validation is not grandfathered", func(t *testing.T) {
+		conn := newMigrationTestDatabase(t, databaseURL)
+		prior := migrationPrefixFixture(t, sources, 15)
+		migrateAndRequireVersion(t, ctx, conn, prior, 15)
+		tenantID, principalID, bundleID := mustMigrationID(t), mustMigrationID(t), mustMigrationID(t)
+		now := time.Now().UTC().Truncate(time.Microsecond)
+		if _, err := conn.Exec(ctx, `INSERT INTO tenants (id,slug,display_name,created_at,updated_at) VALUES ($1,$2,'legacy policy',$3,$3)`, tenantID, "legacy-"+strings.ReplaceAll(tenantID, "-", ""), now); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := conn.Exec(ctx, `INSERT INTO principals (id,tenant_id,external_issuer,external_subject,principal_type,created_at) VALUES ($1,$2,'https://migration.test',$3,'HUMAN',$4)`, principalID, tenantID, principalID, now); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := conn.Exec(ctx, `INSERT INTO policy_bundles (id,tenant_id,channel,content_digest,contract_version,bundle,signature,signer_key_id,validation_status,created_by,created_at) VALUES ($1,$2,'stable','sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','thinkpixelag.authorization/v1alpha1','x','x','legacy-key','VALIDATED',$3,$4)`, bundleID, tenantID, principalID, now); err != nil {
+			t.Fatal(err)
+		}
+		migrateAndRequireVersion(t, ctx, conn, sources, 16)
+		var status string
+		var revision *int64
+		if err := conn.QueryRow(ctx, `SELECT validation_status,artifact_revision FROM policy_bundles WHERE id=$1`, bundleID).Scan(&status, &revision); err != nil {
+			t.Fatal(err)
+		}
+		if status != "REJECTED" || revision != nil {
+			t.Fatalf("legacy policy status=%s revision=%v", status, revision)
+		}
 	})
 
 	t.Run("forward recovery after transactional failure", func(t *testing.T) {

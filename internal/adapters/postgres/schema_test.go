@@ -34,6 +34,7 @@ func TestReleasedMigrationChecksumsArePresent(t *testing.T) {
 		"013_create_resource_extensions.sql",
 		"014_harden_resource_settlements.sql",
 		"015_create_governance_approvals.sql",
+		"016_bind_signed_policy_artifacts.sql",
 	} {
 		if !strings.Contains(string(contents), migration) {
 			t.Errorf("checksum manifest does not cover %s", migration)
@@ -121,6 +122,7 @@ func TestPhaseTwoSchemaContracts(t *testing.T) {
 		{file: "013_create_resource_extensions.sql", required: []string{"CREATE TABLE resource_extensions", "CREATE TABLE resource_extension_items", "content_digest text", "resource_extensions_immutable"}},
 		{file: "014_harden_resource_settlements.sql", required: []string{"policy_decision_id", "idempotency_key", "resource_settlements_immutable", "resource_settlement_items_immutable"}},
 		{file: "015_create_governance_approvals.sql", required: []string{"CREATE TABLE governance_approval_requests", "CREATE TABLE governance_approval_decisions", "CREATE TABLE governance_approval_consumptions", "requester_principal_id <> approver_principal_id", "governance_approval_requests_append_only"}},
+		{file: "016_bind_signed_policy_artifacts.sql", required: []string{"artifact_revision", "signer_key_version", "signature_algorithm", "policy_bundles_signed_metadata_complete", "policy_bundles_artifact_revision_unique", "validation_status = 'REJECTED'"}},
 	}
 
 	dir := projectMigrationsDir(t)

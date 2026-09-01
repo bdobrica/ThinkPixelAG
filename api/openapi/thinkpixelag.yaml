@@ -1137,13 +1137,17 @@ components:
     PolicyUploadRequest:
       type: object
       additionalProperties: false
-      required: [digest, contract_version, artifact, signature, signing_key_id]
+      required: [digest, contract_version, artifact_revision, artifact, signature, signing_key_id, signing_key_version, signature_algorithm]
       properties:
         digest:
           $ref: '#/components/schemas/Digest'
         contract_version:
           type: string
           const: thinkpixelag.authorization/v1alpha1
+        artifact_revision:
+          type: integer
+          format: int64
+          minimum: 1
         artifact:
           type: string
           contentEncoding: base64
@@ -1153,15 +1157,26 @@ components:
           maxLength: 4096
         signing_key_id:
           $ref: '#/components/schemas/Identifier'
+        signing_key_version:
+          type: string
+          minLength: 1
+          maxLength: 256
+        signature_algorithm:
+          type: string
+          enum: [ED25519, ECDSA_SHA256, RSA_PSS_SHA256]
     PolicyBundle:
       type: object
       additionalProperties: false
-      required: [digest, contract_version, state, created_at]
+      required: [digest, contract_version, artifact_revision, state, created_at]
       properties:
         digest:
           $ref: '#/components/schemas/Digest'
         contract_version:
           type: string
+        artifact_revision:
+          type: integer
+          format: int64
+          minimum: 1
         state:
           type: string
           enum: [UPLOADED, VALIDATED, APPROVED, ACTIVE, SUPERSEDED, REJECTED]

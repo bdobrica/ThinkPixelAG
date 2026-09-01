@@ -56,6 +56,9 @@ The initial schema is split along durable consistency boundaries:
   and makes the established settlement ledger immutable.
 - `015` adds append-only governance approval requests, independent provider-
   verified decisions, and exactly-once digest-bound consumption records.
+- `016` binds policy payload digests to artifact/contract revisions and managed
+  signing-key version/algorithm metadata; legacy validations are rejected so
+  they cannot cross the stronger activation boundary without re-promotion.
 
 Tenant-owned relationships use composite foreign keys containing `tenant_id` so
 a database write cannot connect rows across tenants. Frequently used access

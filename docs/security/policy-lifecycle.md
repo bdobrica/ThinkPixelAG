@@ -23,8 +23,11 @@ Decision evidence carries bundle digest/version and evaluation duration, not
 raw policy input. Revocation freshness is bound to the action-risk catalog.
 Managed signing and verification use digest-based, key-version-bound ports and
 reject exportable or software-protected production keys as defined by the
-[managed signing contract](../contracts/managed-signing.md). SEC-004 binds
-those signatures to versioned privileged artifacts.
+[managed signing contract](../contracts/managed-signing.md). The
+[signed-artifact contract](../contracts/signed-artifacts.md) binds the policy
+class, contract version, artifact revision, payload digest, and managed-key
+metadata. Activation rejects incompatible versions, and legacy validations
+must be re-promoted through that boundary.
 
 The baseline Rego denies by default. It covers discovery/invocation, lifecycle
 and trusted workload operations, governance administration, tenant equality,

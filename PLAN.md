@@ -309,6 +309,13 @@ recorded in `docs/contracts/revocation.md` and `docs/phase-6-evidence.md`.
 
 Complete privileged policy separation, approval hooks for high-impact operations, signed artifact verification, KMS abstraction, evidence export, redaction, and break-glass workflow documentation. Exit when privileged changes are attributable and independently exportable, and bypass attempts fail.
 
+Progress through SEC-004 (2026-09-01): privileged actions have closed
+least-privilege roles and digest-bound four-eyes approvals; managed KMS/HSM
+ports keep private keys non-exportable; and a closed, versioned privileged
+artifact envelope now binds payload digest, class, schema/revision, and managed
+key metadata before policy persistence or activation. Evidence export,
+break-glass, identity hooks, redaction, and final adversarial review remain.
+
 ### Phase 8 — Production packaging and operations
 
 Finalize image, Kubernetes resources, dashboards, alerts, SLOs, runbooks, backup/restore, upgrade/rollback, load testing, SBOM/scanning, and release automation. Exit when a disposable cluster passes installation, upgrade, disruption, recovery, and smoke tests.

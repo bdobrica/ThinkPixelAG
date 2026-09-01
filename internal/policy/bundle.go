@@ -2,33 +2,23 @@ package policy
 
 import (
 	"context"
-	"crypto/ed25519"
 	"crypto/sha256"
-	"crypto/subtle"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/bdobrica/ThinkPixelAG/internal/artifact"
+	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 )
 
 const MaxBundleBytes = 4 << 20
 
-type SignatureVerifier interface {
-	Verify(context.Context, string, []byte, []byte) error
-}
 type BundleValidator interface {
 	Validate(context.Context, []byte) error
 }
-type Ed25519Verifier struct{ Keys map[string]ed25519.PublicKey }
 
-func (v Ed25519Verifier) Verify(_ context.Context, keyID string, content, signature []byte) error {
-	key, ok := v.Keys[keyID]
-	if !ok || len(key) != ed25519.PublicKeySize || !ed25519.Verify(key, content, signature) {
-		return errors.New("bundle signature verification failed")
-	}
-	return nil
-}
 func Digest(content []byte) (string, error) {
 	if len(content) == 0 || len(content) > MaxBundleBytes {
 		return "", errors.New("policy bundle size is outside bounds")
@@ -36,18 +26,12 @@ func Digest(content []byte) (string, error) {
 	sum := sha256.Sum256(content)
 	return "sha256:" + hex.EncodeToString(sum[:]), nil
 }
-func VerifyBundle(ctx context.Context, expected, keyID string, content, signature []byte, verifier SignatureVerifier, validator BundleValidator) error {
-	digest, err := Digest(content)
-	if err != nil {
-		return err
-	}
-	if len(expected) != 71 || subtle.ConstantTimeCompare([]byte(digest), []byte(expected)) != 1 {
-		return errors.New("policy bundle digest mismatch")
-	}
-	if verifier == nil || validator == nil {
+func VerifyBundle(ctx context.Context, revision uint64, contractVersion, expected string, content []byte, signature ports.Signature, verifier ports.Verifier, validator BundleValidator) error {
+	if validator == nil {
 		return errors.New("policy bundle verifier and validator are required")
 	}
-	if err := verifier.Verify(ctx, keyID, content, signature); err != nil {
+	versions := artifact.Versions{artifact.PolicyBundle: {ContractVersion: {}}}
+	if err := artifact.Verify(ctx, artifact.Envelope{Kind: artifact.PolicyBundle, FormatVersion: contractVersion, Revision: revision, Digest: expected, Payload: content, Signature: signature}, verifier, versions); err != nil {
 		return err
 	}
 	if err := validator.Validate(ctx, content); err != nil {

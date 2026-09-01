@@ -4,8 +4,12 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"errors"
 	"testing"
 	"time"
+
+	"github.com/bdobrica/ThinkPixelAG/internal/artifact"
+	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 )
 
 func validInput() Input {
@@ -27,16 +31,26 @@ func TestDecisionRejectsExpansionAndUnknownReason(t *testing.T) {
 type acceptValidator struct{}
 
 func (acceptValidator) Validate(context.Context, []byte) error { return nil }
+
+type policyTestVerifier struct{ key ed25519.PublicKey }
+
+func (v policyTestVerifier) Verify(_ context.Context, signature ports.Signature, digest ports.SigningDigest) error {
+	if signature.KeyID != "key" || signature.KeyVersion != "1" || signature.Algorithm != ports.SignatureEd25519 || !ed25519.Verify(v.key, digest.Value, signature.Value) {
+		return errors.New("invalid signature")
+	}
+	return nil
+}
+
 func TestBundleDigestAndSignature(t *testing.T) {
 	pub, priv, _ := ed25519.GenerateKey(rand.Reader)
 	body := []byte("bundle")
-	digest, _ := Digest(body)
-	sig := ed25519.Sign(priv, body)
-	if err := VerifyBundle(context.Background(), digest, "key", body, sig, Ed25519Verifier{Keys: map[string]ed25519.PublicKey{"key": pub}}, acceptValidator{}); err != nil {
+	signingDigest, digest, _ := artifact.SigningDigest(artifact.PolicyBundle, ContractVersion, 1, body)
+	sig := ports.Signature{KeyID: "key", KeyVersion: "1", Algorithm: ports.SignatureEd25519, Value: ed25519.Sign(priv, signingDigest.Value)}
+	if err := VerifyBundle(context.Background(), 1, ContractVersion, digest, body, sig, policyTestVerifier{key: pub}, acceptValidator{}); err != nil {
 		t.Fatal(err)
 	}
 	body[0] = 'B'
-	if VerifyBundle(context.Background(), digest, "key", body, sig, Ed25519Verifier{Keys: map[string]ed25519.PublicKey{"key": pub}}, acceptValidator{}) == nil {
+	if VerifyBundle(context.Background(), 1, ContractVersion, digest, body, sig, policyTestVerifier{key: pub}, acceptValidator{}) == nil {
 		t.Fatal("accepted changed bundle")
 	}
 }
