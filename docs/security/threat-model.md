@@ -47,6 +47,28 @@ We assume enterprise identity, Kubernetes control plane, PostgreSQL, and managed
 | T21 | Migration or restore breaks epoch/allocation invariants | authorization/spend bypass | explicit migration job, constraints, compatibility policy, restore rehearsal | migration/restore tests |
 | T22 | Unbounded input/SSE clients exhaust service | availability loss | body/header/time/concurrency limits, pagination, backpressure, quotas | load/abuse tests |
 
+## Phase 7 implementation review
+
+The Phase 7 exit review on 2026-09-01 assessed every abuse case against the
+implemented control and its executable evidence. The detailed traceability and
+residual-risk register are recorded in
+[Phase 7 governance self-protection evidence](../phase-7-evidence.md).
+
+- **Critical findings:** none open.
+- **High findings:** none open.
+- **Medium residual risks:** production network-policy enforcement and
+  production-shaped abuse/load qualification (T14/T22), release SBOM,
+  provenance, and image-signing automation (T20), and backup/restore/PITR
+  rehearsal (T21). These are explicit Phase 8 deployment and operational
+  acceptance work and do not provide an application-layer authorization
+  bypass in the reviewed RC implementation.
+
+T03 is implemented as a narrower boundary than its original candidate
+mitigation: trusted service routes reject forwarding identity entirely and
+derive workload authority from an exact deployment-owned binding to a verified
+client-certificate URI SAN. A future gateway assertion-forwarding design would
+require a new versioned contract and a fresh threat review.
+
 ## STRIDE summary
 
 - **Spoofing:** T01–T04; strong human/workload identity and token binding.

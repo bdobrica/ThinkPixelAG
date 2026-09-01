@@ -29,6 +29,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [Supported versions](supported-versions.md)
 - [SLOs and capacity targets](operations/slos.md)
 - [Phase 6 revocation distribution and freshness evidence](phase-6-evidence.md)
+- [Phase 7 governance self-protection evidence](phase-7-evidence.md)
 - [Structured logging and redaction](operations/logging.md)
 - [Metrics and tracing](operations/observability.md)
 - [HTTP server and process lifecycle](operations/http-server.md)
