@@ -309,7 +309,7 @@ recorded in `docs/contracts/revocation.md` and `docs/phase-6-evidence.md`.
 
 Complete privileged policy separation, approval hooks for high-impact operations, signed artifact verification, KMS abstraction, evidence export, redaction, and break-glass workflow documentation. Exit when privileged changes are attributable and independently exportable, and bypass attempts fail.
 
-Progress through SEC-008 (2026-09-01): privileged actions have closed
+Progress through SEC-010 (2026-09-01): privileged actions have closed
 least-privilege roles and digest-bound four-eyes approvals; managed KMS/HSM
 ports keep private keys non-exportable; and a closed, versioned privileged
 artifact envelope now binds payload digest, class, schema/revision, and managed
@@ -334,7 +334,11 @@ derive authority from caller input. Central leak controls now fully redact
 structured error values, restrict trace names and attributes, bound metric
 labels and client problem details, reject restricted policy/audit fields, and
 keep panic recovery free of panic values and stacks. Sentinel tests cover each
-sink. Final adversarial review remains.
+sink. A stable `make test-security` acceptance gate now groups privilege
+escalation, approval bypass, replay, cache poisoning, policy tampering, stale
+authorization, and evidence-suppression attacks. Its transaction- and
+lease-sensitive cases run against real PostgreSQL, and the complete repository
+gate passed. Final threat-model review remains.
 
 ### Phase 8 — Production packaging and operations
 

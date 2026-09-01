@@ -18,7 +18,7 @@ func TestMakefileExposesRequiredTargets(t *testing.T) {
 	for _, match := range targetPattern.FindAllStringSubmatch(string(data), -1) {
 		available[match[1]] = true
 	}
-	for _, target := range []string{"tools", "generate", "fmt", "lint", "test", "test-race", "test-policy", "test-integration", "test-e2e", "build", "image", "container-smoke", "verify"} {
+	for _, target := range []string{"tools", "generate", "fmt", "lint", "test", "test-race", "test-policy", "test-integration", "test-e2e", "test-security", "build", "image", "container-smoke", "verify"} {
 		if !available[target] {
 			t.Errorf("Makefile target %q is missing", target)
 		}
@@ -37,7 +37,7 @@ func TestVerifyIncludesRequiredNonContainerGates(t *testing.T) {
 		t.Fatal("verify target dependencies are missing")
 	}
 	dependencies := strings.Fields(match[1])
-	for _, required := range []string{"generate-check", "lint", "test", "test-race", "test-policy", "test-integration", "test-e2e", "compose-check", "security", "build", "container-smoke"} {
+	for _, required := range []string{"generate-check", "lint", "test", "test-race", "test-policy", "test-integration", "test-e2e", "test-security", "compose-check", "security", "build", "container-smoke"} {
 		found := false
 		for _, dependency := range dependencies {
 			if dependency == required {

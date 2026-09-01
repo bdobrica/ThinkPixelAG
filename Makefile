@@ -20,7 +20,7 @@ GO_FILES := $(shell git ls-files '*.go')
 .PHONY: help tools generate generate-check fmt fmt-check lint test test-race \
 	test-policy test-integration test-e2e dependency-check vulnerability-check \
 	license-check security build image container-smoke verify clean compose-check dev-up \
-	dev-up-valkey dev-status dev-smoke dev-down dev-reset
+	dev-up-valkey dev-status dev-smoke dev-down dev-reset test-security
 
 help: ## Show the stable development targets.
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -75,6 +75,14 @@ test-integration: ## Run integration-tagged Go tests against real PostgreSQL.
 test-e2e: ## Run end-to-end-tagged Go tests (suite grows in later phases).
 	THINKPIXELAG_TEST_DATABASE_URL='$(TEST_DATABASE_URL)' $(GO) test -count=1 -tags=e2e ./...
 
+test-security: test-policy ## Run adversarial authorization, integrity, freshness, replay, and evidence tests.
+	$(GO) test -count=1 ./internal/artifact ./internal/application ./internal/domain \
+		./internal/evidence ./internal/policy ./internal/adapters/httpserver \
+		./internal/adapters/mtls ./internal/adapters/opa
+	THINKPIXELAG_TEST_DATABASE_URL='$(TEST_DATABASE_URL)' $(GO) test -count=1 -tags=integration \
+		-run '^(TestTransactionalEvidenceAndReplaySafeOutbox|TestEvidenceDeliveryReplayReceiptAndCheckpoint|TestAgentApprovalLifecycleEvidenceIsolationConcurrencyAndImmutability)$$' \
+		./internal/adapters/postgres
+
 compose-check: ## Validate the pinned local dependency stack definition.
 	$(COMPOSE) -f compose.yaml config --quiet
 
@@ -127,7 +135,7 @@ image: ## Build the pinned, minimal, non-root OCI image.
 container-smoke: image ## Exercise the hardened image runtime and graceful shutdown.
 	VERSION=$(VERSION) REVISION=$(REVISION) IMAGE=$(IMAGE) DOCKER=$(DOCKER) bash test/container_smoke.sh
 
-verify: generate-check lint test test-race test-policy test-integration test-e2e compose-check security build container-smoke ## Run the complete clean-checkout gate.
+verify: generate-check lint test test-race test-policy test-integration test-e2e test-security compose-check security build container-smoke ## Run the complete clean-checkout gate.
 
 clean: ## Remove repository-local build outputs.
 	rm -rf .cache/bin

@@ -13,3 +13,9 @@ Container contract tests enforce immutable builder/runtime pins, static build
 flags, numeric non-root identity, OCI metadata, and the allowlisted Docker build
 context. `container_smoke.sh` supplies the daemon-backed runtime proof through
 `make container-smoke` and the aggregate `make verify` gate.
+
+`make test-security` is the stable adversarial acceptance gate. It groups the
+authorization, approval, artifact-integrity, cache, freshness, replay, and
+evidence controls described in `docs/security/adversarial-testing.md`. Its
+evidence-suppression cases require the same real PostgreSQL instance as
+`make test-integration`.
