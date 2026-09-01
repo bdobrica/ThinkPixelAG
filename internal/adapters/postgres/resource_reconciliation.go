@@ -139,7 +139,7 @@ WHERE i.tenant_id=$1 AND i.reservation_id=$2 ORDER BY i.dimension_id FOR UPDATE 
 
 		payload, _ := json.Marshal(map[string]any{"reservation_id": reservationID, "settlement_id": evidence.SettlementID.String(), "reason": reason, "terminal_run_state": runState})
 		reasons := json.RawMessage(`["resource.reservation.reconciled"]`)
-		metadata, _ := json.Marshal(map[string]any{"expired": expired, "reconciliation_key": settlement.IdempotencyKey})
+		metadata, _ := json.Marshal(map[string]any{"expired": expired})
 		tenant, actor, decision := tenantID, systemPrincipalID, evidence.PolicyDecisionID
 		audit := AuditEvent{ID: evidence.AuditID, TenantID: &tenant, PrincipalID: &actor, Action: "resources.reconcile", ResourceType: "resource_reservation", ResourceID: reservationID, Outcome: "SUCCEEDED", ReasonCodes: reasons, PolicyDecisionID: &decision, Metadata: metadata, OccurredAt: now}
 		message := OutboxMessage{ID: evidence.OutboxID, TenantID: &tenant, AggregateType: "resource_reservation", AggregateID: reservationID, EventType: "resource.reservation.reconciled", SchemaVersion: 1, Payload: payload, Headers: json.RawMessage(`{}`), OccurredAt: now, AvailableAt: now}

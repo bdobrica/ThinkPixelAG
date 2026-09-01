@@ -2,13 +2,19 @@ package tracing
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -31,6 +37,37 @@ func TestNoopTracing(t *testing.T) {
 	}
 	if err := tracing.Shutdown(context.Background()); err != nil {
 		t.Errorf("second Shutdown() error = %v", err)
+	}
+}
+
+func TestTracerDropsRestrictedNamesAttributesEventsAndErrors(t *testing.T) {
+	t.Parallel()
+	recorder := tracetest.NewSpanRecorder()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	tracing := &Tracing{Provider: provider}
+	_, span := tracing.Tracer().Start(context.Background(), "POST /runs?token=trace-name-secret", trace.WithAttributes(attribute.String("authorization", "start-secret")))
+	span.SetAttributes(attribute.String("objective", "attribute-secret"), attribute.String("db.system.name", "postgresql"))
+	span.AddEvent("payload-event-secret", trace.WithAttributes(attribute.String("access_token", "event-secret")))
+	span.RecordError(errors.New("recorded-error-secret"))
+	span.End()
+	finished := recorder.Ended()
+	if len(finished) != 1 || finished[0].Name() != "operation" {
+		t.Fatalf("finished spans=%v", finished)
+	}
+	serialized := finished[0].Name()
+	for _, value := range finished[0].Attributes() {
+		serialized += fmt.Sprint(value)
+	}
+	for _, event := range finished[0].Events() {
+		serialized += event.Name + fmt.Sprint(event.Attributes)
+	}
+	for _, sentinel := range []string{"trace-name-secret", "start-secret", "attribute-secret", "payload-event-secret", "event-secret", "recorded-error-secret"} {
+		if strings.Contains(serialized, sentinel) {
+			t.Fatalf("trace leaked %q: %s", sentinel, serialized)
+		}
+	}
+	if !strings.Contains(serialized, "postgresql") {
+		t.Fatalf("allowlisted trace attribute missing: %s", serialized)
 	}
 }
 

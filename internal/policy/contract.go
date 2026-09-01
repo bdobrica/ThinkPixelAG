@@ -111,7 +111,33 @@ func (in Input) Validate() error {
 	if len(in.Subject.Roles) > 32 || len(in.Action) > 128 || len(in.Resource.ID) > 512 {
 		return errors.New("policy input exceeds bounds")
 	}
+	if containsRestrictedPolicyField(in.Resource.Attributes) || containsRestrictedPolicyField(in.RequestedConstraints) || containsRestrictedPolicyField(in.AuthorityConstraints) {
+		return errors.New("policy input contains a restricted field")
+	}
 	return boundedJSON(in, 64<<10)
+}
+
+func containsRestrictedPolicyField(value any) bool {
+	switch typed := value.(type) {
+	case map[string]any:
+		for key, child := range typed {
+			normalized := strings.NewReplacer("-", "_", ".", "_").Replace(strings.ToLower(strings.TrimSpace(key)))
+			switch normalized {
+			case "authorization", "cookie", "password", "secret", "credential", "token", "access_token", "refresh_token", "objective", "prompt", "payload", "raw_input", "policy_input", "database_url", "valkey_url", "dsn":
+				return true
+			}
+			if containsRestrictedPolicyField(child) {
+				return true
+			}
+		}
+	case []any:
+		for _, child := range typed {
+			if containsRestrictedPolicyField(child) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func ValidateDecision(d Decision, in Input, maxTTL time.Duration) error {

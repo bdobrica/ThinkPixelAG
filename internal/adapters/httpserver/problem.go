@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
 )
@@ -46,12 +47,25 @@ func ProblemFromError(err error) Problem {
 	case domain.CodeInternal:
 		return problemFor(http.StatusInternalServerError, "internal", "Internal Server Error", "An internal error occurred.")
 	}
-	problem := problemFor(status, string(typed.Code()), title, typed.Detail())
+	problem := problemFor(status, string(typed.Code()), title, safeProblemDetail(typed.Detail()))
 	if typed.Retryable() {
 		zero := 0
 		problem.RetryAfterSeconds = &zero
 	}
 	return problem
+}
+
+func safeProblemDetail(detail string) string {
+	normalized := strings.ToLower(detail)
+	if detail == "" || len(detail) > 512 || strings.ContainsAny(detail, "\r\n\x00") {
+		return "The request could not be completed."
+	}
+	for _, restricted := range []string{"secret", "password", "credential", "authorization", "cookie", "objective", "prompt", "payload", "database url", "valkey url", "private key"} {
+		if strings.Contains(normalized, restricted) {
+			return "The request could not be completed."
+		}
+	}
+	return detail
 }
 
 func writeProblem(writer http.ResponseWriter, request *http.Request, problem Problem) {

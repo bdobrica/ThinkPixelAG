@@ -107,6 +107,20 @@ func TestLabelsFailToBoundedValues(t *testing.T) {
 	}
 }
 
+func TestBuildLabelsRejectSecretShapedValues(t *testing.T) {
+	t.Parallel()
+	metrics, err := New(true, BuildInfo{Version: "token=metrics-sentinel-secret", Revision: "safe-revision"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	response := httptest.NewRecorder()
+	metrics.Handler().ServeHTTP(response, httptest.NewRequest("GET", "/metrics", nil))
+	output := response.Body.String()
+	if strings.Contains(output, "metrics-sentinel-secret") || !strings.Contains(output, `version="unknown"`) || !strings.Contains(output, `revision="safe-revision"`) {
+		t.Fatalf("unsafe build labels: %s", output)
+	}
+}
+
 func TestStatusClass(t *testing.T) {
 	t.Parallel()
 	for status, want := range map[int]string{99: "unknown", 100: "1xx", 204: "2xx", 302: "3xx", 404: "4xx", 503: "5xx", 600: "unknown"} {

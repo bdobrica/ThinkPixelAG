@@ -47,6 +47,10 @@ The provider exposes W3C Trace Context and Baggage propagation without changing
 global state. Baggage is propagation plumbing, not permission to add tenant IDs,
 tokens, objectives, inputs, policy data, or other sensitive/high-cardinality
 values. Instrumentation must use bounded operation names and attributes.
+The service trace facade enforces this mechanically: caller-provided start
+attributes and exception text are discarded, event names are bounded, and only
+the reviewed database system/operation/outcome attributes currently pass its
+allowlist. New attributes require code, documentation, and sentinel leak tests.
 
 The owner calls `ForceFlush` where evidence requires an export boundary and
 calls idempotent `Shutdown` during graceful process termination. Export failures

@@ -157,7 +157,7 @@ func (r *TenantRepository) SettleReservation(ctx context.Context, candidate doma
 		}
 		payload, _ := json.Marshal(map[string]any{"reservation_id": settlement.ReservationID.String(), "settlement_id": settlement.ID.String(), "terminal_run_state": settlement.TerminalRunState})
 		reasons, _ := json.Marshal(evidence.ReasonCodes)
-		metadata, _ := json.Marshal(map[string]any{"idempotency_key": settlement.IdempotencyKey, "request_id": evidence.RequestID.String()})
+		metadata, _ := json.Marshal(map[string]any{"request_id": evidence.RequestID.String()})
 		tenant, actor, decision, request := settlement.TenantID, settlement.ActorPrincipalID, settlement.PolicyDecisionID, evidence.RequestID
 		audit := AuditEvent{ID: evidence.AuditID, TenantID: &tenant, PrincipalID: &actor, Action: "resources.settle", ResourceType: "resource_reservation", ResourceID: settlement.ReservationID.String(), Outcome: "SUCCEEDED", ReasonCodes: reasons, PolicyDecisionID: &decision, RequestID: &request, Metadata: metadata, OccurredAt: settlement.SettledAt}
 		message := OutboxMessage{ID: evidence.OutboxID, TenantID: &tenant, AggregateType: "resource_reservation", AggregateID: settlement.ReservationID.String(), EventType: "resource.reservation.settled", SchemaVersion: 1, Payload: payload, Headers: json.RawMessage(`{}`), OccurredAt: settlement.SettledAt, AvailableAt: settlement.SettledAt}

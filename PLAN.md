@@ -330,8 +330,11 @@ to one workload principal, tenant, and least-privilege service-role set. Their
 middleware rejects bearer and forwarding identity, while policy independently
 requires workload principal type, exact action role, tenant/resource binding,
 and authoritative freshness. Explicit local/test transport exceptions cannot
-derive authority from caller input. Redaction and final adversarial review
-remain.
+derive authority from caller input. Central leak controls now fully redact
+structured error values, restrict trace names and attributes, bound metric
+labels and client problem details, reject restricted policy/audit fields, and
+keep panic recovery free of panic values and stacks. Sentinel tests cover each
+sink. Final adversarial review remains.
 
 ### Phase 8 — Production packaging and operations
 

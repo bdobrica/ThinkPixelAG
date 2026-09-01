@@ -163,7 +163,7 @@ func sanitizeAny(value any, depth int) any {
 		return RedactedValue
 	}
 	if _, isError := value.(error); isError {
-		return value
+		return RedactedValue
 	}
 	rv := reflect.ValueOf(value)
 	for rv.IsValid() && (rv.Kind() == reflect.Interface || rv.Kind() == reflect.Pointer) {

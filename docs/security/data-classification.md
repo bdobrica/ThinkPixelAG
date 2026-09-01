@@ -45,3 +45,12 @@ Retention is deployment policy. Idempotency bodies and operational logs use the 
 ## Verification
 
 Automated tests capture logs, spans, metrics, errors, audit events, and panic recovery while injecting sentinel secrets and payloads. A test fails if any sentinel appears outside its explicitly authorized encrypted store.
+
+The trace facade drops caller-supplied start attributes, exception text, and
+arbitrary event attributes; only stable bounded operation names and a closed
+attribute allowlist reach exporters. Structured log `error` values are always
+rendered as `[REDACTED]`, regardless of their concrete type. Audit metadata and
+outbox headers recursively reject restricted field names before a transaction
+starts, and policy input rejects restricted payload/credential fields before
+evaluation or decision caching. Idempotency and reconciliation keys do not
+enter audit metadata.

@@ -37,6 +37,9 @@ Protected fields include:
 
 Suffix matching also protects application-specific names ending in `_password`,
 `_secret`, `_token`, `_api_key`, `_credential`, `_credentials`, or `_dsn`.
+Structured values implementing `error` are fully replaced rather than calling
+`Error()`, because wrapped provider, SQL, and transport errors may contain
+credentials, queries, or payload fragments.
 
 Redaction is defense in depth, not permission to collect sensitive content.
 Never interpolate secrets, authorization headers, raw objectives/inputs, policy

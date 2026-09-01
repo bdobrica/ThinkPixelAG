@@ -105,7 +105,7 @@ func New(enabled bool, build BuildInfo) (*Metrics, error) {
 		Name:      "build_info",
 		Help:      "Build information for the running ThinkPixelAG process.",
 	}, []string{"version", "revision"})
-	buildInfo.WithLabelValues(nonEmpty(build.Version), nonEmpty(build.Revision)).Set(1)
+	buildInfo.WithLabelValues(safeBuildLabel(build.Version), safeBuildLabel(build.Revision)).Set(1)
 
 	if err := registry.Register(collectors.NewGoCollector()); err != nil {
 		return nil, err
@@ -253,8 +253,8 @@ func statusClass(status int) string {
 	return strconv.Itoa(status/100) + "xx"
 }
 
-func nonEmpty(value string) string {
-	if value == "" {
+func safeBuildLabel(value string) string {
+	if value == "" || len(value) > 128 || strings.ContainsAny(value, "=/?#&;\r\n\t ") {
 		return "unknown"
 	}
 	return value

@@ -90,7 +90,8 @@ type queryTracer struct {
 }
 
 func (t queryTracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, _ pgx.TraceQueryStartData) context.Context {
-	ctx, span := t.tracer.Start(ctx, "postgres.query", trace.WithSpanKind(trace.SpanKindClient), trace.WithAttributes(attribute.String("db.system.name", "postgresql"), attribute.String("db.operation.name", "query")))
+	ctx, span := t.tracer.Start(ctx, "postgres.query", trace.WithSpanKind(trace.SpanKindClient))
+	span.SetAttributes(attribute.String("db.system.name", "postgresql"), attribute.String("db.operation.name", "query"))
 	return context.WithValue(ctx, queryTraceKey{}, queryTraceData{start: time.Now(), span: span})
 }
 func (t queryTracer) TraceQueryEnd(ctx context.Context, _ *pgx.Conn, data pgx.TraceQueryEndData) {

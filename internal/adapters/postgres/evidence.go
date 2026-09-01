@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
@@ -111,6 +112,9 @@ func validateEvidence(a AuditEvent, m OutboxMessage) error {
 	if !validJSONArray(a.ReasonCodes) || !validJSONObject(a.Metadata) || !validJSONObject(m.Payload) || !validJSONObject(m.Headers) {
 		return errors.New("evidence JSON has an invalid shape")
 	}
+	if containsRestrictedJSONKey(a.Metadata) || containsRestrictedJSONKey(m.Headers) {
+		return errors.New("audit metadata or outbox headers contain a restricted field")
+	}
 	if len(m.AggregateType) < 1 || len(m.AggregateType) > 128 || len(m.AggregateID) < 1 || len(m.AggregateID) > 512 || len(m.EventType) < 1 || len(m.EventType) > 256 || m.SchemaVersion < 1 {
 		return errors.New("outbox envelope is outside schema bounds")
 	}
@@ -127,6 +131,38 @@ func validateEvidence(a AuditEvent, m OutboxMessage) error {
 		return errors.New("outbox availability precedes occurrence")
 	}
 	return nil
+}
+
+func containsRestrictedJSONKey(raw []byte) bool {
+	var value any
+	if json.Unmarshal(raw, &value) != nil {
+		return true
+	}
+	var inspect func(any) bool
+	inspect = func(current any) bool {
+		switch typed := current.(type) {
+		case map[string]any:
+			for key, child := range typed {
+				normalized := strings.NewReplacer("-", "_", ".", "_").Replace(strings.ToLower(strings.TrimSpace(key)))
+				for _, protected := range []string{"authorization", "cookie", "password", "secret", "credential", "token", "objective", "prompt", "input", "payload", "database_url", "valkey_url", "dsn", "idempotency_key", "reconciliation_key"} {
+					if normalized == protected || strings.HasSuffix(normalized, "_"+protected) {
+						return true
+					}
+				}
+				if inspect(child) {
+					return true
+				}
+			}
+		case []any:
+			for _, child := range typed {
+				if inspect(child) {
+					return true
+				}
+			}
+		}
+		return false
+	}
+	return inspect(value)
 }
 
 func hashAuditEvent(a AuditEvent) (string, error) {

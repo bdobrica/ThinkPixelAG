@@ -44,6 +44,14 @@ type Tracing struct {
 	shutdownErr error
 }
 
+type safeTracer struct{ trace.Tracer }
+type safeSpan struct{ trace.Span }
+
+var allowedSpanAttributes = map[string]bool{
+	"db.system.name": true, "db.operation.name": true,
+	"thinkpixelag.db.outcome": true,
+}
+
 // New initializes a no-op provider or a batched OTLP/HTTP exporter.
 func New(ctx context.Context, config Config) (*Tracing, error) {
 	propagator := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
@@ -99,7 +107,59 @@ func New(ctx context.Context, config Config) (*Tracing, error) {
 }
 
 // Tracer returns an instrumentation-scoped tracer.
-func (t *Tracing) Tracer() trace.Tracer { return t.Provider.Tracer(InstrumentationName) }
+func (t *Tracing) Tracer() trace.Tracer { return safeTracer{t.Provider.Tracer(InstrumentationName)} }
+
+func (t safeTracer) Start(ctx context.Context, name string, options ...trace.SpanStartOption) (context.Context, trace.Span) {
+	config := trace.NewSpanStartConfig(options...)
+	safeOptions := []trace.SpanStartOption{trace.WithSpanKind(config.SpanKind())}
+	if !config.Timestamp().IsZero() {
+		safeOptions = append(safeOptions, trace.WithTimestamp(config.Timestamp()))
+	}
+	if config.NewRoot() {
+		safeOptions = append(safeOptions, trace.WithNewRoot())
+	}
+	if attributes := safeAttributes(config.Attributes()); len(attributes) != 0 {
+		safeOptions = append(safeOptions, trace.WithAttributes(attributes...))
+	}
+	// Link attributes are not accepted because they are not independently
+	// allowlisted; callers may represent safe relationships with child spans.
+	ctx, span := t.Tracer.Start(ctx, boundedSpanName(name), safeOptions...)
+	return ctx, safeSpan{span}
+}
+
+func (s safeSpan) SetAttributes(values ...attribute.KeyValue) {
+	s.Span.SetAttributes(safeAttributes(values)...)
+}
+
+func (s safeSpan) AddEvent(name string, options ...trace.EventOption) {
+	// Application event attributes and arbitrary names are not part of the
+	// trace contract. Callers should use stable child-span names instead.
+	s.Span.AddEvent(boundedSpanName(name))
+}
+
+func (s safeSpan) RecordError(_ error, _ ...trace.EventOption) {
+	// Error text can contain SQL, credentials, or request payload. Outcome codes
+	// are recorded separately through allowlisted attributes.
+}
+
+func safeAttributes(values []attribute.KeyValue) []attribute.KeyValue {
+	result := make([]attribute.KeyValue, 0, len(values))
+	for _, value := range values {
+		if allowedSpanAttributes[string(value.Key)] {
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func boundedSpanName(name string) string {
+	if name == "postgres.query" || strings.HasPrefix(name, "GET ") || strings.HasPrefix(name, "HEAD ") || strings.HasPrefix(name, "POST ") || strings.HasPrefix(name, "PUT ") || strings.HasPrefix(name, "PATCH ") || strings.HasPrefix(name, "DELETE ") || strings.HasPrefix(name, "OPTIONS ") {
+		if len(name) <= 256 && !strings.ContainsAny(name, "?#\r\n") {
+			return name
+		}
+	}
+	return "operation"
+}
 
 // ForceFlush exports all completed spans available to the processor.
 func (t *Tracing) ForceFlush(ctx context.Context) error { return t.flush(ctx) }

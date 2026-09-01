@@ -28,6 +28,19 @@ func TestDecisionRejectsExpansionAndUnknownReason(t *testing.T) {
 	}
 }
 
+func TestPolicyInputRejectsRestrictedPayloadFields(t *testing.T) {
+	in := validInput()
+	in.Resource.Attributes = map[string]any{"safe": "value", "nested": map[string]any{"access_token": "policy-sentinel-secret"}}
+	if err := in.Validate(); err == nil {
+		t.Fatal("accepted restricted policy input")
+	}
+	in = validInput()
+	in.RequestedConstraints = map[string]any{"max_input_tokens": float64(10)}
+	if err := in.Validate(); err != nil {
+		t.Fatalf("safe bounded constraint rejected: %v", err)
+	}
+}
+
 type acceptValidator struct{}
 
 func (acceptValidator) Validate(context.Context, []byte) error { return nil }

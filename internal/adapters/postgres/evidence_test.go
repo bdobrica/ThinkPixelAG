@@ -45,6 +45,33 @@ func TestEvidenceTransactionValidatesBeforeStarting(t *testing.T) {
 	}
 }
 
+func TestEvidenceRejectsRestrictedAuditAndHeaderFields(t *testing.T) {
+	t.Parallel()
+	now := time.Unix(10, 0).UTC()
+	tenant, principal := mustNewRepositoryID(t), mustNewRepositoryID(t)
+	audit := AuditEvent{ID: mustNewRepositoryID(t), TenantID: &tenant, PrincipalID: &principal, Action: "runs.create", ResourceType: "run", ResourceID: "run", Outcome: "SUCCEEDED", ReasonCodes: json.RawMessage(`["agent.invoke.allowed"]`), Metadata: json.RawMessage(`{"safe":"value"}`), OccurredAt: now}
+	message := OutboxMessage{ID: mustNewRepositoryID(t), TenantID: &tenant, AggregateType: "run", AggregateID: "run", EventType: "run.created", SchemaVersion: 1, Payload: json.RawMessage(`{"payload":"authoritative-domain-content"}`), Headers: json.RawMessage(`{}`), OccurredAt: now, AvailableAt: now}
+	for name, mutate := range map[string]func(*AuditEvent, *OutboxMessage){
+		"audit token": func(a *AuditEvent, _ *OutboxMessage) {
+			a.Metadata = json.RawMessage(`{"nested":{"access_token":"sentinel-secret"}}`)
+		},
+		"header credential": func(_ *AuditEvent, m *OutboxMessage) {
+			m.Headers = json.RawMessage(`{"client-credential":"sentinel-secret"}`)
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			candidateAudit, candidateMessage := audit, message
+			mutate(&candidateAudit, &candidateMessage)
+			if err := validateEvidence(candidateAudit, candidateMessage); err == nil {
+				t.Fatal("restricted evidence field accepted")
+			}
+		})
+	}
+	if err := validateEvidence(audit, message); err != nil {
+		t.Fatalf("safe evidence rejected: %v", err)
+	}
+}
+
 func TestOutboxRetryDelayIsBoundedAndJittered(t *testing.T) {
 	t.Parallel()
 	p := &OutboxPublisher{config: OutboxConfig{BaseRetry: 2 * time.Second, MaxRetry: 10 * time.Second, Jitter: func(bound time.Duration) time.Duration { return bound }}}

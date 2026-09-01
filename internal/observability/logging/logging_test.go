@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"strings"
 	"testing"
@@ -113,11 +114,12 @@ func TestSensitiveFieldsAreRedactedRecursively(t *testing.T) {
 		slog.Any("nested", []any{map[string]any{"refresh_token": "refresh-secret", "status": "ok"}}),
 		slog.Any("structured", sensitiveStruct{Name: "safe-name", Password: "struct-password", Credential: "struct-credential"}),
 		slog.Any("too_deep", deep),
+		slog.Any("error", errors.New("embedded-error-secret")),
 		slog.String("action", "runs.create"),
 	)
 
 	serialized := buffer.String()
-	for _, secret := range []string{"bearer-secret", "client-secret-value", "sensitive-objective", "api-key-secret", "logvaluer-secret", "refresh-secret", "deep-secret", "struct-password", "struct-credential"} {
+	for _, secret := range []string{"bearer-secret", "client-secret-value", "sensitive-objective", "api-key-secret", "logvaluer-secret", "refresh-secret", "deep-secret", "struct-password", "struct-credential", "embedded-error-secret"} {
 		if strings.Contains(serialized, secret) {
 			t.Errorf("log output leaked %q: %s", secret, serialized)
 		}

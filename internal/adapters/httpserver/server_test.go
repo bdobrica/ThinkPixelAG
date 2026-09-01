@@ -228,6 +228,10 @@ func TestProblemMappingAndJSONStrictness(t *testing.T) {
 	if strings.Contains(typedInternal.Detail, "sentinel") {
 		t.Fatalf("typed internal leaked: %#v", typedInternal)
 	}
+	typedPublic := ProblemFromError(domain.NewError(domain.CodeInvalidArgument, "credential sentinel-public-secret"))
+	if strings.Contains(typedPublic.Detail, "sentinel") || typedPublic.Detail != "The request could not be completed." {
+		t.Fatalf("typed public detail leaked: %#v", typedPublic)
+	}
 
 	request := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(`{"known":"yes"} {}`)))
 	var value struct {
