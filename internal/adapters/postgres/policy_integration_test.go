@@ -96,6 +96,20 @@ func TestPolicyActivationAndRollbackAppendVersions(t *testing.T) {
 	if len(invalidated) != 3 || invalidated[0] != tenant.String() || invalidated[1] != tenant.String() || invalidated[2] != tenant.String() {
 		t.Fatalf("cache invalidations=%v", invalidated)
 	}
+	repositories, _ := NewRepositories(pool)
+	runtimeState, err := repositories.LoadRuntimeSecurityState(ctx, now.Add(3*time.Second))
+	if err != nil {
+		t.Fatal(err)
+	}
+	foundRuntimeState := false
+	for _, state := range runtimeState {
+		if state.Policy.TenantID == tenant.String() && state.Policy.Channel == "stable" {
+			foundRuntimeState = state.Policy.BundleID == b1.String() && state.Policy.Version == 3 && state.Sequence >= 0 && state.Epochs.Security >= 0
+		}
+	}
+	if !foundRuntimeState {
+		t.Fatalf("active policy and revocation head were not loaded: %+v", runtimeState)
+	}
 	var activeCount int
 	if err := pool.QueryRow(ctx, `SELECT count(*) FROM policy_activations WHERE tenant_id=$1 AND channel='stable' AND deactivated_at IS NULL`, tenant.String()).Scan(&activeCount); err != nil || activeCount != 1 {
 		t.Fatalf("active count=%d err=%v", activeCount, err)

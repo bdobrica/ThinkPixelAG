@@ -7,14 +7,17 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver"
 	postgresadapter "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres"
+	"github.com/bdobrica/ThinkPixelAG/internal/application"
 	"github.com/bdobrica/ThinkPixelAG/internal/config"
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
 	"github.com/bdobrica/ThinkPixelAG/internal/observability/logging"
 	"github.com/bdobrica/ThinkPixelAG/internal/observability/metrics"
 	"github.com/bdobrica/ThinkPixelAG/internal/observability/tracing"
+	"github.com/bdobrica/ThinkPixelAG/internal/policy"
 )
 
 var (
@@ -68,6 +71,32 @@ func run(ctx context.Context, args []string) error {
 	if err != nil {
 		return fmt.Errorf("initialize database readiness: %w", err)
 	}
+	clock := domain.SystemClock{}
+	policyFreshness, err := policy.NewFreshness(settings.OPA.BundleMaxAge, clock.Now)
+	if err != nil {
+		return fmt.Errorf("initialize policy freshness: %w", err)
+	}
+	revocationFreshness, err := application.NewRevocationFreshnessTracker(clock)
+	if err != nil {
+		return fmt.Errorf("initialize revocation freshness: %w", err)
+	}
+	repositories, err := postgresadapter.NewRepositories(databasePool)
+	if err != nil {
+		return fmt.Errorf("initialize repositories: %w", err)
+	}
+	securityReadiness, err := application.NewRuntimeSecurityReadiness(repositories, policyFreshness, revocationFreshness, clock, application.DefaultNormalWriteFreshness)
+	if err != nil {
+		return fmt.Errorf("initialize security readiness: %w", err)
+	}
+	if err := metricSet.RegisterRevocationFreshness(func() (time.Duration, int64, int, uint64, int, bool) {
+		status := revocationFreshness.Metrics(application.DefaultNormalWriteFreshness)
+		return status.MaximumAge, status.MaximumLag, status.CurrentGaps, status.GapEvents, status.TrackedTenants, status.Healthy
+	}); err != nil {
+		return fmt.Errorf("register revocation freshness metrics: %w", err)
+	}
+	refreshInterval := min(settings.OPA.BundleMaxAge/2, application.DefaultNormalWriteFreshness/2)
+	go securityReadiness.Run(ctx, refreshInterval)
+	readiness := httpserver.ComposeReadiness(databaseReadiness, securityReadiness)
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), settings.HTTP.ShutdownTimeout)
 		defer cancel()
@@ -77,7 +106,7 @@ func run(ctx context.Context, args []string) error {
 	}()
 
 	server, err := httpserver.New(settings.HTTP, httpserver.Dependencies{
-		Logger: logger, Metrics: metricSet, Tracing: traceSet, Readiness: databaseReadiness,
+		Logger: logger, Metrics: metricSet, Tracing: traceSet, Readiness: readiness,
 		NewID: func() (string, error) { id, idErr := domain.NewID(); return id.String(), idErr },
 	})
 	if err != nil {

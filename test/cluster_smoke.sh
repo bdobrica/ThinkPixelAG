@@ -20,6 +20,11 @@ trap cleanup EXIT
 "$kubectl_bin" apply -k deploy/kubernetes/test
 "$kubectl_bin" rollout status deployment/thinkpixelag-postgres --timeout=120s
 "$kubectl_bin" wait --for=condition=complete job/thinkpixelag-migrate --timeout=120s
+# Readiness is intentionally fail closed until at least one validated active
+# policy and its authoritative revocation head have been reconciled.
+"$kubectl_bin" exec deployment/thinkpixelag-postgres -- env PGPASSWORD=phase8_disposable_only \
+  psql -U thinkpixelag_test -d thinkpixelag_test -v ON_ERROR_STOP=1 -c \
+  "INSERT INTO tenants(id,slug,display_name,created_at,updated_at) VALUES('019feba6-b9bb-7fff-bfff-fffffffffff1','phase8-smoke','Phase 8 smoke',now(),now()); INSERT INTO principals(id,tenant_id,external_issuer,external_subject,principal_type,created_at) VALUES('019feba6-b9bb-7fff-bfff-fffffffffff2','019feba6-b9bb-7fff-bfff-fffffffffff1','https://phase8.test','operator','HUMAN',now()); INSERT INTO policy_bundles(id,tenant_id,channel,content_digest,contract_version,artifact_revision,bundle,signature,signer_key_id,signer_key_version,signature_algorithm,validation_status,created_by,created_at) VALUES('019feba6-b9bb-7fff-bfff-fffffffffff3','019feba6-b9bb-7fff-bfff-fffffffffff1','stable','sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','thinkpixelag.authorization/v1alpha1',1,'test','test','phase8-test-key','1','ED25519','VALIDATED','019feba6-b9bb-7fff-bfff-fffffffffff2',now()); INSERT INTO policy_activations(id,tenant_id,channel,policy_bundle_id,activation_version,actor_principal_id,reason_code,activated_at) VALUES('019feba6-b9bb-7fff-bfff-fffffffffff4','019feba6-b9bb-7fff-bfff-fffffffffff1','stable','019feba6-b9bb-7fff-bfff-fffffffffff3',1,'019feba6-b9bb-7fff-bfff-fffffffffff2','phase8.smoke',now());"
 "$kubectl_bin" rollout status deployment/thinkpixelag --timeout=120s
 "$kubectl_bin" port-forward service/thinkpixelag 18080:8080 >/tmp/thinkpixelag-port-forward.log 2>&1 &
 forward_pid=$!
