@@ -18,8 +18,11 @@ Job, restricted security contexts, default-deny networking, resource bounds,
 topology spreading, and PDB. Process-only startup/liveness use `/livez`;
 governed readiness uses `/readyz`; the probe abstraction supports PostgreSQL and
 composed security-freshness checks without making disposable Valkey authoritative.
-The current production process assembly wires PostgreSQL but not the policy and
-revocation probes, so OPS-005 remains open.
+The production command reconciles currently valid active policy metadata and
+the matching authoritative revocation sequence/epoch heads from PostgreSQL in
+one bounded query. `/readyz` requires that loaded policy state and revocation
+state within the 30-second normal-write bound; empty, stale, invalid, lagging,
+gapped, or failed reconciliation remains unready while `/livez` stays independent.
 Optional HPA, ServiceMonitor, dashboard, SLO alerts, bounded metric definitions,
 and operator runbooks are separate from the base. Application/background-worker
 metric observations still need production assembly wiring, so OPS-006 remains
@@ -56,15 +59,20 @@ the tag workflow.
   lint/OpenAPI, unit/coverage, race, 26/26 Rego, PostgreSQL integration/e2e and
   security tests, Kubernetes rendering, dependency policy, govulncheck, license,
   static build, image build, and hardened container smoke.
+- OPS-005 focused unit/race and PostgreSQL integration checks passed at
+  `e4de968`/`bdf7cb0`. Clean-tree `make verify` then passed against an isolated
+  PostgreSQL database, including process liveness/fail-closed readiness in the
+  hardened container smoke. The disposable-cluster fixture now promotes an
+  explicit test-only active policy before awaiting `/readyz`.
 
 ## Remaining exit qualifications
 
-The evidence above does not qualify production probe/telemetry composition,
-PITR, production-shaped capacity, or the complete fault matrix. Before Phase 8
+The evidence above does not qualify production telemetry composition, PITR,
+production-shaped capacity, or the complete fault matrix. Before Phase 8
 can close:
 
-- OPS-005 and OPS-006 must assemble the policy/revocation readiness sources and
-  application/background-worker metric observations in the production command.
+- OPS-006 must assemble application/background-worker metric observations in
+  the production command.
 
 - OPS-009 must restore an encrypted physical backup plus WAL to chosen points
   around governance transactions and record RTO/RPO and invariant output.

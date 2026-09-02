@@ -356,7 +356,7 @@ qualification, and the operational disposable-cluster path are implemented and
 recorded in `docs/phase-8-evidence.md`. Phase exit remains blocked on physical
 PITR, production-shaped load, the remaining environment fault matrix, and a
 governed core API workflow through the production process composition. Those
-gates, plus production policy/revocation probe and worker metric wiring, remain
+gates, plus production worker metric wiring, remain
 unchecked rather than being weakened to documentation or synthetic proof.
 
 ### Phase 9 — Release-candidate closure
