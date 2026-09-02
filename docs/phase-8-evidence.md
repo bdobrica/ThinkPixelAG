@@ -81,15 +81,25 @@ the tag workflow.
   `promtool` parsed all 27 rules successfully. Clean-tree `make verify` passed
   against an isolated PostgreSQL database, including all integration/e2e,
   security, Kubernetes, supply-chain, image, and hardened-container gates.
+- `make test-postgres-pitr` at `fda4c64` created a pinned PostgreSQL 18.4
+  primary with continuous WAL archiving, encrypted a physical base backup with
+  ephemeral AES-256 key material, and recovered independently to named points
+  immediately before and after one atomic governance transaction. The targets
+  reproduced exact global/tenant/agent epochs, audit and outbox counts, and
+  allocation consumption; both then migrated forward from schema 17 to 18 and
+  passed `scripts/check-restored-invariants.sql`. Observed local target RTO was
+  3 and 4 seconds, selected-target RPO was zero transactions, and encrypted
+  backup SHA-256 was
+  `f7bfb405de9d4a3a4d2ce1517234887f67cf43d04e98ceb4630f126c6b77fd32`.
+  These measurements qualify the repository rehearsal, not a production
+  provider SLA. Clean-tree `make verify` subsequently passed against an
+  isolated PostgreSQL database.
 
 ## Remaining exit qualifications
 
-The evidence above does not qualify PITR, production-shaped capacity, or the
-complete fault matrix. Before Phase 8
-can close:
+The evidence above does not qualify production-shaped capacity or the complete
+fault matrix. Before Phase 8 can close:
 
-- OPS-009 must restore an encrypted physical backup plus WAL to chosen points
-  around governance transactions and record RTO/RPO and invariant output.
 - OPS-010 must run the documented full API/policy/admission/allocation/SSE/outbox/
   revocation workloads against the intended production topology and report
   percentiles, saturation, and tuned limits.
