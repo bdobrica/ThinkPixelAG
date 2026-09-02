@@ -24,9 +24,11 @@ one bounded query. `/readyz` requires that loaded policy state and revocation
 state within the 30-second normal-write bound; empty, stale, invalid, lagging,
 gapped, or failed reconciliation remains unready while `/livez` stays independent.
 Optional HPA, ServiceMonitor, dashboard, SLO alerts, bounded metric definitions,
-and operator runbooks are separate from the base. Application/background-worker
-metric observations still need production assembly wiring, so OPS-006 remains
-open.
+and operator runbooks are separate from the base. Production now refreshes
+bounded outbox count/age and terminal settlement lag every 15 seconds and
+exports pgx pool saturation at scrape time. HTTP, database, revocation, Go, and
+process collectors are live; closed policy/allocation/admission/cache outcome
+series exist at zero before their first event without synthetic observations.
 
 Release automation builds and pushes an immutable multi-platform image, emits
 BuildKit SBOM/provenance attestations, generates CycloneDX SBOM, JSON
@@ -64,15 +66,16 @@ the tag workflow.
   PostgreSQL database, including process liveness/fail-closed readiness in the
   hardened container smoke. The disposable-cluster fixture now promotes an
   explicit test-only active policy before awaiting `/readyz`.
+- OPS-006 focused unit/race and PostgreSQL integration checks passed at
+  `c4799b2`. Clean-tree `make verify` passed against an isolated PostgreSQL
+  database, including optional monitoring resource/dashboard contracts and the
+  hardened image smoke. The temporary database was removed after verification.
 
 ## Remaining exit qualifications
 
-The evidence above does not qualify production telemetry composition, PITR,
-production-shaped capacity, or the complete fault matrix. Before Phase 8
+The evidence above does not qualify PITR, production-shaped capacity, or the
+complete fault matrix. Before Phase 8
 can close:
-
-- OPS-006 must assemble application/background-worker metric observations in
-  the production command.
 
 - OPS-009 must restore an encrypted physical backup plus WAL to chosen points
   around governance transactions and record RTO/RPO and invariant output.
