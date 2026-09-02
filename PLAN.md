@@ -351,7 +351,7 @@ Finalize image, Kubernetes resources, dashboards, alerts, SLOs, runbooks, backup
 
 Status: in progress as of 2026-09-02. OCI/supply-chain automation,
 Kubernetes packaging/hardening/probe resources, optional monitoring/autoscaling,
-dashboard/alert definitions, runbooks, logical restore invariants, multi-architecture
+the fully validated SLO alert matrix, runbooks, logical restore invariants, multi-architecture
 qualification, and the operational disposable-cluster path are implemented and
 recorded in `docs/phase-8-evidence.md`. Phase exit remains blocked on physical
 PITR, production-shaped load, the remaining environment fault matrix, and a
