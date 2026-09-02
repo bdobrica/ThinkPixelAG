@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+      - name: Authenticate to GHCR
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build reproducible multi-architecture image
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          CREATED: ${{ github.event.repository.updated_at }}
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 --provenance=mode=max --sbom=true --push \
+            --build-arg VERSION="${GITHUB_REF_NAME}" --build-arg REVISION="${GITHUB_SHA}" --build-arg CREATED="$CREATED" \
+            --label org.opencontainers.image.created="$CREATED" --tag "${IMAGE,,}" --metadata-file image-metadata.json .
+          docker buildx imagetools inspect "${IMAGE,,}" --format '{{json .Manifest}}' > image-manifest.json
+      - name: Install pinned Trivy
+        run: |
+          curl --fail --location --silent --show-error https://github.com/aquasecurity/trivy/releases/download/v0.69.3/trivy_0.69.3_Linux-64bit.tar.gz -o /tmp/trivy.tar.gz
+          echo '1816b632dfe529869c740c0913e36bd1629cb7688bd5634f4a858c1d57c88b75  /tmp/trivy.tar.gz' | sha256sum --check
+          tar -xzf /tmp/trivy.tar.gz -C /usr/local/bin trivy
+      - name: Generate release artifacts and enforce vulnerability threshold
+        env:
+          VERSION: ${{ github.ref_name }}
+          REVISION: ${{ github.sha }}
+          IMAGE: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          SOURCE_DATE_EPOCH: ${{ github.event.repository.pushed_at }}
+        run: bash scripts/release-artifacts.sh
+      - name: Attest image and artifacts with GitHub OIDC
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v3.0.0
+        with:
+          subject-checksums: dist/SHA256SUMS
+      - name: Draft immutable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* image-manifest.json image-metadata.json --draft --generate-notes --verify-tag

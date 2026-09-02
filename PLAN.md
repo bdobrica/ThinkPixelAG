@@ -349,6 +349,16 @@ The review method, dispositions, and residual-risk register are recorded in
 
 Finalize image, Kubernetes resources, dashboards, alerts, SLOs, runbooks, backup/restore, upgrade/rollback, load testing, SBOM/scanning, and release automation. Exit when a disposable cluster passes installation, upgrade, disruption, recovery, and smoke tests.
 
+Status: in progress as of 2026-09-02. OCI/supply-chain automation,
+Kubernetes packaging/hardening/probe resources, optional monitoring/autoscaling,
+dashboard/alert definitions, runbooks, logical restore invariants, multi-architecture
+qualification, and the operational disposable-cluster path are implemented and
+recorded in `docs/phase-8-evidence.md`. Phase exit remains blocked on physical
+PITR, production-shaped load, the remaining environment fault matrix, and a
+governed core API workflow through the production process composition. Those
+gates, plus production policy/revocation probe and worker metric wiring, remain
+unchecked rather than being weakened to documentation or synthetic proof.
+
 ### Phase 9 — Release-candidate closure
 
 Run all verification gates, resolve critical/high findings, freeze contracts, prepare release notes, convert completed planning decisions/history into ADRs, update README, remove `PLAN.md` and `TODO.md`, and commit the documentation transition. Exit when the repository can produce a traceable, signed/taggable RC artifact from a clean checkout.

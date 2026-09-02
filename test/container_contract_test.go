@@ -22,6 +22,9 @@ func TestDockerfileIsPinnedMinimalAndNonRoot(t *testing.T) {
 		`ENTRYPOINT ["/thinkpixelag"]`,
 		"org.opencontainers.image.version=$VERSION",
 		"org.opencontainers.image.revision=$REVISION",
+		"org.opencontainers.image.created=$CREATED",
+		"/out/thinkpixelag-migrate /thinkpixelag-migrate",
+		"/src/migrations /migrations",
 	} {
 		if !strings.Contains(dockerfile, required) {
 			t.Errorf("Dockerfile contract %q is missing", required)

@@ -20,6 +20,17 @@ Initial application metrics are:
 - `thinkpixelag_http_requests_total{route,method,status_class}`;
 - `thinkpixelag_http_request_duration_seconds{route,method}`.
 
+The production operations surface additionally defines bounded signals for
+policy outcomes, PostgreSQL operations/health, transactional outbox backlog and
+age, allocation outcomes, run admission outcomes, terminal settlement lag,
+decision-cache outcomes, and revocation freshness/lag/gaps. Their names are
+`thinkpixelag_policy_decisions_total`, `thinkpixelag_database_*`,
+`thinkpixelag_outbox_*`, `thinkpixelag_allocation_operations_total`,
+`thinkpixelag_run_admissions_total`, `thinkpixelag_resource_settlement_lag_seconds`,
+`thinkpixelag_cache_operations_total`, and `thinkpixelag_revocation_*`.
+Background workers and use cases update these through the metrics facade; none
+accept tenant or resource identifiers as labels.
+
 Only stable route templates such as `/v1/runs/{run_id}` may be passed as
 `route`; raw paths, tenant/resource identifiers, query strings, objectives, and
 other user-controlled values are prohibited. Route labels must match the

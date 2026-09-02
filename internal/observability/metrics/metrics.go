@@ -32,6 +32,13 @@ type Metrics struct {
 	databaseOperations   *prometheus.CounterVec
 	databaseDuration     *prometheus.HistogramVec
 	databaseHealth       prometheus.Gauge
+	policyDecisions      *prometheus.CounterVec
+	outboxPending        prometheus.Gauge
+	outboxOldest         prometheus.Gauge
+	allocationOperations *prometheus.CounterVec
+	runAdmissions        *prometheus.CounterVec
+	settlementLag        prometheus.Gauge
+	cacheOperations      *prometheus.CounterVec
 	revocationCollectors []prometheus.Collector
 }
 
@@ -100,6 +107,13 @@ func New(enabled bool, build BuildInfo) (*Metrics, error) {
 	metrics.databaseOperations = prometheus.NewCounterVec(prometheus.CounterOpts{Namespace: namespace, Subsystem: "database", Name: "operations_total", Help: "Total PostgreSQL operations by bounded operation and outcome."}, []string{"operation", "outcome"})
 	metrics.databaseDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{Namespace: namespace, Subsystem: "database", Name: "operation_duration_seconds", Help: "PostgreSQL operation duration by bounded operation.", Buckets: []float64{.001, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10}}, []string{"operation"})
 	metrics.databaseHealth = prometheus.NewGauge(prometheus.GaugeOpts{Namespace: namespace, Subsystem: "database", Name: "healthy", Help: "Whether the most recent PostgreSQL health check succeeded."})
+	metrics.policyDecisions = prometheus.NewCounterVec(prometheus.CounterOpts{Namespace: namespace, Subsystem: "policy", Name: "decisions_total", Help: "Policy decisions by bounded outcome."}, []string{"outcome"})
+	metrics.outboxPending = prometheus.NewGauge(prometheus.GaugeOpts{Namespace: namespace, Subsystem: "outbox", Name: "pending", Help: "Pending transactional outbox messages."})
+	metrics.outboxOldest = prometheus.NewGauge(prometheus.GaugeOpts{Namespace: namespace, Subsystem: "outbox", Name: "oldest_seconds", Help: "Age of the oldest pending outbox message."})
+	metrics.allocationOperations = prometheus.NewCounterVec(prometheus.CounterOpts{Namespace: namespace, Subsystem: "allocation", Name: "operations_total", Help: "Resource allocation operations by bounded outcome."}, []string{"outcome"})
+	metrics.runAdmissions = prometheus.NewCounterVec(prometheus.CounterOpts{Namespace: namespace, Subsystem: "run", Name: "admissions_total", Help: "Run admissions by bounded outcome."}, []string{"outcome"})
+	metrics.settlementLag = prometheus.NewGauge(prometheus.GaugeOpts{Namespace: namespace, Subsystem: "resource", Name: "settlement_lag_seconds", Help: "Oldest terminal resource settlement lag."})
+	metrics.cacheOperations = prometheus.NewCounterVec(prometheus.CounterOpts{Namespace: namespace, Subsystem: "cache", Name: "operations_total", Help: "Decision cache operations by bounded outcome."}, []string{"outcome"})
 	buildInfo := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "build_info",
@@ -128,10 +142,70 @@ func New(enabled bool, build BuildInfo) (*Metrics, error) {
 	if err := registry.Register(metrics.databaseHealth); err != nil {
 		return nil, err
 	}
+	for _, collector := range []prometheus.Collector{metrics.policyDecisions, metrics.outboxPending, metrics.outboxOldest, metrics.allocationOperations, metrics.runAdmissions, metrics.settlementLag, metrics.cacheOperations} {
+		if err := registry.Register(collector); err != nil {
+			return nil, err
+		}
+	}
 	if err := registry.Register(buildInfo); err != nil {
 		return nil, err
 	}
 	return metrics, nil
+}
+
+// ObservePolicyDecision records only the closed decision outcome vocabulary.
+func (m *Metrics) ObservePolicyDecision(outcome string) {
+	m.observeOutcome(m.policyDecisions, outcome, "allow", "deny", "unavailable", "invalid")
+}
+
+// SetOutbox reports bounded backlog state without message or tenant labels.
+func (m *Metrics) SetOutbox(pending int, oldest time.Duration) {
+	if !m.enabled {
+		return
+	}
+	if pending < 0 {
+		pending = 0
+	}
+	if oldest < 0 {
+		oldest = 0
+	}
+	m.outboxPending.Set(float64(pending))
+	m.outboxOldest.Set(oldest.Seconds())
+}
+
+func (m *Metrics) ObserveAllocation(outcome string) {
+	m.observeOutcome(m.allocationOperations, outcome, "ok", "conflict", "denied", "error")
+}
+func (m *Metrics) ObserveRunAdmission(outcome string) {
+	m.observeOutcome(m.runAdmissions, outcome, "admitted", "denied", "conflict", "error")
+}
+func (m *Metrics) ObserveCache(outcome string) {
+	m.observeOutcome(m.cacheOperations, outcome, "hit", "miss", "invalid", "unavailable")
+}
+func (m *Metrics) SetSettlementLag(lag time.Duration) {
+	if m.enabled {
+		if lag < 0 {
+			lag = 0
+		}
+		m.settlementLag.Set(lag.Seconds())
+	}
+}
+
+func (m *Metrics) observeOutcome(counter *prometheus.CounterVec, outcome string, allowed ...string) {
+	if !m.enabled {
+		return
+	}
+	valid := false
+	for _, candidate := range allowed {
+		if outcome == candidate {
+			valid = true
+			break
+		}
+	}
+	if !valid {
+		outcome = "error"
+	}
+	counter.WithLabelValues(outcome).Inc()
 }
 
 // ObserveDatabase records bounded adapter telemetry; callers must never pass SQL text.

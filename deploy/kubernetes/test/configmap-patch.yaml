@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thinkpixelag
+data:
+  THINKPIXELAG_ENVIRONMENT: test
+  THINKPIXELAG_OPA_URL: http://127.0.0.1:8181
+  THINKPIXELAG_OIDC_ISSUER_URL: http://127.0.0.1:5556/test
+  THINKPIXELAG_SIGNING_PROVIDER: disabled
+  THINKPIXELAG_SIGNING_KEY_ID: ""

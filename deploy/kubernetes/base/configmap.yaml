@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thinkpixelag
+data:
+  THINKPIXELAG_ENVIRONMENT: production
+  THINKPIXELAG_HTTP_ADDRESS: :8080
+  THINKPIXELAG_METRICS_ENABLED: "true"
+  THINKPIXELAG_TRACING_MODE: noop
+  THINKPIXELAG_DATABASE_MIN_CONNECTIONS: "1"
+  THINKPIXELAG_DATABASE_MAX_CONNECTIONS: "20"
+  THINKPIXELAG_OPA_URL: https://opa.example.invalid
+  THINKPIXELAG_OIDC_ISSUER_URL: https://idp.example.invalid
+  THINKPIXELAG_OIDC_AUDIENCE: thinkpixelag
+  THINKPIXELAG_SIGNING_PROVIDER: kms
+  THINKPIXELAG_SIGNING_KEY_ID: replace-with-managed-key-reference

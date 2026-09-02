@@ -10,24 +10,33 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY cmd/ ./cmd/
 COPY internal/ ./internal/
+COPY migrations/ ./migrations/
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build \
     -trimpath -buildvcs=false \
     -ldflags "-s -w -X main.version=${VERSION} -X main.revision=${REVISION}" \
     -o /out/thinkpixelag ./cmd/thinkpixelag
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build \
+    -trimpath -buildvcs=false \
+    -ldflags "-s -w -X main.version=${VERSION} -X main.revision=${REVISION}" \
+    -o /out/thinkpixelag-migrate ./cmd/thinkpixelag-migrate
 
 FROM gcr.io/distroless/static-debian13:nonroot@sha256:f7f8f729987ad0fdf6b05eeeae94b26e6a0f613bdf46feea7fc40f7bd72953e6
 
 ARG VERSION=dev
 ARG REVISION=unknown
+ARG CREATED=unknown
 
 LABEL org.opencontainers.image.title="ThinkPixelAG" \
       org.opencontainers.image.description="Agent governance and lifecycle control plane" \
       org.opencontainers.image.source="https://github.com/bdobrica/ThinkPixelAG" \
       org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.created=$CREATED \
       org.opencontainers.image.version=$VERSION \
       org.opencontainers.image.revision=$REVISION
 
 COPY --from=build --chown=65532:65532 /out/thinkpixelag /thinkpixelag
+COPY --from=build --chown=65532:65532 /out/thinkpixelag-migrate /thinkpixelag-migrate
+COPY --from=build --chown=65532:65532 /src/migrations /migrations
 
 USER 65532:65532
 EXPOSE 8080

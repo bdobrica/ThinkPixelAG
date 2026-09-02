@@ -130,19 +130,19 @@ Status notation: `[ ]` pending, `[x]` implemented and verified. Add completion m
 
 ## Phase 8 — Kubernetes, operations, and release engineering
 
-- [ ] OPS-001 Finalize reproducible multi-architecture OCI build with pinned base digests, non-root user, read-only filesystem compatibility, CA roots, labels, and graceful shutdown.
-- [ ] OPS-002 Generate SBOM, vulnerability report, checksum, provenance, and image-signing/verification hooks in CI with release thresholds.
-- [ ] OPS-003 Create Kubernetes Deployment, Service, ServiceAccount, ConfigMap, secret references, and pre-deploy migration Job.
-- [ ] OPS-004 Add restricted security context, seccomp, dropped capabilities, NetworkPolicies, resource requests/limits, topology spreading, and PodDisruptionBudget.
-- [ ] OPS-005 Add readiness/liveness/startup probes that reflect process health, DB/policy readiness, and revocation freshness appropriately.
-- [ ] OPS-006 Add optional HPA and ServiceMonitor/PodMonitor plus dashboards for API, policy, database, outbox, allocation, run, revocation, cache, and Go runtime signals.
-- [ ] OPS-007 Define actionable alerts tied to SLOs with severity, ownership, runbook links, and anti-noise windows.
-- [ ] OPS-008 Write runbooks for install/configure, migration, upgrade/rollback, backup/restore, policy rollback, revocation gaps, DB/OPA/Valkey outage, outbox backlog, key rotation, and break-glass.
+- [x] OPS-001 Finalize reproducible multi-architecture OCI build with pinned base digests, non-root user, read-only filesystem compatibility, CA roots, labels, and graceful shutdown. — completed 2026-09-02, evidence: digest-pinned Buildx `linux/amd64,linux/arm64` OCI manifest `sha256:b6fc5c9712f1b27ba2046a1fa8bcbdedf5bbb307d782a50035203b42491d7d16`; shell-free UID 65532, CA-root/read-only/SIGTERM smoke; implementation commit pending
+- [x] OPS-002 Generate SBOM, vulnerability report, checksum, provenance, and image-signing/verification hooks in CI with release thresholds. — completed 2026-09-02, evidence: CycloneDX, Trivy JSON and zero critical/high threshold, deterministic checksums, SLSA-shaped provenance, BuildKit attestations, cosign hooks; implementation commit pending
+- [x] OPS-003 Create Kubernetes Deployment, Service, ServiceAccount, ConfigMap, secret references, and pre-deploy migration Job. — completed 2026-09-02, evidence: Kustomize render and disposable-cluster migration-before-readiness passed; implementation commit pending
+- [x] OPS-004 Add restricted security context, seccomp, dropped capabilities, NetworkPolicies, resource requests/limits, topology spreading, and PodDisruptionBudget. — completed 2026-09-02, evidence: contract/render gates plus kind restricted runtime and PDB-blocked drain; implementation commit pending
+- [ ] OPS-005 Add readiness/liveness/startup probes that reflect process health, DB/policy readiness, and revocation freshness appropriately. — Kubernetes process/readiness probes and composable application probes implemented; blocked on production process assembly wiring policy/revocation readiness
+- [ ] OPS-006 Add optional HPA and ServiceMonitor/PodMonitor plus dashboards for API, policy, database, outbox, allocation, run, revocation, cache, and Go runtime signals. — assets and bounded signal facade implemented; blocked on production process assembly wiring application/background-worker observations
+- [x] OPS-007 Define actionable alerts tied to SLOs with severity, ownership, runbook links, and anti-noise windows. — completed 2026-09-02, evidence: PrometheusRule availability, database, revocation, latency, outbox, and settlement alerts with `for`, severity, owner, summary, and runbook; implementation commit pending
+- [x] OPS-008 Write runbooks for install/configure, migration, upgrade/rollback, backup/restore, policy rollback, revocation gaps, DB/OPA/Valkey outage, outbox backlog, key rotation, and break-glass. — completed 2026-09-02, evidence: `docs/operations/runbooks.md`, recovery and load qualification procedures; implementation commit pending
 - [ ] OPS-009 Test PostgreSQL backup/restore, point-in-time recovery assumptions, schema forward recovery, and restoration of epoch/outbox/allocation invariants.
 - [ ] OPS-010 Run load tests for target API/policy latency, run admission throughput, allocation contention, SSE fanout, and outbox/revocation lag; tune documented limits.
 - [ ] OPS-011 Run resilience tests for DB failover/latency, OPA outage/malformed response, Valkey loss, stream partitions, worker crash, pod eviction, and rolling restart.
 - [ ] OPS-012 Run disposable-cluster install, restricted-container smoke, migration, core workflow, HPA/disruption, upgrade, rollback, and uninstall tests.
-- [ ] OPS-013 Add release automation that produces immutable image digests, manifests/chart package, SBOM/provenance, API artifacts, checksums, and draft notes.
+- [x] OPS-013 Add release automation that produces immutable image digests, manifests/chart package, SBOM/provenance, API artifacts, checksums, and draft notes. — completed 2026-09-02, evidence: tag-gated `.github/workflows/release.yaml`, deterministic Kubernetes/API archive, image manifest/metadata, SBOM/provenance, checksums, GitHub attestations, draft notes; implementation commit pending
 - [ ] OPS-014 Commit Phase 8 with operational docs, test reports, and artifact-generation evidence.
 
 ## Phase 9 — Release-candidate closure

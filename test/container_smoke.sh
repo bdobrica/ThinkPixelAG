@@ -16,8 +16,10 @@ configured_user=$("$docker_bin" image inspect --format '{{.Config.User}}' "$imag
 test "$configured_user" = "65532:65532"
 actual_version=$("$docker_bin" image inspect --format '{{index .Config.Labels "org.opencontainers.image.version"}}' "$image")
 actual_revision=$("$docker_bin" image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image")
+actual_created=$("$docker_bin" image inspect --format '{{index .Config.Labels "org.opencontainers.image.created"}}' "$image")
 test "$actual_version" = "$expected_version"
 test "$actual_revision" = "$expected_revision"
+test -n "$actual_created"
 if "$docker_bin" run --rm --entrypoint /bin/sh "$image" -c true >/dev/null 2>&1; then
     printf 'container-smoke: runtime unexpectedly contains /bin/sh\n' >&2
     exit 1
@@ -54,6 +56,7 @@ running_uid=$("$docker_bin" top "$container" | awk 'NR == 2 {print $1}')
 test "$running_uid" = "65532"
 read_only=$("$docker_bin" inspect --format '{{.HostConfig.ReadonlyRootfs}}' "$container")
 test "$read_only" = "true"
+"$docker_bin" export "$container" | tar -tf - | awk '$0 == "etc/ssl/certs/ca-certificates.crt" { found=1 } END { exit !found }'
 
 "$docker_bin" stop --time 5 "$container" >/dev/null
 exit_code=$("$docker_bin" inspect --format '{{.State.ExitCode}}' "$container")

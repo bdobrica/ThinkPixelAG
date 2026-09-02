@@ -26,6 +26,14 @@ Compose projects.
 The OPA server intentionally starts without policies until Phase 3. A healthy
 OPA process is not evidence that an application policy is loaded.
 
-Future OCI and Kubernetes assets also live here. Production credentials must
-use managed secret delivery, dependencies must use encrypted authenticated
-transport, and this local Compose file must not be deployed to Kubernetes.
+Production Kubernetes assets live under `deploy/kubernetes`. The base is a
+secure template, not a deployable environment: it uses a digest placeholder,
+managed Secret references, separate migration credentials, and default-deny
+egress. An environment overlay must replace the digest and explicitly allow
+PostgreSQL, OPA, IdP, telemetry, evidence, signing, and optional Valkey
+destinations. Optional HPA and Prometheus Operator resources are separate so
+their CRDs are not mandatory. See the [production runbooks](../docs/operations/runbooks.md).
+
+Production credentials must use managed secret delivery, dependencies must use
+encrypted authenticated transport, and the local Compose file must not be
+deployed to Kubernetes.

@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thinkpixelag
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: thinkpixelag
+          image: thinkpixelag:phase8
+          imagePullPolicy: Never

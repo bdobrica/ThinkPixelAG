@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thinkpixelag-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: thinkpixelag-postgres}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: thinkpixelag-postgres}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:18.4-alpine3.23@sha256:996d0920e4ff9df1fc19dacb904492f3c1ec0ec1cc338f0ad7123be7731c5f5e
+          envFrom:
+            - secretRef: {name: thinkpixelag-postgres-test}
+          ports:
+            - {name: postgres, containerPort: 5432}
+          readinessProbe:
+            exec: {command: [pg_isready, -U, thinkpixelag_test, -d, thinkpixelag_test]}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thinkpixelag-postgres
+spec:
+  selector: {app.kubernetes.io/name: thinkpixelag-postgres}
+  ports:
+    - {name: postgres, port: 5432, targetPort: postgres}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: thinkpixelag-postgres
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: thinkpixelag-postgres}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - {key: app.kubernetes.io/name, operator: In, values: [thinkpixelag, thinkpixelag-migrate]}
+      ports:
+        - {protocol: TCP, port: 5432}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: thinkpixelag-migration-egress
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: thinkpixelag-migrate}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: kube-system}
+      ports:
+        - {protocol: UDP, port: 53}
+        - {protocol: TCP, port: 53}
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: thinkpixelag-postgres}
+      ports:
+        - {protocol: TCP, port: 5432}

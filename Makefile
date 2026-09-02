@@ -15,12 +15,14 @@ MODULE := github.com/bdobrica/ThinkPixelAG
 BUILD_DIR ?= .cache/bin
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || printf dev)
 REVISION ?= $(shell git rev-parse --verify HEAD 2>/dev/null || printf unknown)
+CREATED ?= $(shell git show -s --format=%cI HEAD 2>/dev/null || printf unknown)
 IMAGE ?= thinkpixelag:dev
 GO_FILES := $(shell git ls-files '*.go')
 .PHONY: help tools generate generate-check fmt fmt-check lint test test-race \
 	test-policy test-integration test-e2e dependency-check vulnerability-check \
 	license-check security build image container-smoke verify clean compose-check dev-up \
-	dev-up-valkey dev-status dev-smoke dev-down dev-reset test-security
+	dev-up-valkey dev-status dev-smoke dev-down dev-reset test-security \
+	kubernetes-check release-artifacts test-backup-restore
 
 help: ## Show the stable development targets.
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -130,12 +132,27 @@ build: ## Build the static governance-plane binary with version metadata.
 		-o $(BUILD_DIR)/thinkpixelag ./cmd/thinkpixelag
 
 image: ## Build the pinned, minimal, non-root OCI image.
-	$(DOCKER) build --build-arg VERSION=$(VERSION) --build-arg REVISION=$(REVISION) -t $(IMAGE) .
+	$(DOCKER) build --build-arg VERSION=$(VERSION) --build-arg REVISION=$(REVISION) --build-arg CREATED=$(CREATED) -t $(IMAGE) .
 
 container-smoke: image ## Exercise the hardened image runtime and graceful shutdown.
 	VERSION=$(VERSION) REVISION=$(REVISION) IMAGE=$(IMAGE) DOCKER=$(DOCKER) bash test/container_smoke.sh
 
-verify: generate-check lint test test-race test-policy test-integration test-e2e test-security compose-check security build container-smoke ## Run the complete clean-checkout gate.
+kubernetes-check: ## Validate production manifest and release contracts.
+	$(GO) test -count=1 -run '^(TestKubernetes|TestRelease)' ./test
+	$(DOCKER) run --rm -v "$(CURDIR):/work:ro" -w /work \
+		registry.k8s.io/kubectl:v1.35.0@sha256:0bb95b2a450875fc8ceaea2f9987a99fe27c228846e2e00b93b65ebb0d59034e \
+		kustomize deploy/kubernetes/base >/dev/null
+
+release-artifacts: ## Generate SBOM, scan reports, provenance, API/manifests, and checksums.
+	VERSION=$(VERSION) REVISION=$(REVISION) IMAGE=$(IMAGE) \
+		SOURCE_DATE_EPOCH=$$(git show -s --format=%ct HEAD) bash scripts/release-artifacts.sh
+
+test-backup-restore: ## Exercise a logical restore and authoritative invariants on local PostgreSQL.
+	$(COMPOSE) -f compose.yaml ps --status running --services | grep -qx postgres
+	$(COMPOSE) -f compose.yaml cp scripts/check-restored-invariants.sql postgres:/tmp/thinkpixelag-check-restored-invariants.sql
+	$(COMPOSE) -f compose.yaml exec -T postgres sh -s < test/backup_restore.sh
+
+verify: generate-check lint test test-race test-policy test-integration test-e2e test-security compose-check kubernetes-check security build container-smoke ## Run the complete clean-checkout gate.
 
 clean: ## Remove repository-local build outputs.
 	rm -rf .cache/bin

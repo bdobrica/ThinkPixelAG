@@ -107,6 +107,34 @@ func TestLabelsFailToBoundedValues(t *testing.T) {
 	}
 }
 
+func TestOperationalSignalsUseBoundedOutcomesAndValues(t *testing.T) {
+	t.Parallel()
+	m, err := New(true, BuildInfo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.ObservePolicyDecision("allow")
+	m.ObservePolicyDecision("tenant-secret")
+	m.SetOutbox(7, 42*time.Second)
+	m.ObserveAllocation("conflict")
+	m.ObserveRunAdmission("admitted")
+	m.SetSettlementLag(3 * time.Second)
+	m.ObserveCache("hit")
+	families, err := m.Registry().Gather()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := make(map[string]bool)
+	for _, family := range families {
+		rendered[family.GetName()] = true
+	}
+	for _, name := range []string{"thinkpixelag_policy_decisions_total", "thinkpixelag_outbox_pending", "thinkpixelag_outbox_oldest_seconds", "thinkpixelag_allocation_operations_total", "thinkpixelag_run_admissions_total", "thinkpixelag_resource_settlement_lag_seconds", "thinkpixelag_cache_operations_total"} {
+		if !rendered[name] {
+			t.Errorf("metric %s was not gathered", name)
+		}
+	}
+}
+
 func TestBuildLabelsRejectSecretShapedValues(t *testing.T) {
 	t.Parallel()
 	metrics, err := New(true, BuildInfo{Version: "token=metrics-sentinel-secret", Revision: "safe-revision"})
