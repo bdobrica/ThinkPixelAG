@@ -67,6 +67,12 @@ func run(ctx context.Context, args []string) error {
 		return fmt.Errorf("initialize database: %w", err)
 	}
 	defer databasePool.Close()
+	if err := metricSet.RegisterDatabasePool(func() (int32, int32, int32) {
+		stats := databasePool.Stat()
+		return stats.AcquiredConns(), stats.TotalConns(), stats.MaxConns()
+	}); err != nil {
+		return fmt.Errorf("register database pool metrics: %w", err)
+	}
 	databaseReadiness, err := postgresadapter.NewReadiness(databasePool, settings.Database.HealthTimeout, metricSet)
 	if err != nil {
 		return fmt.Errorf("initialize database readiness: %w", err)
@@ -84,6 +90,11 @@ func run(ctx context.Context, args []string) error {
 	if err != nil {
 		return fmt.Errorf("initialize repositories: %w", err)
 	}
+	operationalMetrics, err := application.NewOperationalMetricsPublisher(repositories, metricSet, clock)
+	if err != nil {
+		return fmt.Errorf("initialize operational metrics: %w", err)
+	}
+	go operationalMetrics.Run(ctx, 15*time.Second)
 	securityReadiness, err := application.NewRuntimeSecurityReadiness(repositories, policyFreshness, revocationFreshness, clock, application.DefaultNormalWriteFreshness)
 	if err != nil {
 		return fmt.Errorf("initialize security readiness: %w", err)

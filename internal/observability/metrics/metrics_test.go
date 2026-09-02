@@ -30,6 +30,32 @@ func TestRevocationFreshnessMetrics(t *testing.T) {
 	}
 }
 
+func TestDatabasePoolMetricsAreBoundedAndRegisteredOnce(t *testing.T) {
+	m, err := New(true, BuildInfo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = m.RegisterDatabasePool(func() (int32, int32, int32) { return 3, 5, 10 }); err != nil {
+		t.Fatal(err)
+	}
+	if err = m.RegisterDatabasePool(func() (int32, int32, int32) { return 0, 0, 0 }); err == nil {
+		t.Fatal("duplicate pool collector registration succeeded")
+	}
+	families, err := m.Registry().Gather()
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, family := range families {
+		if family.GetName() == "thinkpixelag_database_pool_utilization_ratio" {
+			found = len(family.Metric) == 1 && family.Metric[0].GetGauge().GetValue() == 0.3
+		}
+	}
+	if !found {
+		t.Fatal("database pool utilization was not gathered")
+	}
+}
+
 func TestEnabledMetrics(t *testing.T) {
 	t.Parallel()
 	metrics, err := New(true, BuildInfo{Version: "v0.1.0", Revision: "abc123"})
@@ -132,6 +158,30 @@ func TestOperationalSignalsUseBoundedOutcomesAndValues(t *testing.T) {
 		if !rendered[name] {
 			t.Errorf("metric %s was not gathered", name)
 		}
+	}
+}
+
+func TestOperationalOutcomeSeriesExistBeforeFirstEvent(t *testing.T) {
+	t.Parallel()
+	m, err := New(true, BuildInfo{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	families, err := m.Registry().Gather()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]int{"thinkpixelag_policy_decisions_total": 4, "thinkpixelag_allocation_operations_total": 4, "thinkpixelag_run_admissions_total": 4, "thinkpixelag_cache_operations_total": 4}
+	for _, family := range families {
+		if count, ok := want[family.GetName()]; ok {
+			if len(family.Metric) != count {
+				t.Errorf("metric %s series=%d want=%d", family.GetName(), len(family.Metric), count)
+			}
+			delete(want, family.GetName())
+		}
+	}
+	if len(want) != 0 {
+		t.Fatalf("missing initialized metric families: %v", want)
 	}
 }
 

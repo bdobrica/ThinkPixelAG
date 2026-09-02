@@ -25,21 +25,53 @@ type BuildInfo struct {
 // Metrics is safe for concurrent use. When disabled, observations are no-ops
 // and the registry remains empty.
 type Metrics struct {
-	enabled              bool
-	registry             *prometheus.Registry
-	httpRequests         *prometheus.CounterVec
-	httpRequestDuration  *prometheus.HistogramVec
-	databaseOperations   *prometheus.CounterVec
-	databaseDuration     *prometheus.HistogramVec
-	databaseHealth       prometheus.Gauge
-	policyDecisions      *prometheus.CounterVec
-	outboxPending        prometheus.Gauge
-	outboxOldest         prometheus.Gauge
-	allocationOperations *prometheus.CounterVec
-	runAdmissions        *prometheus.CounterVec
-	settlementLag        prometheus.Gauge
-	cacheOperations      *prometheus.CounterVec
-	revocationCollectors []prometheus.Collector
+	enabled               bool
+	registry              *prometheus.Registry
+	httpRequests          *prometheus.CounterVec
+	httpRequestDuration   *prometheus.HistogramVec
+	databaseOperations    *prometheus.CounterVec
+	databaseDuration      *prometheus.HistogramVec
+	databaseHealth        prometheus.Gauge
+	policyDecisions       *prometheus.CounterVec
+	outboxPending         prometheus.Gauge
+	outboxOldest          prometheus.Gauge
+	allocationOperations  *prometheus.CounterVec
+	runAdmissions         *prometheus.CounterVec
+	settlementLag         prometheus.Gauge
+	cacheOperations       *prometheus.CounterVec
+	revocationCollectors  []prometheus.Collector
+	databasePoolCollector prometheus.Collector
+}
+
+type DatabasePoolSource func() (acquired, total, maximum int32)
+
+type databasePoolCollector struct {
+	source                        DatabasePoolSource
+	acquired, total, maximum, use *prometheus.Desc
+}
+
+func newDatabasePoolCollector(source DatabasePoolSource) *databasePoolCollector {
+	return &databasePoolCollector{source: source,
+		acquired: prometheus.NewDesc(namespace+"_database_pool_acquired_connections", "Connections currently acquired from the PostgreSQL pool.", nil, nil),
+		total:    prometheus.NewDesc(namespace+"_database_pool_connections", "Connections currently held by the PostgreSQL pool.", nil, nil),
+		maximum:  prometheus.NewDesc(namespace+"_database_pool_max_connections", "Configured maximum PostgreSQL pool connections.", nil, nil),
+		use:      prometheus.NewDesc(namespace+"_database_pool_utilization_ratio", "Fraction of configured PostgreSQL connections currently acquired.", nil, nil)}
+}
+func (c *databasePoolCollector) Describe(ch chan<- *prometheus.Desc) {
+	for _, desc := range []*prometheus.Desc{c.acquired, c.total, c.maximum, c.use} {
+		ch <- desc
+	}
+}
+func (c *databasePoolCollector) Collect(ch chan<- prometheus.Metric) {
+	acquired, total, maximum := c.source()
+	utilization := 0.0
+	if maximum > 0 {
+		utilization = float64(acquired) / float64(maximum)
+	}
+	ch <- prometheus.MustNewConstMetric(c.acquired, prometheus.GaugeValue, float64(acquired))
+	ch <- prometheus.MustNewConstMetric(c.total, prometheus.GaugeValue, float64(total))
+	ch <- prometheus.MustNewConstMetric(c.maximum, prometheus.GaugeValue, float64(maximum))
+	ch <- prometheus.MustNewConstMetric(c.use, prometheus.GaugeValue, utilization)
 }
 
 // RevocationFreshnessSource supplies one consistent scrape-time aggregate.
@@ -147,10 +179,20 @@ func New(enabled bool, build BuildInfo) (*Metrics, error) {
 			return nil, err
 		}
 	}
+	initializeOutcomeSeries(metrics.policyDecisions, "allow", "deny", "unavailable", "invalid")
+	initializeOutcomeSeries(metrics.allocationOperations, "ok", "conflict", "denied", "error")
+	initializeOutcomeSeries(metrics.runAdmissions, "admitted", "denied", "conflict", "error")
+	initializeOutcomeSeries(metrics.cacheOperations, "hit", "miss", "invalid", "unavailable")
 	if err := registry.Register(buildInfo); err != nil {
 		return nil, err
 	}
 	return metrics, nil
+}
+
+func initializeOutcomeSeries(counter *prometheus.CounterVec, outcomes ...string) {
+	for _, outcome := range outcomes {
+		counter.WithLabelValues(outcome)
+	}
 }
 
 // ObservePolicyDecision records only the closed decision outcome vocabulary.
@@ -260,6 +302,26 @@ func (m *Metrics) RegisterRevocationFreshness(source RevocationFreshnessSource) 
 		}
 	}
 	m.revocationCollectors = metricCollectors
+	return nil
+}
+
+// RegisterDatabasePool exposes bounded pool saturation without connection or
+// query identifiers. It must be called at most once during process assembly.
+func (m *Metrics) RegisterDatabasePool(source DatabasePoolSource) error {
+	if source == nil {
+		return errors.New("database pool metrics require a source")
+	}
+	if !m.enabled {
+		return nil
+	}
+	if m.databasePoolCollector != nil {
+		return errors.New("database pool metrics already registered")
+	}
+	collector := newDatabasePoolCollector(source)
+	if err := m.registry.Register(collector); err != nil {
+		return err
+	}
+	m.databasePoolCollector = collector
 	return nil
 }
 

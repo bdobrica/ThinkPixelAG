@@ -7,7 +7,7 @@
     {"type":"timeseries","title":"API rate and errors","targets":[{"expr":"sum by (route,status_class) (rate(thinkpixelag_http_requests_total[5m]))"}]},
     {"type":"timeseries","title":"API p95/p99 latency","targets":[{"expr":"histogram_quantile(0.99, sum by (le,route) (rate(thinkpixelag_http_request_duration_seconds_bucket[5m])))"}]},
     {"type":"timeseries","title":"Policy decisions","targets":[{"expr":"sum by (outcome) (rate(thinkpixelag_policy_decisions_total[5m]))"}]},
-    {"type":"timeseries","title":"Database health and latency","targets":[{"expr":"thinkpixelag_database_healthy"},{"expr":"histogram_quantile(0.99, sum by (le) (rate(thinkpixelag_database_operation_duration_seconds_bucket[5m])))"}]},
+    {"type":"timeseries","title":"Database health, saturation, and latency","targets":[{"expr":"thinkpixelag_database_healthy"},{"expr":"thinkpixelag_database_pool_utilization_ratio"},{"expr":"histogram_quantile(0.99, sum by (le) (rate(thinkpixelag_database_operation_duration_seconds_bucket[5m])))"}]},
     {"type":"timeseries","title":"Outbox backlog and age","targets":[{"expr":"thinkpixelag_outbox_pending"},{"expr":"thinkpixelag_outbox_oldest_seconds"}]},
     {"type":"timeseries","title":"Allocation conflicts","targets":[{"expr":"sum(rate(thinkpixelag_allocation_operations_total{outcome=\"conflict\"}[5m]))"}]},
     {"type":"timeseries","title":"Run admissions and settlement lag","targets":[{"expr":"sum by (outcome) (rate(thinkpixelag_run_admissions_total[5m]))"},{"expr":"thinkpixelag_resource_settlement_lag_seconds"}]},

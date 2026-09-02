@@ -110,6 +110,10 @@ func TestPolicyActivationAndRollbackAppendVersions(t *testing.T) {
 	if !foundRuntimeState {
 		t.Fatalf("active policy and revocation head were not loaded: %+v", runtimeState)
 	}
+	operationalSnapshot, err := repositories.LoadOperationalMetrics(ctx, now.Add(3*time.Second))
+	if err != nil || operationalSnapshot.OutboxPending < 0 || operationalSnapshot.OutboxOldestAge < 0 || operationalSnapshot.OldestSettlementLag < 0 {
+		t.Fatalf("operational metrics snapshot=%+v err=%v", operationalSnapshot, err)
+	}
 	var activeCount int
 	if err := pool.QueryRow(ctx, `SELECT count(*) FROM policy_activations WHERE tenant_id=$1 AND channel='stable' AND deactivated_at IS NULL`, tenant.String()).Scan(&activeCount); err != nil || activeCount != 1 {
 		t.Fatalf("active count=%d err=%v", activeCount, err)
