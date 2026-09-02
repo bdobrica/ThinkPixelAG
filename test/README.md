@@ -19,3 +19,10 @@ authorization, approval, artifact-integrity, cache, freshness, replay, and
 evidence controls described in `docs/security/adversarial-testing.md`. Its
 evidence-suppression cases require the same real PostgreSQL instance as
 `make test-integration`.
+
+`make test-postgres-pitr` creates an isolated PostgreSQL primary with continuous
+WAL archiving, encrypts a physical base backup, and restores to named points on
+both sides of an atomic governance transaction. Each recovered copy is migrated
+forward from the prior schema and checked for epoch, evidence/outbox, checkpoint,
+and allocation invariants. The fixture and its ephemeral encryption key are
+removed after the rehearsal; the command never uses the developer database.

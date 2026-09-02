@@ -143,3 +143,17 @@ func TestReleaseOperationalRunbooksCoverRequiredRecovery(t *testing.T) {
 		}
 	}
 }
+
+func TestPostgresPITRQualificationIsPhysicalEncryptedAndInvariantChecked(t *testing.T) {
+	t.Parallel()
+	data, err := os.ReadFile("postgres_pitr.sh")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(data)
+	for _, required := range []string{"pg_basebackup", "archive_mode=on", "archive_command=", "pg_create_restore_point", "recovery_target_name", "recovery.signal", "openssl enc -aes-256-cbc", "check-restored-invariants.sql", "thinkpixelag-migrate", "ops009_before_governance", "ops009_after_governance"} {
+		if !strings.Contains(text, required) {
+			t.Errorf("PITR qualification lacks %q", required)
+		}
+	}
+}

@@ -22,7 +22,7 @@ GO_FILES := $(shell git ls-files '*.go')
 	test-policy test-integration test-e2e dependency-check vulnerability-check \
 	license-check security build image container-smoke verify clean compose-check dev-up \
 	dev-up-valkey dev-status dev-smoke dev-down dev-reset test-security \
-	kubernetes-check release-artifacts test-backup-restore
+	kubernetes-check release-artifacts test-backup-restore test-postgres-pitr
 
 help: ## Show the stable development targets.
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -151,6 +151,11 @@ test-backup-restore: ## Exercise a logical restore and authoritative invariants 
 	$(COMPOSE) -f compose.yaml ps --status running --services | grep -qx postgres
 	$(COMPOSE) -f compose.yaml cp scripts/check-restored-invariants.sql postgres:/tmp/thinkpixelag-check-restored-invariants.sql
 	$(COMPOSE) -f compose.yaml exec -T postgres sh -s < test/backup_restore.sh
+
+test-postgres-pitr: ## Exercise encrypted physical backup, WAL PITR, forward migration, and invariants.
+	mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=0 $(GO) build -trimpath -buildvcs=false -o $(BUILD_DIR)/thinkpixelag-migrate ./cmd/thinkpixelag-migrate
+	DOCKER=$(DOCKER) POSTGRES_IMAGE=$$(awk '/^[[:space:]]*image: postgres:/{print $$2; exit}' compose.yaml) bash test/postgres_pitr.sh
 
 verify: generate-check lint test test-race test-policy test-integration test-e2e test-security compose-check kubernetes-check security build container-smoke ## Run the complete clean-checkout gate.
 
