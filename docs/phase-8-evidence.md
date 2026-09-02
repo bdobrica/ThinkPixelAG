@@ -2,7 +2,7 @@
 
 - Status: in progress
 - Review date: 2026-09-02
-- Source revision tested: `df03377` plus the uncommitted Phase 8 candidate tree
+- Implementation commit: `2c919cd`
 - Host: Linux/amd64, Docker, kind v0.30.0 (Kubernetes v1.34.0), kubectl v1.35.0, PostgreSQL 18.4
 
 ## Implemented controls
@@ -52,6 +52,10 @@ the tag workflow.
   API runtime, live/ready/metrics probes, HPA presence, PDB-blocked voluntary
   drain, pod replacement, rolling configuration upgrade, rollback, uninstall,
   and automatic cluster cleanup.
+- Clean-tree `make verify` passed at `2c919cd`, including generation drift,
+  lint/OpenAPI, unit/coverage, race, 26/26 Rego, PostgreSQL integration/e2e and
+  security tests, Kubernetes rendering, dependency policy, govulncheck, license,
+  static build, image build, and hardened container smoke.
 
 ## Remaining exit qualifications
 
