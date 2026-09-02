@@ -4,54 +4,156 @@ metadata:
   name: thinkpixelag
 spec:
   groups:
-    - name: thinkpixelag.slo
+    - name: thinkpixelag.availability
       rules:
-        - alert: ThinkPixelAGUnavailable
-          expr: sum(rate(thinkpixelag_http_requests_total{status_class="5xx"}[5m])) / clamp_min(sum(rate(thinkpixelag_http_requests_total[5m])), 1) > 0.01
+        # The 99.9% APIs use a 0.1% error budget. A 14.4x one-hour burn
+        # pages quickly; the paired 6h/3d condition catches persistent burn.
+        - alert: ThinkPixelAGPublicReadFastBurn
+          expr: (sum(rate(thinkpixelag_http_requests_total{method=~"GET|HEAD",route=~"/v1/(agents.*|runs/\\{run_id\\})",status_class="5xx"}[1h])) / clamp_min(sum(rate(thinkpixelag_http_requests_total{method=~"GET|HEAD",route=~"/v1/(agents.*|runs/\\{run_id\\})"}[1h])), 0.001)) > (14.4 * 0.001)
+          for: 5m
+          labels: {severity: critical, owner: thinkpixelag}
+          annotations: {summary: Public read API is rapidly consuming its availability budget, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#availability-error-budget-burn"}
+        - alert: ThinkPixelAGPublicReadSlowBurn
+          expr: (sum(rate(thinkpixelag_http_requests_total{method=~"GET|HEAD",route=~"/v1/(agents.*|runs/\\{run_id\\})",status_class="5xx"}[6h])) / clamp_min(sum(rate(thinkpixelag_http_requests_total{method=~"GET|HEAD",route=~"/v1/(agents.*|runs/\\{run_id\\})"}[6h])), 0.001)) > 0.001 and (sum(rate(thinkpixelag_http_requests_total{method=~"GET|HEAD",route=~"/v1/(agents.*|runs/\\{run_id\\})",status_class="5xx"}[3d])) / clamp_min(sum(rate(thinkpixelag_http_requests_total{method=~"GET|HEAD",route=~"/v1/(agents.*|runs/\\{run_id\\})"}[3d])), 0.001)) > 0.001
+          for: 30m
+          labels: {severity: warning, owner: thinkpixelag}
+          annotations: {summary: Public read API is persistently consuming its availability budget, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#availability-error-budget-burn"}
+        - alert: ThinkPixelAGRunMutationFastBurn
+          expr: (sum(rate(thinkpixelag_http_requests_total{method="POST",route=~"/v1/(agents/\\{agent_id\\}/runs|runs/\\{run_id\\}/(signals|cancel))",status_class="5xx"}[1h])) / clamp_min(sum(rate(thinkpixelag_http_requests_total{method="POST",route=~"/v1/(agents/\\{agent_id\\}/runs|runs/\\{run_id\\}/(signals|cancel))"}[1h])), 0.001)) > (14.4 * 0.001)
+          for: 5m
+          labels: {severity: critical, owner: thinkpixelag}
+          annotations: {summary: Run mutation API is rapidly consuming its availability budget, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#availability-error-budget-burn"}
+        - alert: ThinkPixelAGRunMutationSlowBurn
+          expr: (sum(rate(thinkpixelag_http_requests_total{method="POST",route=~"/v1/(agents/\\{agent_id\\}/runs|runs/\\{run_id\\}/(signals|cancel))",status_class="5xx"}[6h])) / clamp_min(sum(rate(thinkpixelag_http_requests_total{method="POST",route=~"/v1/(agents/\\{agent_id\\}/runs|runs/\\{run_id\\}/(signals|cancel))"}[6h])), 0.001)) > 0.001 and (sum(rate(thinkpixelag_http_requests_total{method="POST",route=~"/v1/(agents/\\{agent_id\\}/runs|runs/\\{run_id\\}/(signals|cancel))",status_class="5xx"}[3d])) / clamp_min(sum(rate(thinkpixelag_http_requests_total{method="POST",route=~"/v1/(agents/\\{agent_id\\}/runs|runs/\\{run_id\\}/(signals|cancel))"}[3d])), 0.001)) > 0.001
+          for: 30m
+          labels: {severity: warning, owner: thinkpixelag}
+          annotations: {summary: Run mutation API is persistently consuming its availability budget, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#availability-error-budget-burn"}
+        # Admin/trusted traffic has a 99.5% objective and explicit 1h/24h windows.
+        - alert: ThinkPixelAGTrustedAPIFastBurn
+          expr: (sum(rate(thinkpixelag_http_requests_total{route=~"/v1/(admin|trusted)/.*",status_class="5xx"}[1h])) / clamp_min(sum(rate(thinkpixelag_http_requests_total{route=~"/v1/(admin|trusted)/.*"}[1h])), 0.001)) > (6 * 0.005)
           for: 10m
           labels: {severity: critical, owner: thinkpixelag}
-          annotations:
-            summary: ThinkPixelAG error rate exceeds its availability budget
-            runbook_url: https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#service-or-database-outage
+          annotations: {summary: Admin or trusted API is rapidly consuming its availability budget, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#availability-error-budget-burn"}
+        - alert: ThinkPixelAGTrustedAPISlowBurn
+          expr: (sum(rate(thinkpixelag_http_requests_total{route=~"/v1/(admin|trusted)/.*",status_class="5xx"}[24h])) / clamp_min(sum(rate(thinkpixelag_http_requests_total{route=~"/v1/(admin|trusted)/.*"}[24h])), 0.001)) > 0.005
+          for: 1h
+          labels: {severity: warning, owner: thinkpixelag}
+          annotations: {summary: Admin or trusted API is persistently consuming its availability budget, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#availability-error-budget-burn"}
+
+    - name: thinkpixelag.latency
+      rules:
+        # Both 10m and 1h windows must breach to suppress transient spikes.
+        - alert: ThinkPixelAGPublicReadP95LatencyHigh
+          expr: histogram_quantile(0.95, sum by (le) (rate(thinkpixelag_http_request_duration_seconds_bucket{method=~"GET|HEAD",route=~"/v1/(agents.*|runs/\\{run_id\\})"}[10m]))) > 0.1 and histogram_quantile(0.95, sum by (le) (rate(thinkpixelag_http_request_duration_seconds_bucket{method=~"GET|HEAD",route=~"/v1/(agents.*|runs/\\{run_id\\})"}[1h]))) > 0.1
+          for: 10m
+          labels: {severity: warning, owner: thinkpixelag}
+          annotations: {summary: Public cached read p95 latency exceeds 100 ms, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#latency-or-capacity"}
+        - alert: ThinkPixelAGPublicReadP99LatencyHigh
+          expr: histogram_quantile(0.99, sum by (le) (rate(thinkpixelag_http_request_duration_seconds_bucket{method=~"GET|HEAD",route=~"/v1/(agents.*|runs/\\{run_id\\})"}[10m]))) > 0.25 and histogram_quantile(0.99, sum by (le) (rate(thinkpixelag_http_request_duration_seconds_bucket{method=~"GET|HEAD",route=~"/v1/(agents.*|runs/\\{run_id\\})"}[1h]))) > 0.25
+          for: 10m
+          labels: {severity: critical, owner: thinkpixelag}
+          annotations: {summary: Public cached read p99 latency exceeds 250 ms, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#latency-or-capacity"}
+        - alert: ThinkPixelAGRunAdmissionP95LatencyHigh
+          expr: histogram_quantile(0.95, sum by (le) (rate(thinkpixelag_http_request_duration_seconds_bucket{method="POST",route="/v1/agents/{agent_id}/runs"}[10m]))) > 0.3 and histogram_quantile(0.95, sum by (le) (rate(thinkpixelag_http_request_duration_seconds_bucket{method="POST",route="/v1/agents/{agent_id}/runs"}[1h]))) > 0.3
+          for: 10m
+          labels: {severity: warning, owner: thinkpixelag}
+          annotations: {summary: Run admission p95 latency exceeds 300 ms, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#latency-or-capacity"}
+        - alert: ThinkPixelAGRunAdmissionP99LatencyHigh
+          expr: histogram_quantile(0.99, sum by (le) (rate(thinkpixelag_http_request_duration_seconds_bucket{method="POST",route="/v1/agents/{agent_id}/runs"}[10m]))) > 0.75 and histogram_quantile(0.99, sum by (le) (rate(thinkpixelag_http_request_duration_seconds_bucket{method="POST",route="/v1/agents/{agent_id}/runs"}[1h]))) > 0.75
+          for: 10m
+          labels: {severity: critical, owner: thinkpixelag}
+          annotations: {summary: Run admission p99 latency exceeds 750 ms, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#latency-or-capacity"}
+        - alert: ThinkPixelAGMutationP95LatencyHigh
+          expr: histogram_quantile(0.95, sum by (le) (rate(thinkpixelag_http_request_duration_seconds_bucket{method="POST",route=~"/v1/.*",route!="/v1/agents/{agent_id}/runs"}[10m]))) > 0.2 and histogram_quantile(0.95, sum by (le) (rate(thinkpixelag_http_request_duration_seconds_bucket{method="POST",route=~"/v1/.*",route!="/v1/agents/{agent_id}/runs"}[1h]))) > 0.2
+          for: 10m
+          labels: {severity: warning, owner: thinkpixelag}
+          annotations: {summary: Other mutation p95 latency exceeds 200 ms, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#latency-or-capacity"}
+        - alert: ThinkPixelAGMutationP99LatencyHigh
+          expr: histogram_quantile(0.99, sum by (le) (rate(thinkpixelag_http_request_duration_seconds_bucket{method="POST",route=~"/v1/.*",route!="/v1/agents/{agent_id}/runs"}[10m]))) > 0.5 and histogram_quantile(0.99, sum by (le) (rate(thinkpixelag_http_request_duration_seconds_bucket{method="POST",route=~"/v1/.*",route!="/v1/agents/{agent_id}/runs"}[1h]))) > 0.5
+          for: 10m
+          labels: {severity: critical, owner: thinkpixelag}
+          annotations: {summary: Other mutation p99 latency exceeds 500 ms, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#latency-or-capacity"}
+
+    - name: thinkpixelag.dependencies
+      rules:
         - alert: ThinkPixelAGDatabaseUnavailable
           expr: thinkpixelag_database_healthy == 0
           for: 5m
           labels: {severity: critical, owner: thinkpixelag}
-          annotations:
-            summary: ThinkPixelAG cannot reach authoritative PostgreSQL
-            runbook_url: https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#service-or-database-outage
+          annotations: {summary: ThinkPixelAG cannot reach authoritative PostgreSQL, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#service-or-database-outage"}
+        - alert: ThinkPixelAGDatabasePoolSaturated
+          expr: thinkpixelag_database_pool_utilization_ratio > 0.9
+          for: 15m
+          labels: {severity: warning, owner: thinkpixelag}
+          annotations: {summary: PostgreSQL pool utilization is above 90 percent, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#latency-or-capacity"}
+        - alert: ThinkPixelAGPolicyEvaluationFailures
+          expr: sum(rate(thinkpixelag_policy_decisions_total{outcome=~"unavailable|invalid"}[10m])) / clamp_min(sum(rate(thinkpixelag_policy_decisions_total[10m])), 0.001) > 0.01
+          for: 10m
+          labels: {severity: critical, owner: thinkpixelag}
+          annotations: {summary: Policy evaluation failures exceed one percent, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#opa-or-valkey-outage"}
+        - alert: ThinkPixelAGPolicyP95LatencyHigh
+          expr: histogram_quantile(0.95, sum by (le) (rate(thinkpixelag_policy_decision_duration_seconds_bucket[10m]))) > 0.025 and histogram_quantile(0.95, sum by (le) (rate(thinkpixelag_policy_decision_duration_seconds_bucket[1h]))) > 0.025
+          for: 10m
+          labels: {severity: warning, owner: thinkpixelag}
+          annotations: {summary: OPA decision p95 latency exceeds 25 ms, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#opa-or-valkey-outage"}
+        - alert: ThinkPixelAGPolicyP99LatencyHigh
+          expr: histogram_quantile(0.99, sum by (le) (rate(thinkpixelag_policy_decision_duration_seconds_bucket[10m]))) > 0.075 and histogram_quantile(0.99, sum by (le) (rate(thinkpixelag_policy_decision_duration_seconds_bucket[1h]))) > 0.075
+          for: 10m
+          labels: {severity: critical, owner: thinkpixelag}
+          annotations: {summary: OPA decision p99 latency exceeds 75 ms, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#opa-or-valkey-outage"}
+        - alert: ThinkPixelAGCacheFailures
+          expr: sum(rate(thinkpixelag_cache_operations_total{outcome=~"unavailable|invalid"}[15m])) / clamp_min(sum(rate(thinkpixelag_cache_operations_total[15m])), 0.001) > 0.05
+          for: 15m
+          labels: {severity: warning, owner: thinkpixelag}
+          annotations: {summary: Decision cache failure rate exceeds five percent, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#opa-or-valkey-outage"}
+
+    - name: thinkpixelag.governance
+      rules:
+        - alert: ThinkPixelAGRevocationPropagationSlow
+          expr: thinkpixelag_revocation_age_seconds > 10
+          for: 5m
+          labels: {severity: warning, owner: thinkpixelag}
+          annotations: {summary: Revocation propagation exceeds 10 seconds, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#revocation-gap-or-staleness"}
         - alert: ThinkPixelAGRevocationStale
           expr: thinkpixelag_revocation_fresh == 0 or thinkpixelag_revocation_age_seconds > 30
           for: 2m
           labels: {severity: critical, owner: thinkpixelag}
-          annotations:
-            summary: Revocation state is outside its freshness contract
-            runbook_url: https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#revocation-gap-or-staleness
-        - alert: ThinkPixelAGLatencyHigh
-          expr: histogram_quantile(0.99, sum by (le) (rate(thinkpixelag_http_request_duration_seconds_bucket[10m]))) > 0.75
+          annotations: {summary: Revocation state is outside its freshness contract, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#revocation-gap-or-staleness"}
+        - alert: ThinkPixelAGRevocationGap
+          expr: thinkpixelag_revocation_gaps > 0 or thinkpixelag_revocation_lag_entries > 0
+          for: 1m
+          labels: {severity: critical, owner: thinkpixelag}
+          annotations: {summary: Authoritative reconciliation found a revocation sequence gap, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#revocation-gap-or-staleness"}
+        - alert: ThinkPixelAGAllocationContention
+          expr: sum(rate(thinkpixelag_allocation_operations_total{outcome="conflict"}[15m])) / clamp_min(sum(rate(thinkpixelag_allocation_operations_total[15m])), 0.001) > 0.05
           for: 15m
           labels: {severity: warning, owner: thinkpixelag}
-          annotations:
-            summary: API p99 exceeds the run-admission envelope
-            runbook_url: https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#latency-or-capacity
+          annotations: {summary: Resource allocation conflict rate exceeds five percent, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#latency-or-capacity"}
+        - alert: ThinkPixelAGRunAdmissionFailures
+          expr: sum(rate(thinkpixelag_run_admissions_total{outcome="error"}[10m])) / clamp_min(sum(rate(thinkpixelag_run_admissions_total[10m])), 0.001) > 0.01
+          for: 10m
+          labels: {severity: critical, owner: thinkpixelag}
+          annotations: {summary: Run admission internal failures exceed one percent, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#latency-or-capacity"}
+
+    - name: thinkpixelag.workers
+      rules:
         - alert: ThinkPixelAGOutboxBacklog
           expr: thinkpixelag_outbox_oldest_seconds > 30
           for: 10m
           labels: {severity: warning, owner: thinkpixelag}
-          annotations:
-            summary: Transactional outbox publication is outside its p99 objective
-            runbook_url: https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#outbox-backlog
+          annotations: {summary: Transactional outbox publication is outside its p99 objective, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#outbox-backlog"}
         - alert: ThinkPixelAGOutboxStalled
           expr: thinkpixelag_outbox_oldest_seconds > 300
           for: 5m
           labels: {severity: critical, owner: thinkpixelag}
-          annotations:
-            summary: Transactional outbox publication is stalled
-            runbook_url: https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#outbox-backlog
+          annotations: {summary: Transactional outbox publication is stalled, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#outbox-backlog"}
         - alert: ThinkPixelAGSettlementLag
           expr: thinkpixelag_resource_settlement_lag_seconds > 30
           for: 10m
           labels: {severity: warning, owner: thinkpixelag}
-          annotations:
-            summary: Terminal resource settlement is delayed
-            runbook_url: https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#latency-or-capacity
+          annotations: {summary: Terminal resource settlement is delayed, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#latency-or-capacity"}
+        - alert: ThinkPixelAGSettlementStalled
+          expr: thinkpixelag_resource_settlement_lag_seconds > 300
+          for: 5m
+          labels: {severity: critical, owner: thinkpixelag}
+          annotations: {summary: Terminal resource settlement is stalled, runbook_url: "https://github.com/bdobrica/ThinkPixelAG/blob/main/docs/operations/runbooks.md#latency-or-capacity"}

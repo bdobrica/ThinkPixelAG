@@ -69,6 +69,19 @@ checkpoints before restoring traffic. A process crash or eviction is recovered
 by Kubernetes; readiness prevents traffic until PostgreSQL and security
 freshness pass.
 
+## Availability error-budget burn
+
+Identify the affected public-read, run-mutation, or admin/trusted traffic class
+and compare its bounded route/status series with latency, policy, database, and
+runtime saturation. A fast-burn page means the rolling 30-day budget is being
+consumed at least 14.4 times its sustainable rate for a 99.9% API, or six times
+for the 99.5% trusted API. Stop non-remediation releases, preserve fail-closed
+behavior, and roll back only to a digest compatible with the current schema.
+For a slow-burn warning, assign an owner and investigate before the next
+release; do not silence it merely because the service remains within its
+calendar-month target. Confirm recovery across both the short and long alert
+windows before resolving the incident.
+
 ## OPA or Valkey outage
 
 OPA outage/malformed output is an authorization outage: restore the last

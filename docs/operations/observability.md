@@ -24,7 +24,7 @@ The production operations surface additionally defines bounded signals for
 policy outcomes, PostgreSQL operations/health, transactional outbox backlog and
 age, allocation outcomes, run admission outcomes, terminal settlement lag,
 decision-cache outcomes, and revocation freshness/lag/gaps. Their names are
-`thinkpixelag_policy_decisions_total`, `thinkpixelag_database_*`,
+`thinkpixelag_policy_decisions_total`, `thinkpixelag_policy_decision_duration_seconds`, `thinkpixelag_database_*`,
 `thinkpixelag_outbox_*`, `thinkpixelag_allocation_operations_total`,
 `thinkpixelag_run_admissions_total`, `thinkpixelag_resource_settlement_lag_seconds`,
 `thinkpixelag_cache_operations_total`, and `thinkpixelag_revocation_*`.

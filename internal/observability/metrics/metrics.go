@@ -33,6 +33,7 @@ type Metrics struct {
 	databaseDuration      *prometheus.HistogramVec
 	databaseHealth        prometheus.Gauge
 	policyDecisions       *prometheus.CounterVec
+	policyDuration        prometheus.Histogram
 	outboxPending         prometheus.Gauge
 	outboxOldest          prometheus.Gauge
 	allocationOperations  *prometheus.CounterVec
@@ -140,6 +141,7 @@ func New(enabled bool, build BuildInfo) (*Metrics, error) {
 	metrics.databaseDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{Namespace: namespace, Subsystem: "database", Name: "operation_duration_seconds", Help: "PostgreSQL operation duration by bounded operation.", Buckets: []float64{.001, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10}}, []string{"operation"})
 	metrics.databaseHealth = prometheus.NewGauge(prometheus.GaugeOpts{Namespace: namespace, Subsystem: "database", Name: "healthy", Help: "Whether the most recent PostgreSQL health check succeeded."})
 	metrics.policyDecisions = prometheus.NewCounterVec(prometheus.CounterOpts{Namespace: namespace, Subsystem: "policy", Name: "decisions_total", Help: "Policy decisions by bounded outcome."}, []string{"outcome"})
+	metrics.policyDuration = prometheus.NewHistogram(prometheus.HistogramOpts{Namespace: namespace, Subsystem: "policy", Name: "decision_duration_seconds", Help: "OPA decision duration at the service boundary.", Buckets: []float64{.001, .005, .01, .025, .05, .075, .1, .25, .5, 1}})
 	metrics.outboxPending = prometheus.NewGauge(prometheus.GaugeOpts{Namespace: namespace, Subsystem: "outbox", Name: "pending", Help: "Pending transactional outbox messages."})
 	metrics.outboxOldest = prometheus.NewGauge(prometheus.GaugeOpts{Namespace: namespace, Subsystem: "outbox", Name: "oldest_seconds", Help: "Age of the oldest pending outbox message."})
 	metrics.allocationOperations = prometheus.NewCounterVec(prometheus.CounterOpts{Namespace: namespace, Subsystem: "allocation", Name: "operations_total", Help: "Resource allocation operations by bounded outcome."}, []string{"outcome"})
@@ -174,7 +176,7 @@ func New(enabled bool, build BuildInfo) (*Metrics, error) {
 	if err := registry.Register(metrics.databaseHealth); err != nil {
 		return nil, err
 	}
-	for _, collector := range []prometheus.Collector{metrics.policyDecisions, metrics.outboxPending, metrics.outboxOldest, metrics.allocationOperations, metrics.runAdmissions, metrics.settlementLag, metrics.cacheOperations} {
+	for _, collector := range []prometheus.Collector{metrics.policyDecisions, metrics.policyDuration, metrics.outboxPending, metrics.outboxOldest, metrics.allocationOperations, metrics.runAdmissions, metrics.settlementLag, metrics.cacheOperations} {
 		if err := registry.Register(collector); err != nil {
 			return nil, err
 		}
@@ -198,6 +200,18 @@ func initializeOutcomeSeries(counter *prometheus.CounterVec, outcomes ...string)
 // ObservePolicyDecision records only the closed decision outcome vocabulary.
 func (m *Metrics) ObservePolicyDecision(outcome string) {
 	m.observeOutcome(m.policyDecisions, outcome, "allow", "deny", "unavailable", "invalid")
+}
+
+// ObservePolicyDuration records OPA boundary time without policy, tenant, or
+// action labels. Outcome is reported separately through ObservePolicyDecision.
+func (m *Metrics) ObservePolicyDuration(duration time.Duration) {
+	if !m.enabled {
+		return
+	}
+	if duration < 0 {
+		duration = 0
+	}
+	m.policyDuration.Observe(duration.Seconds())
 }
 
 // SetOutbox reports bounded backlog state without message or tenant labels.

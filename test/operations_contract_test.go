@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -59,6 +60,50 @@ func TestKubernetesOptionalOperationsAssets(t *testing.T) {
 	for _, signal := range []string{"API", "Policy", "Database", "Outbox", "Allocation", "Run", "Revocation", "cache", "Go runtime"} {
 		if !strings.Contains(string(dashboard), signal) {
 			t.Errorf("dashboard lacks %s signal", signal)
+		}
+	}
+}
+
+func TestPrometheusAlertsCoverSLOsAndAreActionable(t *testing.T) {
+	t.Parallel()
+	data, err := os.ReadFile("../deploy/kubernetes/optional/prometheusrule.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(data)
+	alertStart := regexp.MustCompile(`(?m)^        - alert: `).FindAllStringIndex(text, -1)
+	if len(alertStart) < 20 {
+		t.Fatalf("alert matrix has %d rules; want at least 20", len(alertStart))
+	}
+	for i, bounds := range alertStart {
+		end := len(text)
+		if i+1 < len(alertStart) {
+			end = alertStart[i+1][0]
+		}
+		block := text[bounds[0]:end]
+		for _, required := range []string{"expr:", "for:", "severity:", "owner: thinkpixelag", "summary:", "runbook_url:"} {
+			if !strings.Contains(block, required) {
+				t.Errorf("alert block %q lacks %q", strings.SplitN(block, "\n", 2)[0], required)
+			}
+		}
+	}
+	for _, required := range []string{
+		"PublicReadFastBurn", "PublicReadSlowBurn", "RunMutationFastBurn", "RunMutationSlowBurn",
+		"TrustedAPIFastBurn", "TrustedAPISlowBurn", "[1h]", "[6h]", "[3d]", "[24h]",
+		"PublicReadP95LatencyHigh", "PublicReadP99LatencyHigh", "RunAdmissionP95LatencyHigh",
+		"RunAdmissionP99LatencyHigh", "MutationP95LatencyHigh", "MutationP99LatencyHigh",
+		"DatabaseUnavailable", "DatabasePoolSaturated", "PolicyEvaluationFailures", "CacheFailures",
+		"PolicyP95LatencyHigh", "PolicyP99LatencyHigh",
+		"RevocationPropagationSlow", "RevocationStale", "RevocationGap", "AllocationContention",
+		"RunAdmissionFailures", "OutboxBacklog", "OutboxStalled", "SettlementLag", "SettlementStalled",
+	} {
+		if !strings.Contains(text, required) {
+			t.Errorf("alert matrix lacks %q", required)
+		}
+	}
+	for _, prohibited := range []string{"tenant_id", "principal_id", "run_id=", "agent_id="} {
+		if strings.Contains(text, prohibited) {
+			t.Errorf("alert matrix contains prohibited dynamic label %q", prohibited)
 		}
 	}
 }
