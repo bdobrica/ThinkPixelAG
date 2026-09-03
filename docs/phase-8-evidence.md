@@ -2,7 +2,7 @@
 
 - Status: in progress
 - Review date: 2026-09-02
-- Implementation commit: `2c919cd`
+- Implementation commit: `967165a`
 - Host: Linux/amd64, Docker, kind v0.30.0 (Kubernetes v1.34.0), kubectl v1.35.0, PostgreSQL 18.4
 
 ## Implemented controls
@@ -63,25 +63,25 @@ the tag workflow.
   API runtime, live/ready/metrics probes, HPA presence, PDB-blocked voluntary
   drain, pod replacement, rolling configuration upgrade, rollback, uninstall,
   and automatic cluster cleanup.
-- Clean-tree `make verify` passed at `2c919cd`, including generation drift,
+- Clean-tree `make verify` passed at `967165a`, including generation drift,
   lint/OpenAPI, unit/coverage, race, 26/26 Rego, PostgreSQL integration/e2e and
   security tests, Kubernetes rendering, dependency policy, govulncheck, license,
   static build, image build, and hardened container smoke.
 - OPS-005 focused unit/race and PostgreSQL integration checks passed at
-  `e4de968`/`bdf7cb0`. Clean-tree `make verify` then passed against an isolated
+  `e528009`/`01135d6`. Clean-tree `make verify` then passed against an isolated
   PostgreSQL database, including process liveness/fail-closed readiness in the
   hardened container smoke. The disposable-cluster fixture now promotes an
   explicit test-only active policy before awaiting `/readyz`.
 - OPS-006 focused unit/race and PostgreSQL integration checks passed at
-  `c4799b2`. Clean-tree `make verify` passed against an isolated PostgreSQL
+  `41ab200`. Clean-tree `make verify` passed against an isolated PostgreSQL
   database, including optional monitoring resource/dashboard contracts and the
   hardened image smoke. The temporary database was removed after verification.
-- OPS-007 alert and metrics unit/race checks passed at `30c321f`; the optional
+- OPS-007 alert and metrics unit/race checks passed at `bd203e5`; the optional
   resources rendered with the pinned kubectl image and Prometheus 3.5
   `promtool` parsed all 27 rules successfully. Clean-tree `make verify` passed
   against an isolated PostgreSQL database, including all integration/e2e,
   security, Kubernetes, supply-chain, image, and hardened-container gates.
-- `make test-postgres-pitr` at `fda4c64` created a pinned PostgreSQL 18.4
+- `make test-postgres-pitr` at `fa04a0c` created a pinned PostgreSQL 18.4
   primary with continuous WAL archiving, encrypted a physical base backup with
   ephemeral AES-256 key material, and recovered independently to named points
   immediately before and after one atomic governance transaction. The targets
