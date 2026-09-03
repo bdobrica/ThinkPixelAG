@@ -157,3 +157,17 @@ func TestPostgresPITRQualificationIsPhysicalEncryptedAndInvariantChecked(t *test
 		}
 	}
 }
+
+func TestLoadBaselineCoversPolicyAndStreamingPrimitives(t *testing.T) {
+	t.Parallel()
+	data, err := os.ReadFile(filepath.Join("operations", "baseline_test.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(data)
+	for _, required := range []string{"BenchmarkPolicyContract", "BenchmarkRunEventCursor", "BenchmarkRevocationFanoutReceipt", "BenchmarkRevocationCursor", "5_000"} {
+		if !strings.Contains(text, required) {
+			t.Errorf("load baseline lacks %q", required)
+		}
+	}
+}
