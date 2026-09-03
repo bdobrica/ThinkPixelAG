@@ -94,6 +94,11 @@ the tag workflow.
   These measurements qualify the repository rehearsal, not a production
   provider SLA. Clean-tree `make verify` subsequently passed against an
   isolated PostgreSQL database.
+- `go test -run '^$' -bench . ./test/operations` at `0710e5c` executed the
+  deterministic policy contract, run/revocation cursor, and 5,000-client
+  revocation freshness baselines. Focused unit and race checks passed. This
+  repairs the previously documented local command but deliberately does not
+  qualify production capacity or close OPS-010.
 
 ## Remaining exit qualifications
 

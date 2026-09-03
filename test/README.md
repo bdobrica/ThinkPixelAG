@@ -26,3 +26,9 @@ both sides of an atomic governance transaction. Each recovered copy is migrated
 forward from the prior schema and checked for epoch, evidence/outbox, checkpoint,
 and allocation invariants. The fixture and its ephemeral encryption key are
 removed after the rehearsal; the command never uses the developer database.
+
+`go test -run '^$' -bench . ./test/operations` runs deterministic policy and
+stream/cursor component baselines. These benchmarks catch local regressions but
+do not constitute OPS-010 evidence; the production-shaped qualification must use
+the deployed API composition and topology described in
+`docs/operations/load-testing.md`.

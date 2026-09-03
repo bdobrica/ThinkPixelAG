@@ -354,7 +354,10 @@ Kubernetes packaging/hardening/probe resources, optional monitoring/autoscaling,
 the fully validated SLO alert matrix, runbooks, encrypted physical backup/WAL
 PITR with forward-schema and authoritative-invariant recovery, multi-architecture
 qualification, and the operational disposable-cluster path are implemented and
-recorded in `docs/phase-8-evidence.md`. Phase exit remains blocked on
+recorded in `docs/phase-8-evidence.md`. Deterministic policy and streaming
+component load baselines are executable through the documented Go benchmark
+command; they are regression evidence rather than production capacity proof.
+Phase exit remains blocked on
 production-shaped load, the remaining environment fault matrix, and a
 governed core API workflow through the production process composition. Those
 gates remain unchecked rather than being weakened to documentation or synthetic
