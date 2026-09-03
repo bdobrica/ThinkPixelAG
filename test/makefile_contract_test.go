@@ -18,7 +18,7 @@ func TestMakefileExposesRequiredTargets(t *testing.T) {
 	for _, match := range targetPattern.FindAllStringSubmatch(string(data), -1) {
 		available[match[1]] = true
 	}
-	for _, target := range []string{"tools", "generate", "fmt", "lint", "test", "test-race", "test-policy", "test-integration", "test-e2e", "test-security", "build", "image", "container-smoke", "kubernetes-check", "release-artifacts", "verify"} {
+	for _, target := range []string{"tools", "generate", "fmt", "lint", "test", "test-race", "test-policy", "test-integration", "test-e2e", "test-security", "test-resilience", "test-cluster-smoke", "test-cluster-resilience", "build", "image", "container-smoke", "kubernetes-check", "release-artifacts", "verify"} {
 		if !available[target] {
 			t.Errorf("Makefile target %q is missing", target)
 		}

@@ -8,6 +8,8 @@ OPENAPI_CLI_VERSION := 2.3.0
 OPENAPI_CLI := $(NPM_EXEC) @redocly/cli@$(OPENAPI_CLI_VERSION)
 OPA ?= opa
 DOCKER ?= docker
+KIND ?= kind
+KUBECTL ?= kubectl
 COMPOSE ?= $(DOCKER) compose
 TEST_DATABASE_URL ?= postgresql://thinkpixelag_local:thinkpixelag_local_only_change_me@127.0.0.1:5432/thinkpixelag_local
 
@@ -22,7 +24,8 @@ GO_FILES := $(shell git ls-files '*.go')
 	test-policy test-integration test-e2e dependency-check vulnerability-check \
 	license-check security build image container-smoke verify clean compose-check dev-up \
 	dev-up-valkey dev-status dev-smoke dev-down dev-reset test-security \
-	kubernetes-check release-artifacts test-backup-restore test-postgres-pitr
+	kubernetes-check release-artifacts test-backup-restore test-postgres-pitr \
+	test-resilience test-cluster-smoke test-cluster-resilience
 
 help: ## Show the stable development targets.
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -156,6 +159,18 @@ test-postgres-pitr: ## Exercise encrypted physical backup, WAL PITR, forward mig
 	mkdir -p $(BUILD_DIR)
 	CGO_ENABLED=0 $(GO) build -trimpath -buildvcs=false -o $(BUILD_DIR)/thinkpixelag-migrate ./cmd/thinkpixelag-migrate
 	DOCKER=$(DOCKER) POSTGRES_IMAGE=$$(awk '/^[[:space:]]*image: postgres:/{print $$2; exit}' compose.yaml) bash test/postgres_pitr.sh
+
+test-resilience: ## Exercise provider-neutral policy, cache, stream, worker, and evidence fault handling.
+	$(GO) test -count=1 -run '^(TestClientFailsClosed|TestClientRejectsAdversarialOutput)$$' ./internal/adapters/opa
+	$(GO) test -count=1 -run '^(TestCachedEvaluatorBypassesFailureAndPoison|TestCachedEvaluatorExpiredAllowCannotReappearDuringRecovery)$$' ./internal/policy
+	$(GO) test -count=1 -run '^(TestFreshnessEvaluatorFailsClosedDuringLagGapAndPartitionThenRecovers|TestRevocationReconcileFallsBackToSnapshotAndPersistsCheckpoint|TestRunWorkerRejectsExpiredLeaseAndInvalidConfiguration)$$' ./internal/application
+	$(GO) test -count=1 -run '^TestExporterPersistsValidatedReceipt$$' ./internal/evidence
+
+test-cluster-smoke: ## Run install, migration, restricted-runtime, disruption, upgrade, rollback, and uninstall acceptance.
+	KIND=$(KIND) KUBECTL=$(KUBECTL) IMAGE=$(IMAGE) bash test/cluster_smoke.sh
+
+test-cluster-resilience: ## Inject dependency latency/outage, pod loss, and rolling restart in a disposable cluster.
+	KIND=$(KIND) KUBECTL=$(KUBECTL) IMAGE=$(IMAGE) bash test/cluster_resilience.sh
 
 verify: generate-check lint test test-race test-policy test-integration test-e2e test-security compose-check kubernetes-check security build container-smoke ## Run the complete clean-checkout gate.
 
