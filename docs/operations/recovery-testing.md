@@ -17,3 +17,12 @@ and all authorization failure modes remain closed.
 Provider-specific backup, failover, and fault-injection commands belong in the
 environment overlay or controlled game-day record; the repository deliberately
 does not make one cloud platform authoritative.
+
+Run `make test-resilience` for the deterministic provider-neutral fault matrix.
+After building the intended image, run `make test-cluster-resilience` with
+explicit `KIND`, `KUBECTL`, and `IMAGE` values for disposable-cluster PostgreSQL
+latency/process-restart, API crash, and rolling-restart evidence. The latter
+uses PostgreSQL's test-only pre-authentication delay and never modifies a
+production database. Neither command substitutes for promotion of a real
+target-platform PostgreSQL replica or crashes of the production-composed
+worker and optional Valkey adapters.

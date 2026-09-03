@@ -46,6 +46,32 @@ the tag workflow.
 
 ## Executed evidence
 
+- OPS-011 repository-local qualification at `4fff867` passed
+  `make test-resilience` and `test/cluster_resilience.sh`. The deterministic
+  matrix rejected OPA timeout/malformed/adversarial output, bypassed failed or
+  poisoned cache state conservatively, failed closed across a revocation stream
+  partition until snapshot reconciliation, rejected expired worker leases, and
+  released failed evidence claims for retry. A disposable kind v0.30.0 / Kubernetes
+  v1.34.0 cluster then returned readiness 503 while a five-second PostgreSQL
+  pre-authentication delay exceeded the two-second health bound, kept liveness
+  200, recovered after reset, and recovered from PostgreSQL process crash, API
+  pod crash, and rolling restart. Target-platform PostgreSQL replica promotion
+  and production-composed Valkey/worker crashes remain required, so OPS-011 is
+  not yet complete.
+- OPS-012 disposable-cluster qualification at `4fff867` passed
+  `test/cluster_smoke.sh`: clean install, explicit migration to schema 18,
+  UID/GID 65532 restricted runtime with read-only root/no escalation/dropped
+  capabilities, policy/revocation readiness, metrics, declared HPA 2–4 replicas
+  at 70% CPU, PDB-blocked drain, pod replacement, rolling configuration change
+  and rollback, deletion, and absence of managed workloads after uninstall.
+  A governed production HTTP workflow, observed metrics-driven scaling, and
+  upgrade/rollback between two immutable application digests remain required,
+  so OPS-012 is not yet complete.
+- A clean isolated-database `make verify` passed after these changes, including
+  generation/lint/OpenAPI, unit/coverage/race, 26/26 Rego, PostgreSQL integration,
+  end-to-end and security suites, Kubernetes rendering, dependency/vulnerability/
+  license checks, static build, image build, and hardened-container smoke.
+
 - `make kubernetes-check`: contract checks and Kustomize render passed with
   digest-pinned kubectl v1.35.0.
 - A Buildx OCI export for `linux/amd64,linux/arm64` passed; manifest-list digest

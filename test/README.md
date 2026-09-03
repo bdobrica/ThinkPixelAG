@@ -32,3 +32,12 @@ stream/cursor component baselines. These benchmarks catch local regressions but
 do not constitute OPS-010 evidence; the production-shaped qualification must use
 the deployed API composition and topology described in
 `docs/operations/load-testing.md`.
+
+`make test-resilience` runs the provider-neutral OPS-011 fault matrix for OPA,
+cache, revocation stream, worker fencing, and evidence delivery behavior.
+`make test-cluster-resilience KIND=/path/to/kind KUBECTL=/path/to/kubectl
+IMAGE=thinkpixelag:phase8` adds disposable-cluster PostgreSQL latency/process
+restart, API crash, and rolling restart. `make test-cluster-smoke` runs the
+OPS-012 install/migration/restricted-runtime/HPA-contract/PDB/configuration
+rollback/uninstall path. Target-platform failover and capacity behavior remain
+separate operational qualifications.

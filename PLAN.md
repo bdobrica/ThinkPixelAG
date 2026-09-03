@@ -357,11 +357,16 @@ qualification, and the operational disposable-cluster path are implemented and
 recorded in `docs/phase-8-evidence.md`. Deterministic policy and streaming
 component load baselines are executable through the documented Go benchmark
 command; they are regression evidence rather than production capacity proof.
-Phase exit remains blocked on
-production-shaped load, the remaining environment fault matrix, and a
-governed core API workflow through the production process composition. Those
-gates remain unchecked rather than being weakened to documentation or synthetic
-proof.
+Repository-local resilience and lifecycle gates now cover fail-closed OPA
+responses, conservative cache loss, revocation partitions, worker fencing,
+evidence retry, bounded PostgreSQL latency/process restart, API pod loss,
+rolling restart, schema-version assertion, restricted runtime, declared HPA
+bounds, PDB behavior, configuration rollback, and complete uninstall. Phase
+exit remains blocked on production-shaped load; target-platform PostgreSQL
+replica promotion and composed Valkey/worker faults; and a governed core API
+workflow, observed HPA scaling, and two-digest application upgrade/rollback
+through the production process composition. Those gates remain unchecked
+rather than being weakened to documentation or synthetic proof.
 
 ### Phase 9 — Release-candidate closure
 
