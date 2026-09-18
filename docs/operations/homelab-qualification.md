@@ -10,6 +10,11 @@ close production capacity qualification in OPS-010. The operator identified
 WiFi networking and USB flash storage; the three-worker Raspberry Pi topology,
 resource bounds and test fixture are described in [initial evidence](ops010-evidence.md).
 
+The final runtime repair, driver, fault script, and verification sources are
+preserved in commit `8ceb61017c6336e1ea97ee0331cd015f53363e1d`. Images were built
+from the working tree before that commit and retain their documented
+`uncommitted-homelab` label; intermediate-image results are identified below.
+
 ## Method
 
 An observed operating point requires all scheduled requests to complete
