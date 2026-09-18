@@ -34,6 +34,9 @@ type revocationPolicyStub struct {
 
 func (p *revocationPolicyStub) Decide(_ context.Context, in policy.Input) (policy.Result, error) {
 	p.input = in
+	if err := in.Validate(); err != nil {
+		return policy.Result{}, err
+	}
 	return policy.Result{Decision: policy.Decision{DecisionID: in.DecisionID, Allow: p.allow, ReasonCodes: []string{"governance.operation.allowed"}}}, nil
 }
 

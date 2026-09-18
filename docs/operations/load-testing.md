@@ -66,7 +66,8 @@ attempts are bounded to 32 at once. Reported lag includes historical replay and
 is bucketed in 10 ms intervals (the final bucket means at least 60 seconds).
 Stream gaps require authoritative reconciliation; this driver counts them and
 ends the affected stream. It does not implement a complete gateway reconciler
-or prove delivery of every committed event to every client. Missing peak connections, incomplete reconnect counts and gaps fail the run;
+or prove delivery of every committed event to every client. Missing peak connections, incomplete reconnect counts, missing controlled
+fanout deliveries and gaps fail the run;
 review these counts alongside request outcomes. Repeated stream runs
 replay retained history, so distinguish catch-up from live propagation.
 
@@ -75,3 +76,25 @@ trusted-usage load, contested child allocations, global-change fanout, lifecycle
 completion/settlement, or a 15-minute outbox backlog. Real database integration
 tests cover allocation invariants but do not substitute for those capacity
 scenarios. Keep OPS-010 open until the full matrix and intended topology pass.
+
+## Hardware-limited rehearsal
+
+Keep production targets unchanged when testing a smaller deployment. Record a
+separate observed operating envelope, with all offered requests, failures,
+scheduler/concurrency drops, duration, percentiles and backlog behavior. The
+`-rate` option accepts fractional rates (minimum 0.01/s); for example,
+`-mode admission -rate 0.05 -workers 1 -duration 5m` schedules one admission
+every 20 seconds. A request's client timeout is not increased to hide a stall.
+
+For live fanout, reconcile the gateway first and pass the returned sequence as
+`-after-sequence`. This avoids treating retained historical replay as current
+propagation lag. Run without another revocation writer and inspect
+`CompleteStreams`, `StreamEvents`, `StreamGaps`, and `TransportErrors` alongside
+latency. Each receiver must observe the successful mutation count; a 30-second
+drain window follows offered traffic. Connection setup time is reported
+separately. This controlled measurement does not implement durable gateway
+state or replace partition/reconciliation checks.
+
+See [homelab qualification](homelab-qualification.md) for hardware-limited
+measurements and recovery evidence; the production objectives remain in
+[slos.md](slos.md).

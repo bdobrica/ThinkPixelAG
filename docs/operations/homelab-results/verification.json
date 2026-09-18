@@ -1,0 +1,7 @@
+{
+  "command": "make --silent verify",
+  "exit_code": 0,
+  "postgres_integration_seconds": 325.82,
+  "postgres_e2e_seconds": 331.196,
+  "separate_operational_retry_qualification": "failed"
+}

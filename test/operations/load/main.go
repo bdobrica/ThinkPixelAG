@@ -14,6 +14,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -30,6 +31,9 @@ import (
 
 type identity struct{ Tenant, Principal, Admin, Agent string }
 type report struct {
+	LateDropped, BusyDropped                                                 int64
+	CompleteStreams                                                          int64
+	StreamSetupSeconds                                                       float64
 	Mode                                                                     string    `json:"mode"`
 	Started                                                                  time.Time `json:"started"`
 	DurationSeconds                                                          float64   `json:"duration_seconds"`
@@ -40,6 +44,8 @@ type report struct {
 	LagP99MS                                                                 float64
 }
 type runner struct {
+	afterSequence                                  int64
+	received                                       []int64
 	base, trusted, dir, token, admin, foreign, run string
 	id                                             identity
 	client                                         *http.Client
@@ -53,18 +59,21 @@ type runner struct {
 
 func main() {
 	var base, trusted, dir, mode string
-	var rate, workers, clients int
+	var rate float64
+	var workers, clients int
 	var duration time.Duration
+	var afterSequence int64
 	flag.StringVar(&base, "base", "", "public API URL")
 	flag.StringVar(&trusted, "trusted", "", "trusted API URL")
 	flag.StringVar(&dir, "identities", "", "private fixture directory")
 	flag.StringVar(&mode, "mode", "smoke", "smoke, admission, read, signal, revocation, streams")
-	flag.IntVar(&rate, "rate", 10, "scheduled requests/second (revocations during streams)")
+	flag.Float64Var(&rate, "rate", 10, "scheduled requests/second (revocations during streams)")
 	flag.IntVar(&workers, "workers", 64, "bounded HTTP concurrency")
 	flag.IntVar(&clients, "clients", 100, "distinct mTLS stream clients")
 	flag.DurationVar(&duration, "duration", time.Minute, "measurement duration")
+	flag.Int64Var(&afterSequence, "after-sequence", 0, "initial revocation sequence; reconcile before a live fanout measurement")
 	flag.Parse()
-	if base == "" || dir == "" || rate < 1 || rate > 10000 || workers < 1 || workers > 1024 || clients < 1 || clients > 5000 || duration <= 0 || duration > 10*time.Minute {
+	if afterSequence < 0 || base == "" || dir == "" || math.IsNaN(rate) || rate < 0.01 || rate > 10000 || rate*duration.Seconds() < 1 || workers < 1 || workers > 1024 || clients < 1 || clients > 5000 || duration <= 0 || duration > 10*time.Minute {
 		fatal(errors.New("invalid load configuration"))
 	}
 	r := &runner{base: strings.TrimRight(base, "/"), trusted: strings.TrimRight(trusted, "/"), dir: dir, seen: map[string]bool{}, report: report{Mode: mode, Started: time.Now().UTC(), Statuses: map[int]int64{}}}
@@ -82,6 +91,7 @@ func main() {
 		}
 		*target = string(b)
 	}
+	r.afterSequence = afterSequence
 	r.client = &http.Client{Timeout: 20 * time.Second, Transport: &http.Transport{MaxIdleConns: workers * 2, MaxIdleConnsPerHost: workers, MaxConnsPerHost: workers, ResponseHeaderTimeout: 15 * time.Second}, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	if e = r.smoke(); e != nil {
 		r.report.InvariantFailures++
@@ -114,7 +124,7 @@ func main() {
 		total += n
 	}
 	if total > 0 {
-		threshold := int64(float64(total) * .99)
+		threshold := int64(math.Ceil(float64(total) * .99))
 		var n int64
 		for j, v := range r.lag {
 			n += v
@@ -129,7 +139,7 @@ func main() {
 	if r.report.InvariantFailures > 0 {
 		os.Exit(2)
 	}
-	if r.report.Success != r.report.Offered || r.report.Dropped > 0 || r.report.TransportErrors > 0 || r.report.StreamGaps > 0 || (mode == "streams" && (r.report.PeakStreams < int64(clients) || r.report.Reconnects < int64(clients/4))) {
+	if r.report.Success != r.report.Offered || r.report.Dropped > 0 || r.report.TransportErrors > 0 || r.report.StreamGaps > 0 || (mode == "streams" && (r.report.PeakStreams < int64(clients) || r.report.Reconnects < int64(clients/4) || r.report.CompleteStreams < int64(clients))) {
 		os.Exit(1)
 	}
 }
@@ -237,49 +247,52 @@ func (r *runner) operation(mode string) {
 		r.seen[response.ID] = true
 	}
 }
-func (r *runner) load(mode string, rate, workers int, duration time.Duration) {
+func (r *runner) load(mode string, rate float64, workers int, duration time.Duration) {
 	start := time.Now()
-	jobs := make(chan struct{})
+	slots := make(chan struct{}, workers)
 	var wg sync.WaitGroup
-	for n := 0; n < workers; n++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for range jobs {
-				r.operation(mode)
-			}
-		}()
-	}
 	total := int64(duration.Seconds() * float64(rate))
 	r.mu.Lock()
 	r.report.Offered = total
 	r.mu.Unlock()
 	for n := int64(0); n < total; n++ {
-		due := start.Add(time.Duration(n) * time.Second / time.Duration(rate))
+		due := start.Add(time.Duration(float64(n) * float64(time.Second) / rate))
 		if wait := time.Until(due); wait > 0 {
 			time.Sleep(wait)
 		}
-		if time.Since(due) > time.Second/time.Duration(rate) {
+		if time.Since(due) > max(100*time.Millisecond, time.Duration(float64(time.Second)/rate)) {
 			r.mu.Lock()
 			r.report.Dropped++
+			r.report.LateDropped++
 			r.mu.Unlock()
 			continue
 		}
 		select {
-		case jobs <- struct{}{}:
+		case slots <- struct{}{}:
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				defer func() { <-slots }()
+				r.operation(mode)
+			}()
 		default:
 			r.mu.Lock()
 			r.report.Dropped++
+			r.report.BusyDropped++
 			r.mu.Unlock()
 		}
 	}
-	close(jobs)
 	wg.Wait()
+	if remaining := time.Until(start.Add(duration)); remaining > 0 {
+		time.Sleep(remaining)
+	}
 	r.mu.Lock()
 	r.report.DurationSeconds = time.Since(start).Seconds()
 	r.mu.Unlock()
 }
-func (r *runner) streams(clients, rate, workers int, duration time.Duration) error {
+func (r *runner) streams(clients int, rate float64, workers int, duration time.Duration) error {
+	setupStarted := time.Now()
+	r.received = make([]int64, clients)
 	if r.trusted == "" {
 		return errors.New("trusted URL required")
 	}
@@ -312,7 +325,7 @@ func (r *runner) streams(clients, rate, workers int, duration time.Duration) err
 			defer transport.CloseIdleConnections()
 			client := &http.Client{Transport: transport}
 			cursor := ""
-			var last int64
+			last := r.afterSequence
 			var lastEpoch domain.EpochVector
 			streamCtx, stop := context.WithCancel(ctx)
 			defer stop()
@@ -327,7 +340,7 @@ func (r *runner) streams(clients, rate, workers int, duration time.Duration) err
 			}
 			first := true
 			for {
-				req, _ := http.NewRequestWithContext(streamCtx, "GET", r.trusted+"/v1/trusted/revocations/events", nil)
+				req, _ := http.NewRequestWithContext(streamCtx, "GET", r.trusted+"/v1/trusted/revocations/events?after_sequence="+strconv.FormatInt(r.afterSequence, 10), nil)
 				if cursor != "" {
 					req.Header.Set("Last-Event-ID", cursor)
 				}
@@ -394,6 +407,7 @@ func (r *runner) streams(clients, rate, workers int, duration time.Duration) err
 						lag = min(lag, 6001)
 						r.mu.Lock()
 						r.report.StreamEvents++
+						r.received[n]++
 						r.lag[lag]++
 						r.mu.Unlock()
 					}
@@ -423,6 +437,7 @@ func (r *runner) streams(clients, rate, workers int, duration time.Duration) err
 		<-connected
 	}
 	r.mu.Lock()
+	r.report.StreamSetupSeconds = time.Since(setupStarted).Seconds()
 	r.report.StreamClients = int64(clients)
 	r.mu.Unlock()
 	go func() {
@@ -433,6 +448,22 @@ func (r *runner) streams(clients, rate, workers int, duration time.Duration) err
 		}
 	}()
 	r.load("revocation", rate, workers, duration)
+	// Allow the final committed change to reach each receiver before disconnect.
+	for deadline := time.Now().Add(30 * time.Second); time.Now().Before(deadline) && ctx.Err() == nil; {
+		r.mu.Lock()
+		complete := int64(0)
+		for _, count := range r.received {
+			if r.report.Success > 0 && count >= r.report.Success {
+				complete++
+			}
+		}
+		r.report.CompleteStreams = complete
+		r.mu.Unlock()
+		if complete == int64(clients) {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 	cancel()
 	wg.Wait()
 	r.mu.Lock()

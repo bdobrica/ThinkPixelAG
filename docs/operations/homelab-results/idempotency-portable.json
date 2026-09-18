@@ -1,0 +1,11 @@
+{
+  "scenario": "admission completion failure followed by lease-expiry retry",
+  "runs_before": 96,
+  "first_status": 503,
+  "first_seconds": 10.088,
+  "runs_after_failure": 97,
+  "retry_status": 500,
+  "runs_after_retry": 97,
+  "new_runs_for_one_key": 1,
+  "passed": false
+}

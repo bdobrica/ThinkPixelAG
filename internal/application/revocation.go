@@ -118,7 +118,7 @@ func (s *RevocationService) authorize(ctx context.Context, c ChangeRevocation, a
 	roles := append([]string(nil), c.Roles...)
 	sort.Strings(roles)
 	tenant := c.TenantID.String()
-	result, err := s.evaluator.Decide(ctx, policy.Input{ContractVersion: policy.ContractVersion, DecisionID: did.String(), RequestTime: now, Subject: policy.Subject{PrincipalID: c.PrincipalID.String(), TenantID: tenant, PrincipalType: "human", Roles: roles, Issuer: c.Issuer}, Action: action, Resource: policy.Resource{Type: "revocation", ID: c.RevocationID.String(), TenantID: tenant, Attributes: map[string]any{"scope": strings.ToLower(string(c.Scope)), "target": c.Target, "reason_code": c.ReasonCode, "approval_reference": c.ApprovalReference}}, SecurityState: c.SecurityState, Context: policy.RequestContext{RequestID: c.RequestID.String()}})
+	result, err := s.evaluator.Decide(ctx, policy.Input{ContractVersion: policy.ContractVersion, DecisionID: did.String(), RequestTime: now, Subject: policy.Subject{PrincipalID: c.PrincipalID.String(), TenantID: tenant, PrincipalType: "human", Roles: roles, Issuer: c.Issuer}, Action: action, Resource: policy.Resource{Type: "revocation", ID: c.RevocationID.String(), TenantID: tenant, Attributes: map[string]any{"scope": strings.ToLower(string(c.Scope)), "target": c.Target, "reason_code": c.ReasonCode, "approval_reference": c.ApprovalReference}}, RequestedConstraints: map[string]any{}, AuthorityConstraints: map[string]any{}, SecurityState: c.SecurityState, Context: policy.RequestContext{RequestID: c.RequestID.String()}})
 	if err != nil {
 		return domain.ID{}, ports.RevocationEvidence{}, domain.WrapError(domain.CodeUnavailable, "revocation policy is unavailable", err).WithRetryable()
 	}

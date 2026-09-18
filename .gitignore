@@ -33,3 +33,6 @@ go.work.sum
 # Instruction files
 /AUDIT_SUMMARY.md
 /ALIGNMENT.md
+
+# Operational Python test bytecode
+__pycache__/

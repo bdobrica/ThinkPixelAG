@@ -178,7 +178,10 @@ func (t *RevocationFreshnessTracker) record(tenant domain.ID, sequence int64, ep
 			t.mu.Unlock()
 			return ErrFreshnessRegression
 		}
-		if sequence == previous.lastAppliedSequence && epochAdvances(epochs, previous.lastAppliedEpochs) {
+		// A tenant-filtered authoritative reconciliation can observe a newer
+		// global security epoch without a new event visible to this tenant.
+		// Stream duplicates still must carry the same epoch vector.
+		if stream && previous.hasObservation && sequence == previous.lastAppliedSequence && epochAdvances(epochs, previous.lastAppliedEpochs) {
 			t.mu.Unlock()
 			return ErrFreshnessRegression
 		}

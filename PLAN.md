@@ -359,8 +359,11 @@ component load baselines are executable through the documented Go benchmark
 command; they are regression evidence rather than production capacity proof.
 An opt-in governed runtime and external HTTP fixture/driver now support live
 qualification. Initial ARM64 measurements failed mutation/read capacity;
-OPS-010 remains open for storage remediation and the remaining workload matrix
-(see `docs/operations/ops010-evidence.md`).
+OPS-010 production capacity remains open; hardware-limited homelab results are
+recorded separately without changing targets. A reproduced admission/idempotency
+commit-window duplicate is a correctness blocker requiring an atomic mutation
+and replay-outcome boundary before retry qualification can pass (see
+`docs/operations/homelab-qualification.md`).
 Repository-local resilience and lifecycle gates now cover fail-closed OPA
 responses, conservative cache loss, revocation partitions, worker fencing,
 evidence retry, bounded PostgreSQL latency/process restart, API pod loss,

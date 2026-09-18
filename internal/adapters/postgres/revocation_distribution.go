@@ -23,7 +23,7 @@ func (r *Repositories) AuthoritativeRevocations(ctx context.Context, tenant, age
 }
 
 func (r *Repositories) RevocationChanges(ctx context.Context, tenant domain.ID, after int64, limit int, retainedAfter time.Time) ([]ports.RevocationLogEntry, error) {
-	if r == nil || r.db == nil || tenant.IsZero() || after < 0 || limit < 1 || limit > 1000 || retainedAfter.IsZero() {
+	if r == nil || r.db == nil || tenant.IsZero() || after < 0 || limit < 1 || limit > 10001 || retainedAfter.IsZero() {
 		return nil, errors.New("revocation change query is invalid")
 	}
 	var earliest *int64

@@ -120,7 +120,9 @@ func TestRevocationAtomicEvidenceAndConcurrentMonotonicEpochs(t *testing.T) {
 	if changes != n+1 || logs != n+1 || audits != n+1 || outbox != n+1 {
 		t.Fatalf("atomic evidence changes=%d logs=%d audits=%d outbox=%d", changes, logs, audits, outbox)
 	}
-	distributed, err := repos.RevocationChanges(ctx, tenant, 0, 100, now.Add(-time.Hour))
+	// Reconciliation probes one beyond the contract's 10,000-change delta cap
+	// so it can choose an authoritative snapshot.
+	distributed, err := repos.RevocationChanges(ctx, tenant, 0, 10001, now.Add(-time.Hour))
 	if err != nil || len(distributed) != n+1 {
 		t.Fatalf("distributed changes=%d err=%v", len(distributed), err)
 	}
@@ -134,6 +136,9 @@ func TestRevocationAtomicEvidenceAndConcurrentMonotonicEpochs(t *testing.T) {
 		t.Fatalf("snapshot=%+v err=%v", snapshot, err)
 	}
 	reconciledAt := now.Add(4 * time.Second)
+	if _, err := repos.RevocationChanges(ctx, tenant, 0, 10002, now.Add(-time.Hour)); err == nil {
+		t.Fatal("unbounded reconciliation probe accepted")
+	}
 	checkpoint := ports.GatewayCheckpoint{TenantID: tenant, GatewayPrincipalID: actor, LastSequence: snapshot.Sequence, Epochs: snapshot.Epochs, LastReconciledAt: &reconciledAt, UpdatedAt: reconciledAt}
 	if err = repos.SaveGatewayCheckpoint(ctx, checkpoint); err != nil {
 		t.Fatal(err)

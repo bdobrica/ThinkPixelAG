@@ -72,3 +72,29 @@ func TestRuntimeSecurityReadinessFailsClosedOnRefreshFailure(t *testing.T) {
 		t.Fatal("last successful state remained ready after refresh failure")
 	}
 }
+
+func TestRuntimeSecurityReadinessReconcilesGlobalEpochWithoutTenantEvent(t *testing.T) {
+	now := time.Date(2026, 9, 18, 20, 0, 0, 0, time.UTC)
+	clock := &freshnessTestClock{wall: now}
+	policies, _ := policy.NewFreshness(time.Minute, clock.Now)
+	tracker, _ := NewRevocationFreshnessTrackerWithElapsed(clock, clock.monotonic)
+	tenant := applicationID(t).String()
+	source := &runtimeSecuritySourceStub{states: []ports.RuntimeSecurityState{{Policy: ports.RuntimeActivePolicy{TenantID: tenant, Channel: "stable", BundleID: tenant, Digest: "sha256:policy", Version: 1, ActivatedAt: now}, Epochs: domain.EpochVector{Security: 1}}}}
+	readiness, _ := NewRuntimeSecurityReadiness(source, policies, tracker, clock, 30*time.Second)
+	for _, epoch := range []int64{1, 2} {
+		source.states[0].Epochs.Security = epoch
+		if err := readiness.Refresh(context.Background()); err != nil {
+			t.Fatalf("global epoch %d without tenant event: %v", epoch, err)
+		}
+		if err := readiness.Ready(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	source.states[0].Epochs.Security = 1
+	if err := readiness.Refresh(context.Background()); !errors.Is(err, ErrFreshnessRegression) {
+		t.Fatalf("epoch regression accepted: %v", err)
+	}
+	if err := readiness.Ready(context.Background()); err == nil {
+		t.Fatal("regressed state remained ready")
+	}
+}

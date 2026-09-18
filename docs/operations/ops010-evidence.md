@@ -1,5 +1,7 @@
 # OPS-010 ARM64 diagnostic qualification — 2026-09-18
 
+Follow-up: [homelab operating envelope and recovery](homelab-qualification.md) records hardware-limited measurements separately from production qualification.
+
 Status: **not qualified; OPS-010 remains open**. The governed executable and
 external HTTP diagnostic driver are implemented. Initial measurements expose
 storage and throughput limits; this report is not production capacity proof.

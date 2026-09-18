@@ -149,3 +149,5 @@ passes.
 
 The 2026-09-18 OPS-010 diagnostic deployment and failed capacity measurements
 are recorded in [OPS-010 evidence](operations/ops010-evidence.md).
+
+Hardware-limited follow-up: [homelab operating envelope and recovery](operations/homelab-qualification.md). Production OPS-010 targets remain unchanged; the reproduced admission retry atomicity failure blocks correctness sign-off.
