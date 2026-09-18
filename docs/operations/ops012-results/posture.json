@@ -1,0 +1,34 @@
+{
+  "scenario": "posture",
+  "started_utc": "2026-09-18T22:27:23Z",
+  "checks": [
+    {
+      "name": "pods_present",
+      "passed": true
+    },
+    {
+      "name": "running_pod_restricted",
+      "passed": true
+    },
+    {
+      "name": "running_pod_restricted",
+      "passed": true
+    },
+    {
+      "name": "running_pod_restricted",
+      "passed": true
+    },
+    {
+      "name": "schema_18",
+      "passed": true
+    },
+    {
+      "name": "ready",
+      "passed": true
+    },
+    {
+      "name": "metrics",
+      "passed": true
+    }
+  ]
+}

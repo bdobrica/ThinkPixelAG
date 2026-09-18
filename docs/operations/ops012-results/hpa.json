@@ -1,0 +1,76 @@
+{
+  "scenario": "hpa",
+  "started_utc": "2026-09-18T22:30:39Z",
+  "checks": [
+    {
+      "name": "hpa_baseline_three",
+      "passed": true
+    },
+    {
+      "name": "hpa_scaled_up",
+      "passed": true,
+      "samples": [
+        {
+          "currentReplicas": null,
+          "desiredReplicas": 0,
+          "currentMetrics": null
+        },
+        {
+          "currentReplicas": null,
+          "desiredReplicas": 0,
+          "currentMetrics": null
+        },
+        {
+          "currentReplicas": 3,
+          "desiredReplicas": 4,
+          "currentMetrics": [
+            {
+              "containerResource": {
+                "container": "api",
+                "current": {
+                  "averageValue": "40m"
+                },
+                "name": "cpu"
+              },
+              "type": "ContainerResource"
+            }
+          ]
+        },
+        {
+          "currentReplicas": 4,
+          "desiredReplicas": 4,
+          "currentMetrics": [
+            {
+              "containerResource": {
+                "container": "api",
+                "current": {
+                  "averageValue": "76m"
+                },
+                "name": "cpu"
+              },
+              "type": "ContainerResource"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bounded_read_traffic",
+      "passed": true,
+      "requests": 1360,
+      "errors": 0,
+      "maximum_rate": 40,
+      "concurrency": 16
+    },
+    {
+      "name": "hpa_scaled_down",
+      "passed": true,
+      "retained_minimum": 3,
+      "retained_maximum": 4
+    }
+  ],
+  "traffic": {
+    "requests": 1360,
+    "errors": 0
+  }
+}

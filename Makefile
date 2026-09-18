@@ -25,7 +25,7 @@ GO_FILES := $(shell git ls-files '*.go')
 	license-check security build image container-smoke verify clean compose-check dev-up \
 	dev-up-valkey dev-status dev-smoke dev-down dev-reset test-security \
 	kubernetes-check release-artifacts test-backup-restore test-postgres-pitr \
-	test-resilience test-cluster-smoke test-cluster-resilience test-load test-retained-resilience
+	test-resilience test-cluster-smoke test-cluster-resilience test-load test-retained-resilience test-retained-lifecycle test-lifecycle
 
 help: ## Show the stable development targets.
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -178,6 +178,12 @@ test-load: ## Run external governed API qualification; pass explicit LOAD_ARGS (
 
 test-retained-resilience: ## Run an explicitly authorized retained-cluster scenario; pass RESILIENCE_ARGS.
 	python3 test/operations/resilience.py $(RESILIENCE_ARGS)
+
+test-lifecycle: ## Check lifecycle drill rollback and uncertain-mutation safety.
+	python3 -m unittest discover -s test/operations -p test_lifecycle.py
+
+test-retained-lifecycle: ## Run retained-cluster lifecycle qualification with explicit LIFECYCLE_ARGS.
+	python3 test/operations/lifecycle.py $(LIFECYCLE_ARGS)
 
 verify: generate-check lint test test-race test-policy test-integration test-e2e test-security compose-check kubernetes-check security build container-smoke ## Run the complete clean-checkout gate.
 

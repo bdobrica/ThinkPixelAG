@@ -1,0 +1,313 @@
+{
+  "scenario": "upgrade",
+  "started_utc": "2026-09-18T22:27:45Z",
+  "checks": [
+    {
+      "name": "distinct_immutable_images",
+      "passed": true
+    },
+    {
+      "name": "pods_present",
+      "passed": true
+    },
+    {
+      "name": "running_pod_restricted",
+      "passed": true
+    },
+    {
+      "name": "running_pod_restricted",
+      "passed": true
+    },
+    {
+      "name": "running_pod_restricted",
+      "passed": true
+    },
+    {
+      "name": "schema_18",
+      "passed": true
+    },
+    {
+      "name": "ready",
+      "passed": true
+    },
+    {
+      "name": "metrics",
+      "passed": true
+    },
+    {
+      "name": "before_admitted",
+      "passed": true,
+      "status": 201
+    },
+    {
+      "name": "before_admission_replay",
+      "passed": true
+    },
+    {
+      "name": "before_key_conflict",
+      "passed": true
+    },
+    {
+      "name": "before_authorized_read",
+      "passed": true
+    },
+    {
+      "name": "before_tenant_isolation",
+      "passed": true
+    },
+    {
+      "name": "before_forged_token_denied",
+      "passed": true
+    },
+    {
+      "name": "before_signal",
+      "passed": true,
+      "status": 202
+    },
+    {
+      "name": "before_signal_replay",
+      "passed": true
+    },
+    {
+      "name": "before_cancel",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "before_cancel_replay",
+      "passed": true
+    },
+    {
+      "name": "before_ordered_events",
+      "passed": true
+    },
+    {
+      "name": "before_cursor_resume",
+      "passed": true
+    },
+    {
+      "name": "before_no_duplicate_events",
+      "passed": true
+    },
+    {
+      "name": "before_database_invariants",
+      "passed": true
+    },
+    {
+      "name": "candidate_migration_compatible",
+      "passed": true
+    },
+    {
+      "name": "image_converged",
+      "passed": true,
+      "image": "quay.io/bdobrica/thinkpixelag@sha256:3d0e53d9c0bfab3772482915eb39e757594ce4815d432006ff0b77fb1a373dc4"
+    },
+    {
+      "name": "upgrade_durable_replay",
+      "passed": true
+    },
+    {
+      "name": "upgrade_terminal_state_preserved",
+      "passed": true
+    },
+    {
+      "name": "upgraded_admitted",
+      "passed": true,
+      "status": 201
+    },
+    {
+      "name": "upgraded_admission_replay",
+      "passed": true
+    },
+    {
+      "name": "upgraded_key_conflict",
+      "passed": true
+    },
+    {
+      "name": "upgraded_authorized_read",
+      "passed": true
+    },
+    {
+      "name": "upgraded_tenant_isolation",
+      "passed": true
+    },
+    {
+      "name": "upgraded_forged_token_denied",
+      "passed": true
+    },
+    {
+      "name": "upgraded_signal",
+      "passed": true,
+      "status": 202
+    },
+    {
+      "name": "upgraded_signal_replay",
+      "passed": true
+    },
+    {
+      "name": "upgraded_cancel",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "upgraded_cancel_replay",
+      "passed": true
+    },
+    {
+      "name": "upgraded_ordered_events",
+      "passed": true
+    },
+    {
+      "name": "upgraded_cursor_resume",
+      "passed": true
+    },
+    {
+      "name": "upgraded_no_duplicate_events",
+      "passed": true
+    },
+    {
+      "name": "upgraded_database_invariants",
+      "passed": true
+    },
+    {
+      "name": "pods_present",
+      "passed": true
+    },
+    {
+      "name": "running_pod_restricted",
+      "passed": true
+    },
+    {
+      "name": "running_pod_restricted",
+      "passed": true
+    },
+    {
+      "name": "running_pod_restricted",
+      "passed": true
+    },
+    {
+      "name": "schema_18",
+      "passed": true
+    },
+    {
+      "name": "ready",
+      "passed": true
+    },
+    {
+      "name": "metrics",
+      "passed": true
+    },
+    {
+      "name": "image_converged",
+      "passed": true,
+      "image": "quay.io/bdobrica/thinkpixelag@sha256:7f52eba9bd8c31d6e6c499032561336f1e53359990626584967f1edecb9aeef9"
+    },
+    {
+      "name": "rollback_original_durable_replay",
+      "passed": true
+    },
+    {
+      "name": "rollback_original_terminal_state_preserved",
+      "passed": true
+    },
+    {
+      "name": "rollback_candidate_durable_replay",
+      "passed": true
+    },
+    {
+      "name": "rollback_candidate_terminal_state_preserved",
+      "passed": true
+    },
+    {
+      "name": "rollback_admitted",
+      "passed": true,
+      "status": 201
+    },
+    {
+      "name": "rollback_admission_replay",
+      "passed": true
+    },
+    {
+      "name": "rollback_key_conflict",
+      "passed": true
+    },
+    {
+      "name": "rollback_authorized_read",
+      "passed": true
+    },
+    {
+      "name": "rollback_tenant_isolation",
+      "passed": true
+    },
+    {
+      "name": "rollback_forged_token_denied",
+      "passed": true
+    },
+    {
+      "name": "rollback_signal",
+      "passed": true,
+      "status": 202
+    },
+    {
+      "name": "rollback_signal_replay",
+      "passed": true
+    },
+    {
+      "name": "rollback_cancel",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "rollback_cancel_replay",
+      "passed": true
+    },
+    {
+      "name": "rollback_ordered_events",
+      "passed": true
+    },
+    {
+      "name": "rollback_cursor_resume",
+      "passed": true
+    },
+    {
+      "name": "rollback_no_duplicate_events",
+      "passed": true
+    },
+    {
+      "name": "rollback_database_invariants",
+      "passed": true
+    },
+    {
+      "name": "pods_present",
+      "passed": true
+    },
+    {
+      "name": "running_pod_restricted",
+      "passed": true
+    },
+    {
+      "name": "running_pod_restricted",
+      "passed": true
+    },
+    {
+      "name": "running_pod_restricted",
+      "passed": true
+    },
+    {
+      "name": "schema_18",
+      "passed": true
+    },
+    {
+      "name": "ready",
+      "passed": true
+    },
+    {
+      "name": "metrics",
+      "passed": true
+    }
+  ],
+  "images": {
+    "original": "quay.io/bdobrica/thinkpixelag@sha256:7f52eba9bd8c31d6e6c499032561336f1e53359990626584967f1edecb9aeef9",
+    "candidate": "quay.io/bdobrica/thinkpixelag@sha256:3d0e53d9c0bfab3772482915eb39e757594ce4815d432006ff0b77fb1a373dc4"
+  }
+}

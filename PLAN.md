@@ -370,15 +370,19 @@ evidence retry, bounded PostgreSQL latency/process restart, API pod loss,
 rolling restart, schema-version assertion, restricted runtime, declared HPA
 bounds, PDB behavior, configuration rollback, and complete uninstall. Phase
 exit remains blocked on production-shaped load; composed Valkey/worker faults
-and intended-topology partition/failover qualification; and a governed core API
-workflow, observed HPA scaling, and two-digest application upgrade/rollback
-through the production process composition. Those gates remain unchecked
+and intended-topology partition/failover qualification. Those gates remain unchecked
 rather than being weakened to documentation or synthetic proof.
 
 Retained ARM64 resilience evidence now includes quiesced PostgreSQL replica
 promotion, latency, deployed OPA faults, eviction and rolling restart. Real-adapter
 cache, worker and stream probes do not close production composition gates; see
 `docs/operations/ops011-evidence.md`. Production targets remain unchanged.
+
+OPS-012 lifecycle qualification now includes the governed core HTTP workflow,
+observed hardware-diagnostic HPA scale-out/scale-in and two-digest application
+upgrade/rollback, alongside the earlier disposable install/uninstall evidence.
+See `docs/operations/ops012-evidence.md`; production scaling capacity and SLO
+qualification remain part of OPS-010.
 
 ### Phase 9 — Release-candidate closure
 

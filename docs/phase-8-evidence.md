@@ -64,9 +64,9 @@ the tag workflow.
   capabilities, policy/revocation readiness, metrics, declared HPA 2–4 replicas
   at 70% CPU, PDB-blocked drain, pod replacement, rolling configuration change
   and rollback, deletion, and absence of managed workloads after uninstall.
-  A governed production HTTP workflow, observed metrics-driven scaling, and
-  upgrade/rollback between two immutable application digests remain required,
-  so OPS-012 is not yet complete.
+  The remaining governed HTTP workflow, observed metrics-driven scaling and
+  two-digest upgrade/rollback were subsequently exercised on retained ARM64
+  hardware; see [OPS-012 evidence](operations/ops012-evidence.md).
 - A clean isolated-database `make verify` passed after these changes, including
   generation/lint/OpenAPI, unit/coverage/race, 26/26 Rego, PostgreSQL integration,
   end-to-end and security suites, Kubernetes rendering, dependency/vulnerability/
@@ -139,13 +139,13 @@ fault matrix. Before Phase 8 can close:
   cache/worker/stream probes passed, but production-composed Valkey/worker and
   intended-topology partition/failover qualification remain open. See
   [OPS-011 evidence](operations/ops011-evidence.md) for the exact scope.
-- OPS-012 still requires its complete governed workflow, observed HPA scaling
-  and two-digest upgrade/rollback qualification. Opt-in runtime composition now
-  mounts governed handlers; admission/replay/read/isolation smoke passed in the
-  ARM64 load environment, but this does not close the full lifecycle gate.
+- OPS-012 lifecycle qualification is complete using the earlier disposable
+  install/uninstall evidence and the retained ARM64 workflow/scaling/image
+  transition evidence. Hardware-diagnostic HPA behavior does not qualify
+  production scaling capacity; that remains under OPS-010.
 
 These are release blockers, not accepted residual risks. OPS-014 and the Phase
-8 checkbox remain open until all four are executed and the full clean-tree gate
+8 checkbox remain open until the remaining gates are executed and the full clean-tree gate
 passes.
 
 The 2026-09-18 OPS-010 diagnostic deployment and failed capacity measurements
