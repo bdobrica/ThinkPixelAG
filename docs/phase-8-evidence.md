@@ -1,9 +1,10 @@
 # Phase 8 production operations evidence
 
 - Status: in progress
-- Review date: 2026-09-02
-- Implementation commit: `967165a`
-- Host: Linux/amd64, Docker, kind v0.30.0 (Kubernetes v1.34.0), kubectl v1.35.0, PostgreSQL 18.4
+- Review date: 2026-09-18
+- Foundation implementation commit: `967165a`; follow-up revisions are linked below
+- Initial host: Linux/amd64, Docker, kind v0.30.0 (Kubernetes v1.34.0), kubectl v1.35.0, PostgreSQL 18.4
+- Current closeout checkpoint: [OPS-014 evidence and artifact inventory](operations/phase-8-checkpoint.md); Phase 8 remains open.
 
 ## Implemented controls
 
@@ -55,9 +56,9 @@ the tag workflow.
   v1.34.0 cluster then returned readiness 503 while a five-second PostgreSQL
   pre-authentication delay exceeded the two-second health bound, kept liveness
   200, recovered after reset, and recovered from PostgreSQL process crash, API
-  pod crash, and rolling restart. Target-platform PostgreSQL replica promotion
-  and production-composed Valkey/worker crashes remain required, so OPS-011 is
-  not yet complete.
+  pod crash, and rolling restart. Subsequent ARM64 quiesced replica promotion
+  passed at `8e3a1de`; production-composed Valkey/worker and intended-topology
+  qualification remain open (see the OPS-011 report below).
 - OPS-012 disposable-cluster qualification at `4fff867` passed
   `test/cluster_smoke.sh`: clean install, explicit migration to schema 18,
   UID/GID 65532 restricted runtime with read-only root/no escalation/dropped

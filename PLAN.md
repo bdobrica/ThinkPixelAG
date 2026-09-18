@@ -349,7 +349,7 @@ The review method, dispositions, and residual-risk register are recorded in
 
 Finalize image, Kubernetes resources, dashboards, alerts, SLOs, runbooks, backup/restore, upgrade/rollback, load testing, SBOM/scanning, and release automation. Exit when a disposable cluster passes installation, upgrade, disruption, recovery, and smoke tests.
 
-Status: in progress as of 2026-09-02. OCI/supply-chain automation,
+Status: in progress as of 2026-09-18. OCI/supply-chain automation,
 Kubernetes packaging/hardening/probe resources, optional monitoring/autoscaling,
 the fully validated SLO alert matrix, runbooks, encrypted physical backup/WAL
 PITR with forward-schema and authoritative-invariant recovery, multi-architecture
@@ -383,6 +383,11 @@ observed hardware-diagnostic HPA scale-out/scale-in and two-digest application
 upgrade/rollback, alongside the earlier disposable install/uninstall evidence.
 See `docs/operations/ops012-evidence.md`; production scaling capacity and SLO
 qualification remain part of OPS-010.
+
+OPS-014 has a consolidated evidence/artifact checkpoint at
+`docs/operations/phase-8-checkpoint.md`. The fresh image gate required the gRPC
+security patch at `99c8ae9`; final Phase 8 closeout still depends on OPS-010 and
+OPS-011 and is not implied by committing the checkpoint.
 
 ### Phase 9 — Release-candidate closure
 
