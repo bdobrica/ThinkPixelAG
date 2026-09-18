@@ -134,10 +134,11 @@ fault matrix. Before Phase 8 can close:
 - OPS-010 must run the documented full API/policy/admission/allocation/SSE/outbox/
   revocation workloads against the intended production topology and report
   percentiles, saturation, and tuned limits.
-- OPS-011 must finish environment fault injection for DB failover/latency and
-  cross-zone stream behavior; deterministic tests already cover OPA timeout and
-  malformed responses, cache loss/poisoning, revocation gaps/reconciliation,
-  worker lease recovery, pod eviction, and rolling restart.
+- OPS-011 retained ARM64 qualification now covers quiesced replica promotion,
+  DB latency, deployed OPA faults, eviction and rolling restart. Real-adapter
+  cache/worker/stream probes passed, but production-composed Valkey/worker and
+  intended-topology partition/failover qualification remain open. See
+  [OPS-011 evidence](operations/ops011-evidence.md) for the exact scope.
 - OPS-012 still requires its complete governed workflow, observed HPA scaling
   and two-digest upgrade/rollback qualification. Opt-in runtime composition now
   mounts governed handlers; admission/replay/read/isolation smoke passed in the

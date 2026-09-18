@@ -369,11 +369,16 @@ responses, conservative cache loss, revocation partitions, worker fencing,
 evidence retry, bounded PostgreSQL latency/process restart, API pod loss,
 rolling restart, schema-version assertion, restricted runtime, declared HPA
 bounds, PDB behavior, configuration rollback, and complete uninstall. Phase
-exit remains blocked on production-shaped load; target-platform PostgreSQL
-replica promotion and composed Valkey/worker faults; and a governed core API
+exit remains blocked on production-shaped load; composed Valkey/worker faults
+and intended-topology partition/failover qualification; and a governed core API
 workflow, observed HPA scaling, and two-digest application upgrade/rollback
 through the production process composition. Those gates remain unchecked
 rather than being weakened to documentation or synthetic proof.
+
+Retained ARM64 resilience evidence now includes quiesced PostgreSQL replica
+promotion, latency, deployed OPA faults, eviction and rolling restart. Real-adapter
+cache, worker and stream probes do not close production composition gates; see
+`docs/operations/ops011-evidence.md`. Production targets remain unchanged.
 
 ### Phase 9 — Release-candidate closure
 

@@ -123,3 +123,8 @@ outbox/revocation lag, and Go runtime pressure. Preserve security timeouts and
 freshness bounds. Scale replicas only within DB and external-dependency budgets;
 use the last Phase 8 load report to distinguish CPU, DB contention, OPA, and SSE
 fanout limits.
+
+For an existing isolated cluster that must retain its resources, use the
+[retained-cluster resilience workflow](resilience-testing.md). Its promotion
+drill fences the old writer and preserves both volumes; inspect the recorded
+roles before any subsequent database restart.

@@ -25,7 +25,7 @@ GO_FILES := $(shell git ls-files '*.go')
 	license-check security build image container-smoke verify clean compose-check dev-up \
 	dev-up-valkey dev-status dev-smoke dev-down dev-reset test-security \
 	kubernetes-check release-artifacts test-backup-restore test-postgres-pitr \
-	test-resilience test-cluster-smoke test-cluster-resilience test-load
+	test-resilience test-cluster-smoke test-cluster-resilience test-load test-retained-resilience
 
 help: ## Show the stable development targets.
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -161,6 +161,7 @@ test-postgres-pitr: ## Exercise encrypted physical backup, WAL PITR, forward mig
 	DOCKER=$(DOCKER) POSTGRES_IMAGE=$$(awk '/^[[:space:]]*image: postgres:/{print $$2; exit}' compose.yaml) bash test/postgres_pitr.sh
 
 test-resilience: ## Exercise provider-neutral policy, cache, stream, worker, and evidence fault handling.
+	python3 -m unittest discover -s test/operations -p test_resilience.py
 	$(GO) test -count=1 -run '^(TestClientFailsClosed|TestClientRejectsAdversarialOutput)$$' ./internal/adapters/opa
 	$(GO) test -count=1 -run '^(TestCachedEvaluatorBypassesFailureAndPoison|TestCachedEvaluatorExpiredAllowCannotReappearDuringRecovery)$$' ./internal/policy
 	$(GO) test -count=1 -run '^(TestFreshnessEvaluatorFailsClosedDuringLagGapAndPartitionThenRecovers|TestRevocationReconcileFallsBackToSnapshotAndPersistsCheckpoint|TestRunWorkerRejectsExpiredLeaseAndInvalidConfiguration)$$' ./internal/application
@@ -174,6 +175,9 @@ test-cluster-resilience: ## Inject dependency latency/outage, pod loss, and roll
 
 test-load: ## Run external governed API qualification; pass explicit LOAD_ARGS (see load-testing.md).
 	$(GO) run ./test/operations/load $(LOAD_ARGS)
+
+test-retained-resilience: ## Run an explicitly authorized retained-cluster scenario; pass RESILIENCE_ARGS.
+	python3 test/operations/resilience.py $(RESILIENCE_ARGS)
 
 verify: generate-check lint test test-race test-policy test-integration test-e2e test-security compose-check kubernetes-check security build container-smoke ## Run the complete clean-checkout gate.
 

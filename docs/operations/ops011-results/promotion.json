@@ -1,0 +1,56 @@
+{
+  "scenario": "promote",
+  "started_utc": "2026-09-18T21:27:07Z",
+  "checks": [
+    {
+      "name": "standby_in_recovery",
+      "passed": true
+    },
+    {
+      "name": "separate_nodes",
+      "passed": true
+    },
+    {
+      "name": "writer_service_targets_source",
+      "passed": true
+    },
+    {
+      "name": "prepromotion_read",
+      "passed": true
+    },
+    {
+      "name": "standby_matches_authoritative_rows",
+      "passed": true,
+      "tables": 41
+    },
+    {
+      "name": "source_fenced_before_promotion",
+      "passed": true
+    },
+    {
+      "name": "standby_promoted",
+      "passed": true
+    },
+    {
+      "name": "promoted_rows_preserved",
+      "passed": true,
+      "tables": 41
+    },
+    {
+      "name": "promoted_database_invariants",
+      "passed": true
+    },
+    {
+      "name": "api_reconnected_to_promoted_database",
+      "passed": true,
+      "interruption_seconds": 191.257
+    }
+  ],
+  "retained_topology": {
+    "writer_deployment": "ops011-standby",
+    "fenced_deployment": "postgres",
+    "service": "postgres",
+    "automatic_failover": false,
+    "quiesced_promotion": true
+  }
+}
