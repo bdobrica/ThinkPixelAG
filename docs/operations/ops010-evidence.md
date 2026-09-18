@@ -4,6 +4,10 @@ Status: **not qualified; OPS-010 remains open**. The governed executable and
 external HTTP diagnostic driver are implemented. Initial measurements expose
 storage and throughput limits; this report is not production capacity proof.
 
+Implementation and verification source commit: `562cc4df241e906749b824ae0f5464a8c7a1e5bc`.
+The cluster images were built before that commit was created, with the
+development labels and digests below. Subsequent edits only record evidence.
+
 ## Environment and artifacts
 
 Disposable single-site Kubernetes ARM64 cluster: three Raspberry Pi 4 workers
