@@ -1,0 +1,23 @@
+{
+  "mode": "admission",
+  "started": "2026-09-18T18:55:34.330212888Z",
+  "duration_seconds": 11.502996434,
+  "Offered": 10,
+  "Completed": 4,
+  "Success": 4,
+  "Dropped": 6,
+  "TransportErrors": 0,
+  "InvariantFailures": 0,
+  "Statuses": {
+    "201": 4
+  },
+  "Throughput": 0.3477354811809724,
+  "P50MS": 9411.053047,
+  "P95MS": 10349.83624,
+  "P99MS": 10349.83624,
+  "StreamClients": 0,
+  "PeakStreams": 0,
+  "StreamEvents": 0,
+  "Reconnects": 0,
+  "LagP99MS": 0
+}

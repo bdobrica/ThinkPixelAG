@@ -312,7 +312,7 @@ func phase4Request(t *testing.T, handler http.Handler, method, target, body, ide
 
 func phase4Stream(t *testing.T, handler http.Handler, target, cursor string) *httptest.ResponseRecorder {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	request := httptest.NewRequest(http.MethodGet, target, nil).WithContext(ctx)
 	request.Header.Set("Authorization", "Bearer valid")
@@ -320,8 +320,22 @@ func phase4Stream(t *testing.T, handler http.Handler, target, cursor string) *ht
 		request.Header.Set("Last-Event-ID", cursor)
 	}
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
+	handler.ServeHTTP(&phase4StreamRecorder{ResponseRecorder: response, cancel: cancel}, request)
 	return response
+}
+
+// End the functional stream check after an event is flushed, rather than
+// imposing a 25 ms database/network latency assertion on a lifecycle test.
+type phase4StreamRecorder struct {
+	*httptest.ResponseRecorder
+	cancel context.CancelFunc
+}
+
+func (r *phase4StreamRecorder) Flush() {
+	r.ResponseRecorder.Flush()
+	if strings.Contains(r.Body.String(), "\nid: ") || strings.HasPrefix(r.Body.String(), "id: ") {
+		r.cancel()
+	}
 }
 
 func phase4LastEventID(t *testing.T, body string) string {

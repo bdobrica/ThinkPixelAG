@@ -77,7 +77,10 @@ func (s *EvidenceDeliveryStore) Complete(ctx context.Context, claim evidence.Cla
 	 SELECT $1,$2,$3,NULLIF($4,''),$5,$6,$7,$8,$9::jsonb FROM evidence_sink_checkpoints c
 	 WHERE c.sink_id=$1 AND c.claim_token=$10 AND c.claimed_event_id=$2 AND c.last_sequence+1=$3
 	 RETURNING sink_id
-	) UPDATE evidence_sink_checkpoints c SET last_sequence=$3,last_event_hash=$5,claim_token=NULL,claimed_event_id=NULL,claimed_until=NULL,updated_at=$8
+	) , published AS (
+ UPDATE outbox_messages SET published_at=$8 WHERE id=$2 AND published_at IS NULL
+ AND EXISTS (SELECT 1 FROM inserted) RETURNING id
+ ) UPDATE evidence_sink_checkpoints c SET last_sequence=$3,last_event_hash=$5,claim_token=NULL,claimed_event_id=NULL,claimed_until=NULL,updated_at=$8
 	 FROM inserted i WHERE c.sink_id=i.sink_id`, claim.Delivery.SinkID, claim.Delivery.EventID, claim.Delivery.Sequence, claim.Delivery.PreviousHash, claim.Delivery.EventHash, receipt.ReceiptID, receipt.Checkpoint, receipt.AcceptedAt, raw, claim.ClaimToken)
 	if err != nil {
 		return fmt.Errorf("commit evidence receipt: %w", err)

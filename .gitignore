@@ -27,6 +27,9 @@ go.work.sum
 # Repository-local build and pinned tool binaries
 .cache/
 
+# Local operational environment notes
+/docs/operations/homelab.md
+
 # Instruction files
 /AUDIT_SUMMARY.md
 /ALIGNMENT.md

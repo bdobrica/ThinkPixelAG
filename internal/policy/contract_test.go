@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -88,5 +89,17 @@ func TestFreshnessIsMonotonicAndBounded(t *testing.T) {
 	now = now.Add(30 * time.Second)
 	if _, ok := f.Get("t", "stable"); ok {
 		t.Fatal("stale policy reported fresh")
+	}
+}
+
+func TestNumericNarrowingAcrossHTTPAndOPARepresentations(t *testing.T) {
+	for _, tc := range []struct {
+		got     float64
+		ceiling json.Number
+		allowed bool
+	}{{99, "100", true}, {101, "100", false}, {9007199254740992, "9007199254740991", false}} {
+		if got := constraintsNarrow(map[string]any{"max_llm_tokens": tc.got}, map[string]any{"max_llm_tokens": tc.ceiling}); got != tc.allowed {
+			t.Fatalf("numeric narrowing=%v want=%v", got, tc.allowed)
+		}
 	}
 }

@@ -71,6 +71,14 @@ func TestEvidenceDeliveryReplayReceiptAndCheckpoint(t *testing.T) {
 	if err = store.Complete(ctx, *replay, receipt); err != nil {
 		t.Fatal(err)
 	}
+	var published *time.Time
+	if err = tx.QueryRow(ctx, `SELECT published_at FROM outbox_messages WHERE id=$1`, event1.String()).Scan(&published); err != nil || published == nil || !published.Equal(receipt.AcceptedAt) {
+		t.Fatalf("receipt did not atomically mark publication: %v", err)
+	}
+	var unpublished *time.Time
+	if err = tx.QueryRow(ctx, `SELECT published_at FROM outbox_messages WHERE id=$1`, event2.String()).Scan(&unpublished); err != nil || unpublished != nil {
+		t.Fatalf("undelivered event marked published: %v", err)
+	}
 	if err = store.Complete(ctx, *first, receipt); err == nil {
 		t.Fatal("stale claimant committed receipt")
 	}

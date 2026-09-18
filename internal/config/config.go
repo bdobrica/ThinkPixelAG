@@ -44,6 +44,8 @@ func (s Secret) MarshalJSON() ([]byte, error) { return json.Marshal(redacted) }
 // Config is the validated configuration for the governance-plane process.
 type Config struct {
 	Environment Environment
+	RuntimeFile string
+	CursorKey   Secret
 	HTTP        HTTPConfig
 	Database    DatabaseConfig
 	Log         LogConfig
@@ -193,9 +195,11 @@ func Defaults() Config {
 }
 
 type safeConfig struct {
-	Environment Environment `json:"environment"`
-	HTTP        HTTPConfig  `json:"http"`
-	Database    struct {
+	RuntimeFile         string      `json:"runtime_file"`
+	CursorKeyConfigured bool        `json:"cursor_key_configured"`
+	Environment         Environment `json:"environment"`
+	HTTP                HTTPConfig  `json:"http"`
+	Database            struct {
 		URLConfigured         bool          `json:"url_configured"`
 		ConnectTimeout        time.Duration `json:"connect_timeout"`
 		HealthTimeout         time.Duration `json:"health_timeout"`
@@ -235,6 +239,8 @@ type safeConfig struct {
 func (c Config) safe() safeConfig {
 	var out safeConfig
 	out.Environment = c.Environment
+	out.RuntimeFile = c.RuntimeFile
+	out.CursorKeyConfigured = c.CursorKey.IsSet()
 	out.HTTP = c.HTTP
 	out.Database.URLConfigured = c.Database.URL.IsSet()
 	out.Database.ConnectTimeout = c.Database.ConnectTimeout

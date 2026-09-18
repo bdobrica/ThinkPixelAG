@@ -395,3 +395,29 @@ func TestValidateValkeyCacheIntegrityKey(t *testing.T) {
 		t.Fatalf("Validate() error = %v, want orphan cache HMAC failure", err)
 	}
 }
+
+func TestRuntimeCursorKeyRequiresPairedConfiguration(t *testing.T) {
+	for _, tc := range []struct {
+		name, file, key string
+		valid           bool
+	}{
+		{"disabled", "", "", true},
+		{"missing key", "runtime.json", "", false},
+		{"short key", "runtime.json", strings.Repeat("x", 31), false},
+		{"orphan key", "", strings.Repeat("x", 32), false},
+		{"enabled", "runtime.json", strings.Repeat("x", 32), true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			env := validEnvironment()
+			env["THINKPIXELAG_RUNTIME_FILE"] = tc.file
+			env["THINKPIXELAG_CURSOR_HMAC_KEY"] = tc.key
+			c, err := load(nil, env)
+			if (err == nil) != tc.valid {
+				t.Fatalf("configuration acceptance=%v, want %v", err == nil, tc.valid)
+			}
+			if err == nil && (c.RuntimeFile != tc.file || c.CursorKey.Value() != tc.key) {
+				t.Fatal("runtime settings were not loaded")
+			}
+		})
+	}
+}

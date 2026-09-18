@@ -1,0 +1,24 @@
+{
+  "mode": "streams",
+  "started": "2026-09-18T19:19:13.560730812Z",
+  "duration_seconds": 30.533352266,
+  "Offered": 30,
+  "Completed": 29,
+  "Success": 0,
+  "Dropped": 1,
+  "TransportErrors": 1831,
+  "InvariantFailures": 0,
+  "Statuses": {
+    "503": 29
+  },
+  "Throughput": 0,
+  "P50MS": 1766.518212,
+  "P95MS": 2271.985783,
+  "P99MS": 2501.997417,
+  "StreamClients": 5000,
+  "PeakStreams": 4093,
+  "StreamEvents": 0,
+  "Reconnects": 1250,
+  "StreamGaps": 0,
+  "LagP99MS": 0
+}

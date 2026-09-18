@@ -30,6 +30,12 @@ func newValidationError(problems []string) error {
 // transport requirements without performing network I/O.
 func (c Config) Validate() error {
 	var problems []string
+	if c.RuntimeFile != "" && len(c.CursorKey.Value()) < 32 {
+		problems = append(problems, "runtime requires a cursor HMAC key of at least 32 bytes")
+	}
+	if c.RuntimeFile == "" && c.CursorKey.IsSet() {
+		problems = append(problems, "cursor HMAC key requires a runtime file")
+	}
 	if c.Environment != EnvironmentLocal && c.Environment != EnvironmentTest && c.Environment != EnvironmentProduction {
 		problems = append(problems, "environment must be local, test, or production")
 	}

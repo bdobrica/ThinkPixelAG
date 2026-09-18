@@ -38,9 +38,13 @@ deny(reason) := {"contract_version": "thinkpixelag.authorization/v1alpha1", "dec
 budget_exhaustion_obligation := {"type": "budget.pause_on_exhaustion", "mandatory": false} if input.agent.risk_class in {"low", "medium"}
 else := {"type": "budget.fail_on_exhaustion", "mandatory": false}
 
-default narrow_constraints := {}
-narrow_constraints := {"max_tokens": value} if {
-    requested := input.requested_constraints.max_tokens
-    ceiling := input.authority_constraints.max_tokens
-    value := min({requested, ceiling})
+# Resolve only requested numeric ceilings present in deployment authority.
+# Keep max_tokens for the original policy contract examples.
+constraint_names := {"max_tokens", "max_execution_time_seconds", "max_budget_usd_microunits", "max_llm_tokens", "max_tool_calls", "max_tool_calls_per_minute", "max_active_children", "max_total_children", "max_delegation_depth"}
+narrow_constraints := {key: min({requested, ceiling}) |
+    some key in constraint_names
+    requested := input.requested_constraints[key]
+    ceiling := input.authority_constraints[key]
+    is_number(requested)
+    is_number(ceiling)
 }

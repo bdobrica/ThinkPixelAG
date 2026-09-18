@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/config"
@@ -19,15 +20,19 @@ type requestIDKey struct{}
 func middleware(route string, httpConfig config.HTTPConfig, dependencies Dependencies, handler http.Handler) http.Handler {
 	// Streaming responses own their lifecycle and are bounded by disconnect,
 	// shutdown, heartbeat, and per-write deadlines rather than a unary timeout.
-	if route != "GET /v1/runs/{run_id}/events" {
+	if route != "GET /v1/runs/{run_id}/events" && route != "GET /v1/trusted/revocations/events" {
 		handler = deadlineContext(handler, httpConfig.HandlerTimeout)
 		handler = responseWriteDeadline(handler, httpConfig.WriteTimeout)
 	}
 	handler = bodyLimit(handler, httpConfig.MaxBodyBytes)
 	handler = recoverPanic(handler, dependencies.Logger)
-	handler = observe(handler, route, dependencies)
+	metricRoute := route
+	if _, pattern, ok := strings.Cut(route, " "); ok {
+		metricRoute = pattern
+	}
+	handler = observe(handler, metricRoute, dependencies)
 	handler = correlate(handler)
-	handler = traceRequest(handler, route, dependencies)
+	handler = traceRequest(handler, metricRoute, dependencies)
 	handler = requestID(handler, dependencies.NewID)
 	return handler
 }

@@ -138,10 +138,14 @@ fault matrix. Before Phase 8 can close:
   cross-zone stream behavior; deterministic tests already cover OPA timeout and
   malformed responses, cache loss/poisoning, revocation gaps/reconciliation,
   worker lease recovery, pod eviction, and rolling restart.
-- OPS-012 still requires a governed core API workflow in-cluster. The current
-  process composition exposes operational endpoints but does not yet assemble
-  the previously implemented application handlers in `cmd/thinkpixelag`.
+- OPS-012 still requires its complete governed workflow, observed HPA scaling
+  and two-digest upgrade/rollback qualification. Opt-in runtime composition now
+  mounts governed handlers; admission/replay/read/isolation smoke passed in the
+  ARM64 load environment, but this does not close the full lifecycle gate.
 
 These are release blockers, not accepted residual risks. OPS-014 and the Phase
 8 checkbox remain open until all four are executed and the full clean-tree gate
 passes.
+
+The 2026-09-18 OPS-010 diagnostic deployment and failed capacity measurements
+are recorded in [OPS-010 evidence](operations/ops010-evidence.md).

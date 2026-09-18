@@ -25,7 +25,7 @@ GO_FILES := $(shell git ls-files '*.go')
 	license-check security build image container-smoke verify clean compose-check dev-up \
 	dev-up-valkey dev-status dev-smoke dev-down dev-reset test-security \
 	kubernetes-check release-artifacts test-backup-restore test-postgres-pitr \
-	test-resilience test-cluster-smoke test-cluster-resilience
+	test-resilience test-cluster-smoke test-cluster-resilience test-load
 
 help: ## Show the stable development targets.
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -171,6 +171,9 @@ test-cluster-smoke: ## Run install, migration, restricted-runtime, disruption, u
 
 test-cluster-resilience: ## Inject dependency latency/outage, pod loss, and rolling restart in a disposable cluster.
 	KIND=$(KIND) KUBECTL=$(KUBECTL) IMAGE=$(IMAGE) bash test/cluster_resilience.sh
+
+test-load: ## Run external governed API qualification; pass explicit LOAD_ARGS (see load-testing.md).
+	$(GO) run ./test/operations/load $(LOAD_ARGS)
 
 verify: generate-check lint test test-race test-policy test-integration test-e2e test-security compose-check kubernetes-check security build container-smoke ## Run the complete clean-checkout gate.
 

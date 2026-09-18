@@ -88,6 +88,10 @@ func RunEventStreamHandler(verifier oidc.Verifier, service RunEventStreamService
 		writer.Header().Set("X-Accel-Buffering", "no")
 		writer.WriteHeader(http.StatusOK)
 		controller := http.NewResponseController(writer)
+		_ = controller.SetWriteDeadline(time.Now().Add(options.WriteTimeout))
+		if controller.Flush() != nil {
+			return
+		}
 		poll := time.NewTicker(options.PollInterval)
 		defer poll.Stop()
 		heartbeat := time.NewTicker(options.HeartbeatInterval)
@@ -119,6 +123,9 @@ func RunEventStreamHandler(verifier oidc.Verifier, service RunEventStreamService
 					return
 				}
 			case <-poll.C:
+			}
+			if err = service.Authorize(request.Context(), command); err != nil {
+				return
 			}
 			events, err = service.Events(request.Context(), runID, after, runEventBatchSize)
 			if err != nil {

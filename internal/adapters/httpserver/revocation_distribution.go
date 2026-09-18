@@ -77,6 +77,10 @@ func RevocationDistributionHandler(verifier WorkloadVerifier, service Revocation
 		w.Header().Set("X-Accel-Buffering", "no")
 		w.WriteHeader(http.StatusOK)
 		controller := http.NewResponseController(w)
+		_ = controller.SetWriteDeadline(time.Now().Add(options.WriteTimeout))
+		if controller.Flush() != nil {
+			return
+		}
 		poll := time.NewTicker(options.PollInterval)
 		defer poll.Stop()
 		heartbeat := time.NewTicker(options.HeartbeatInterval)

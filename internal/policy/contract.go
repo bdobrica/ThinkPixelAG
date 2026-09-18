@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -174,12 +176,14 @@ func constraintsNarrow(got, ceiling map[string]any) bool {
 		if !ok {
 			return false
 		}
-		switch v := value.(type) {
-		case float64:
-			l, ok := limit.(float64)
-			if !ok || v > l {
+		if numeric, ok := constraintNumber(value); ok {
+			ceiling, valid := constraintNumber(limit)
+			if !valid || numeric.Cmp(ceiling) > 0 {
 				return false
 			}
+			continue
+		}
+		switch v := value.(type) {
 		case string:
 			if v != limit {
 				return false
@@ -260,4 +264,24 @@ func compact(v []string) []string {
 		n++
 	}
 	return v[:n]
+}
+
+// Compare HTTP json.Number constraints and decoded OPA numbers without silently
+// rounding the caller's integer ceiling through float64.
+func constraintNumber(value any) (*big.Rat, bool) {
+	var text string
+	switch v := value.(type) {
+	case json.Number:
+		text = v.String()
+	case float64:
+		text = strconv.FormatFloat(v, 'g', -1, 64)
+	case int64:
+		text = strconv.FormatInt(v, 10)
+	case int:
+		text = strconv.Itoa(v)
+	default:
+		return nil, false
+	}
+	result, ok := new(big.Rat).SetString(text)
+	return result, ok
 }

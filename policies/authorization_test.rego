@@ -164,3 +164,9 @@ test_deterministic_equivalent_input if {
     second := authorization.decision with input as object.union(base,{"action":"agents.list","subject":{"tenant_id":"t","roles":["agent-invoker","other"]}})
     first == second
 }
+
+test_api_resource_constraints_narrowed if {
+    d := authorization.decision with input as object.union(base, {"action": "runs.create", "requested_constraints": {"max_llm_tokens": 200, "max_tool_calls": 3}, "authority_constraints": {"max_llm_tokens": 100, "max_tool_calls": 10}})
+    d.allow
+    d.resolved_constraints == {"max_llm_tokens": 100, "max_tool_calls": 3}
+}

@@ -107,3 +107,54 @@ the same scheme and authority. HTTPS is mandatory except for numeric loopback
 development endpoints. Protected handlers accept only an Authorization bearer
 token; tenant/principal/role forwarding headers and request tenant fields are
 rejected. See [authentication and tenant mapping](security/authentication.md).
+
+## Governed runtime composition
+
+Set `THINKPIXELAG_RUNTIME_FILE` to a mounted JSON file to opt into the governed
+API handlers. Without it, the existing operational-endpoint startup is retained.
+Set `THINKPIXELAG_CURSOR_HMAC_KEY` separately through secret delivery (at least
+32 bytes, shared across replicas); the runtime derives separate Run and
+revocation cursor keys. Rotating this key invalidates existing cursors.
+
+Minimal runtime file:
+
+```json
+{
+  "policy_channel": "stable",
+  "authority_constraints": {
+    "max_execution_time_seconds": 3600,
+    "max_llm_tokens": 10000,
+    "max_tool_calls": 1000,
+    "max_active_children": 10,
+    "max_total_children": 100,
+    "max_delegation_depth": 3
+  }
+}
+```
+
+Ceilings are deployment inputs, not caller grants. Unknown keys, negative or
+noninteger values, numbers above 2^53, and execution times outside 1–604800
+seconds are rejected. The existing OIDC issuer/audience/role mappings and OPA
+settings apply. Authenticated identity selects the tenant repository; every
+policy decision checks live authoritative revocation state. This initial
+composition does not enable the optional decision cache or a Run worker.
+Registration/policy-management composition is not included.
+
+To enable trusted usage, settlement, and revocation distribution, supply all of
+`trusted_address`, `tls_certificate`, `tls_key`, `client_ca`, and
+`workload_bindings`. The first is a separate listen address; the remaining four
+are mounted file paths. The listener requires verified client certificates and
+the existing `thinkpixelag.workload-identity/v1` URI-SAN binding contract. Public
+routes never accept workload identity through caller-controlled headers.
+Bindings are loaded at startup; restart replicas to update them. Use the
+managed identity/trust distribution described in the security documentation
+for production; the load fixture is test-only.
+
+When the existing evidence endpoint settings are supplied, a background exporter
+persists validated receipts and checkpoints atomically with outbox publication.
+Idle/error retries wait one second. Runtime defaults are 24-hour idempotency
+retention, one-minute idempotency leases, one-second stream polling, 15-second
+heartbeats, five-second stream write deadlines, and 24-hour revocation cursor
+retention. OPA HTTP connections are bounded to 32 per process; size replica
+pools against the database connection budget. These are implementation bounds,
+not measured production capacity guarantees.

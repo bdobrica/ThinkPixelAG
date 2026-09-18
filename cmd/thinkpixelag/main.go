@@ -2,18 +2,23 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
+	"github.com/bdobrica/ThinkPixelAG/internal/adapters/evidencehttp"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver"
+	"github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc"
 	postgresadapter "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres"
 	"github.com/bdobrica/ThinkPixelAG/internal/application"
 	"github.com/bdobrica/ThinkPixelAG/internal/config"
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
+	"github.com/bdobrica/ThinkPixelAG/internal/evidence"
 	"github.com/bdobrica/ThinkPixelAG/internal/observability/logging"
 	"github.com/bdobrica/ThinkPixelAG/internal/observability/metrics"
 	"github.com/bdobrica/ThinkPixelAG/internal/observability/tracing"
@@ -35,6 +40,8 @@ func main() {
 }
 
 func run(ctx context.Context, args []string) error {
+	ctx, cancelRuntime := context.WithCancel(ctx)
+	defer cancelRuntime()
 	settings, err := config.Load(args)
 	if err != nil {
 		return err
@@ -116,10 +123,75 @@ func run(ctx context.Context, args []string) error {
 		}
 	}()
 
-	server, err := httpserver.New(settings.HTTP, httpserver.Dependencies{
+	dependencies := httpserver.Dependencies{
 		Logger: logger, Metrics: metricSet, Tracing: traceSet, Readiness: readiness,
 		NewID: func() (string, error) { id, idErr := domain.NewID(); return id.String(), idErr },
-	})
+	}
+	var trustedServer *httpserver.Server
+	var trustedTLS *tls.Config
+	if settings.RuntimeFile != "" {
+		runtime, err := readRuntimeSettings(settings.RuntimeFile)
+		if err != nil {
+			return err
+		}
+		verifier, err := oidc.New(ctx, settings.OIDC, nil)
+		if err != nil {
+			return err
+		}
+		routes := &runtimeRoutes{settings: settings, runtime: runtime, repositories: repositories, policies: policyFreshness, verifier: verifier, clock: clock, metrics: metricSet, client: policyHTTPClient(settings.OPA.Timeout), readiness: securityReadiness}
+		routes.mount(&dependencies, false)
+		if runtime.TrustedAddress != "" {
+			trustedTLS, routes.workload, err = trustedTransport(runtime)
+			if err != nil {
+				return err
+			}
+			trustedDependencies := httpserver.Dependencies{Logger: logger, Metrics: metricSet, Tracing: traceSet, Readiness: readiness, NewID: dependencies.NewID}
+			routes.mount(&trustedDependencies, true)
+			trustedConfig := settings.HTTP
+			trustedConfig.Address = runtime.TrustedAddress
+			trustedServer, err = httpserver.New(trustedConfig, trustedDependencies)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	workerCtx, stopWorkers := context.WithCancel(ctx)
+	var workers sync.WaitGroup
+	defer func() { stopWorkers(); workers.Wait() }()
+	if settings.Evidence.Endpoint != "" {
+		sink, err := evidencehttp.New(evidencehttp.Config{Endpoint: settings.Evidence.Endpoint, BearerToken: settings.Evidence.BearerToken.Value(), Timeout: settings.Evidence.Timeout, MaxResponseBytes: settings.Evidence.MaxResponseBytes}, nil)
+		if err != nil {
+			return err
+		}
+		store, err := postgresadapter.NewEvidenceDeliveryStore(databasePool, 2*settings.Evidence.Timeout)
+		if err != nil {
+			return err
+		}
+		exporter, err := evidence.NewExporter(settings.Evidence.SinkID, store, sink)
+		if err != nil {
+			return err
+		}
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			for workerCtx.Err() == nil {
+				exported, err := exporter.ExportOne(workerCtx, clock.Now())
+				if err != nil {
+					logger.Warn("evidence export retry", slog.String("category", "evidence_export"))
+				}
+				if err != nil || !exported {
+					timer := time.NewTimer(time.Second)
+					select {
+					case <-workerCtx.Done():
+						timer.Stop()
+						return
+					case <-timer.C:
+					}
+				}
+			}
+		}()
+	}
+	server, err := httpserver.New(settings.HTTP, dependencies)
 	if err != nil {
 		return fmt.Errorf("initialize HTTP server: %w", err)
 	}
@@ -128,29 +200,46 @@ func run(ctx context.Context, args []string) error {
 		return fmt.Errorf("listen HTTP: %w", err)
 	}
 
-	listenResult := make(chan error, 1)
+	listenResult := make(chan error, 2)
+	serverCount := 1
+	if trustedServer != nil {
+		trustedListener, err := trustedServer.Listen()
+		if err != nil {
+			_ = listener.Close()
+			return fmt.Errorf("listen trusted HTTP: %w", err)
+		}
+		serverCount++
+		go func() { listenResult <- trustedServer.Serve(tls.NewListener(trustedListener, trustedTLS)) }()
+	}
 	go func() { listenResult <- server.Serve(listener) }()
 	logger.Info("HTTP server started", slog.String("address", listener.Addr().String()), slog.String("version", version), slog.String("revision", revision))
+	var serveErr error
 	select {
-	case listenErr := <-listenResult:
-		if listenErr != nil {
-			return fmt.Errorf("serve HTTP: %w", listenErr)
-		}
-		return nil
+	case serveErr = <-listenResult:
+		serverCount--
 	case <-ctx.Done():
 		logger.Info("HTTP server draining")
 	}
-
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), settings.HTTP.ShutdownTimeout)
 	defer cancel()
 	shutdownErr := server.Shutdown(shutdownCtx)
-	listenErr := <-listenResult
+	if trustedServer != nil {
+		if err := trustedServer.Shutdown(shutdownCtx); shutdownErr == nil {
+			shutdownErr = err
+		}
+	}
+	for range serverCount {
+		if err := <-listenResult; serveErr == nil {
+			serveErr = err
+		}
+	}
 	if shutdownErr != nil {
 		return fmt.Errorf("shutdown HTTP server: %w", shutdownErr)
 	}
-	if listenErr != nil {
-		return fmt.Errorf("serve HTTP: %w", listenErr)
+	if serveErr != nil {
+		return fmt.Errorf("serve HTTP: %w", serveErr)
 	}
+
 	logger.Info("HTTP server stopped")
 	return nil
 }

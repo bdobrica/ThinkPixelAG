@@ -14,6 +14,8 @@ import (
 const envPrefix = "THINKPIXELAG_"
 
 var knownEnvironment = map[string]func(*Config, string) error{
+	"THINKPIXELAG_RUNTIME_FILE":                      setString(func(c *Config) *string { return &c.RuntimeFile }),
+	"THINKPIXELAG_CURSOR_HMAC_KEY":                   setSecret(func(c *Config) *Secret { return &c.CursorKey }),
 	"THINKPIXELAG_ENVIRONMENT":                       setEnvironment,
 	"THINKPIXELAG_HTTP_ADDRESS":                      setString(func(c *Config) *string { return &c.HTTP.Address }),
 	"THINKPIXELAG_HTTP_MAX_HEADER_BYTES":             setInt(func(c *Config) *int { return &c.HTTP.MaxHeaderBytes }),

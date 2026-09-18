@@ -100,3 +100,9 @@ func DecodeJSON(request *http.Request, destination any) error {
 	}
 	return nil
 }
+
+// WriteError preserves the common problem, request-ID, and retry-hint contract
+// for composition boundaries that reject a request before an application handler.
+func WriteError(writer http.ResponseWriter, request *http.Request, err error) {
+	writeProblem(writer, request, ProblemFromError(err))
+}
