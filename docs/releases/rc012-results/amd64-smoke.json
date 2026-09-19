@@ -1,0 +1,13 @@
+{
+  "image": "quay.io/bdobrica/thinkpixelag@sha256:a07335298fe22e296419ae8b882f14a3f85eeb9000eae4f59cf3abb481fa838a",
+  "architecture": "amd64",
+  "source_commit": "a64d323d5c3bfa667e063b5f9dcd69f3cb89258f",
+  "liveness_status": 200,
+  "unconfigured_dependency_readiness_status": 503,
+  "uid": 65532,
+  "read_only_root": true,
+  "shell_absent": true,
+  "ca_roots_present": true,
+  "sigterm_exit_code": 0,
+  "container_retained_stopped": true
+}

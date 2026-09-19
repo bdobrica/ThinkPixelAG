@@ -1,7 +1,8 @@
 # Integration release status
 
-Candidate: [0.1.0-rc.1](0.1.0-rc.1.md). No semantic tag or formal release has
-been published by this work. The candidate is intended to unblock dependent
+Candidate: [0.1.0-rc.1](0.1.0-rc.1.md). Phase 9 is complete for the integration scope.
+[Final artifacts](final-artifacts.md) are built, scanned and runtime-tested; no
+semantic Git tag or formal GitHub release has been published by this work. The candidate is intended to unblock dependent
 component development; production targets and accepted deferrals remain explicit.
 
 | Phase 9 item | Status | Evidence / commit |
@@ -16,8 +17,8 @@ component development; production targets and accepted deferrals remain explicit
 | RC-008 ADR extraction | Complete | [ADR index](../adr/README.md), `28c706b` |
 | RC-009 preservation | Complete | [Preservation review](preservation-review.md), `95ee42a` |
 | RC-010 release preparation | Complete | [Notes and operator checklist](0.1.0-rc.1.md), `475a495` |
-| RC-011 retire temporary planning files | Complete | [Transition](planning-transition.md) and [link/aggregate verification](rc011-verification.json); source commit recorded with final artifacts |
-| RC-012 final-source artifacts | Pending | Build immutable multiarchitecture image, scan both platforms, verify checksums/source/digests and record signing/publication status |
+| RC-011 retire temporary planning files | Complete | [Transition](planning-transition.md), [verification](rc011-verification.json), source `a64d323` |
+| RC-012 final-source artifacts | Complete | [Exact-source image, inventory and runtime checks](final-artifacts.md); this evidence commit |
 
 The [historical ledger](history/README.md) is immutable evidence, not a current
 TODO. This document retains remaining release work after root planning files

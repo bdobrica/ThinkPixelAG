@@ -69,3 +69,4 @@ and remaining work live in [release status](releases/status.md).
 - [Decision/history preservation review](releases/preservation-review.md)
 - [0.1.0-rc.1 notes and operator checklist](releases/0.1.0-rc.1.md)
 - [Current release completion and remaining work](releases/status.md)
+- [Final exact-source artifacts and runtime qualification](releases/final-artifacts.md)

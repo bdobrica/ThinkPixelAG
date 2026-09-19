@@ -1,0 +1,94 @@
+{
+  "source_commit": "a64d323d5c3bfa667e063b5f9dcd69f3cb89258f",
+  "image_index": "quay.io/bdobrica/thinkpixelag@sha256:82ad793f6b19460e58aeb43203bfd2f8a3563bc2d8bf53a120e92dbafa78a53a",
+  "smoke": {
+    "mode": "smoke",
+    "result": "passed",
+    "checks": [
+      "admission",
+      "idempotent_replay",
+      "cross_tenant_denial",
+      "forged_token_denial",
+      "run_read"
+    ]
+  },
+  "read_status": 200,
+  "pods": [
+    {
+      "ready": true,
+      "image": "quay.io/bdobrica/thinkpixelag@sha256:82ad793f6b19460e58aeb43203bfd2f8a3563bc2d8bf53a120e92dbafa78a53a",
+      "image_id": "quay.io/bdobrica/thinkpixelag@sha256:82ad793f6b19460e58aeb43203bfd2f8a3563bc2d8bf53a120e92dbafa78a53a",
+      "container_security_context": {
+        "allowPrivilegeEscalation": false,
+        "capabilities": {
+          "drop": [
+            "ALL"
+          ]
+        },
+        "readOnlyRootFilesystem": true
+      },
+      "pod_security_context": {
+        "fsGroup": 65532,
+        "runAsGroup": 65532,
+        "runAsNonRoot": true,
+        "runAsUser": 65532,
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "liveness_probe": true,
+      "readiness_probe": true
+    },
+    {
+      "ready": true,
+      "image": "quay.io/bdobrica/thinkpixelag@sha256:82ad793f6b19460e58aeb43203bfd2f8a3563bc2d8bf53a120e92dbafa78a53a",
+      "image_id": "quay.io/bdobrica/thinkpixelag@sha256:82ad793f6b19460e58aeb43203bfd2f8a3563bc2d8bf53a120e92dbafa78a53a",
+      "container_security_context": {
+        "allowPrivilegeEscalation": false,
+        "capabilities": {
+          "drop": [
+            "ALL"
+          ]
+        },
+        "readOnlyRootFilesystem": true
+      },
+      "pod_security_context": {
+        "fsGroup": 65532,
+        "runAsGroup": 65532,
+        "runAsNonRoot": true,
+        "runAsUser": 65532,
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "liveness_probe": true,
+      "readiness_probe": true
+    },
+    {
+      "ready": true,
+      "image": "quay.io/bdobrica/thinkpixelag@sha256:82ad793f6b19460e58aeb43203bfd2f8a3563bc2d8bf53a120e92dbafa78a53a",
+      "image_id": "quay.io/bdobrica/thinkpixelag@sha256:82ad793f6b19460e58aeb43203bfd2f8a3563bc2d8bf53a120e92dbafa78a53a",
+      "container_security_context": {
+        "allowPrivilegeEscalation": false,
+        "capabilities": {
+          "drop": [
+            "ALL"
+          ]
+        },
+        "readOnlyRootFilesystem": true
+      },
+      "pod_security_context": {
+        "fsGroup": 65532,
+        "runAsGroup": 65532,
+        "runAsNonRoot": true,
+        "runAsUser": 65532,
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "liveness_probe": true,
+      "readiness_probe": true
+    }
+  ],
+  "resources_retained": true
+}

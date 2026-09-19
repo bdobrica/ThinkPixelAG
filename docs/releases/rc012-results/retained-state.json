@@ -1,0 +1,10 @@
+{
+  "schema_version": 18,
+  "pending_outbox": 0,
+  "api_ready": 3,
+  "valkey_ready": 1,
+  "hpa": {
+    "minReplicas": 3,
+    "maxReplicas": 4
+  }
+}

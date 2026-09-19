@@ -1,5 +1,9 @@
 # Phase 8 closeout for the integration RC
 
+Later Phase 9 source, artifacts and the current retained API deployment are
+recorded in [final RC qualification](../releases/final-artifacts.md). This report
+retains the original Phase 8 image and execution evidence.
+
 Phase 8 is complete under the project owner's 2026-09-19 integration-RC scope.
 The objective is to make AG available for development and testing of dependent
 components, including ThinkPixelAR with a real Codex harness. This is not a
