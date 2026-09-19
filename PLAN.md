@@ -374,8 +374,8 @@ Clean-checkout verification and archived RC evidence are complete; see
 `docs/releases/verification.md`. The accepted integration capacity envelope is recorded separately from unchanged
 production targets in `docs/releases/capacity-envelope.md`. The integration release risk review is recorded in
 `docs/releases/risk-review.md`; integration game-day dispositions and the
-repeatable component rehearsal are in `docs/releases/game-days.md`. Next is
-release-wide evidence reconciliation.
+repeatable component rehearsal are in `docs/releases/game-days.md`. Release-wide evidence reconciliation is recorded in
+`docs/releases/reconciliation.md`; next are final reference documentation and ADR extraction.
 
 Run all verification gates, resolve critical/high findings, freeze contracts, prepare release notes, convert completed planning decisions/history into ADRs, update README, remove `PLAN.md` and `TODO.md`, and commit the documentation transition. Exit when the repository can produce a traceable, signed/taggable RC artifact from a clean checkout.
 
@@ -426,10 +426,10 @@ An RC requires all of the following:
 - all TODO items checked with evidence and no unresolved blockers;
 - clean build plus unit, race, policy, integration, contract, end-to-end, security, and Kubernetes smoke tests;
 - API and migration compatibility reviewed and documented;
-- load/resource targets met and failure behavior demonstrated;
+- load/resource and failure evidence dispositioned under the owner-approved integration scope in `docs/operations/deferred-qualification.md`; production targets remain unchanged;
 - zero unresolved critical/high exploitable vulnerabilities or policy violations;
 - threat model, data classification, SLOs, alerts, and operational/security runbooks reviewed;
-- restore, upgrade, rollback, revocation-gap recovery, and credential/key-rotation procedures exercised;
+- restore, upgrade, rollback, revocation-gap recovery and credential/key-rotation evidence scoped as recorded in `docs/releases/game-days.md`; production-provider ceremonies are not implied by component tests;
 - OCI image, SBOM, checksums/provenance/signature hooks, Kubernetes artifacts, and release notes generated reproducibly;
 - ADR extraction and removal of temporary planning files completed as the final release-preparation change.
 

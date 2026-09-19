@@ -63,3 +63,5 @@ Integration-RC capacity: [measured envelope and scaling guidance](releases/capac
 Integration-RC risks: [review and outstanding qualification](releases/risk-review.md).
 
 Integration-RC operations: [game-day scope and evidence](releases/game-days.md).
+
+Release traceability: [checklist reconciliation](releases/reconciliation.md).

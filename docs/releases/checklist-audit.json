@@ -1,0 +1,1547 @@
+{
+  "source_commit": "85ba0e783c7cde2d1d18568fdba2aa9ff8d3fec3",
+  "todo_sha256": "6ee2a643902f2a2a862e3bfe594a5ff23fc64551ad5a55d172fef64adfe349fb",
+  "item_count": 126,
+  "completed_at_audit": 119,
+  "scope": "structural traceability audit; recorded commands/results are evidence, not re-execution of every historical scenario",
+  "items": [
+    {
+      "id": "GOV-001",
+      "phase": 0,
+      "status": "verified within recorded scope",
+      "record": "Create `docs/` and an ADR template with status, context, decision, alternatives, consequences, security, operations, and references sections. \u2014 completed 2026-08-10, commit `eddf453`, evidence: `docs/adr/README.md`, `docs/adr/template.md`",
+      "commits": {
+        "eddf453": "eddf4536aa11b85e24b5cf640130d2186c512b29"
+      },
+      "evidence_files": [
+        "docs/adr/README.md",
+        "docs/adr/template.md",
+        "docs/phase-0-review.md"
+      ]
+    },
+    {
+      "id": "GOV-002",
+      "phase": 0,
+      "status": "verified within recorded scope",
+      "record": "Write the system context, trust-boundary, data-flow, and component diagrams; identify trusted gateways, workers, IdP, OPA, PostgreSQL, Valkey, KMS, and evidence sink. \u2014 completed 2026-08-10, commit `eddf453`, evidence: `docs/architecture/system.md`",
+      "commits": {
+        "eddf453": "eddf4536aa11b85e24b5cf640130d2186c512b29"
+      },
+      "evidence_files": [
+        "docs/architecture/system.md",
+        "docs/phase-0-review.md"
+      ]
+    },
+    {
+      "id": "GOV-003",
+      "phase": 0,
+      "status": "verified within recorded scope",
+      "record": "Produce a threat model covering spoofing, tenant confusion, confused deputy/delegation, policy tampering, stale revocation, resource races, replay, evidence tampering, and governance-admin compromise. \u2014 completed 2026-08-10, commit `eddf453`, evidence: `docs/security/threat-model.md`",
+      "commits": {
+        "eddf453": "eddf4536aa11b85e24b5cf640130d2186c512b29"
+      },
+      "evidence_files": [
+        "docs/phase-0-review.md",
+        "docs/security/threat-model.md"
+      ]
+    },
+    {
+      "id": "GOV-004",
+      "phase": 0,
+      "status": "verified within recorded scope",
+      "record": "Define the data-classification and redaction rules for tokens, objectives, inputs, policy data, decisions, audit events, logs, traces, and metrics. \u2014 completed 2026-08-10, commit `eddf453`, evidence: `docs/security/data-classification.md`",
+      "commits": {
+        "eddf453": "eddf4536aa11b85e24b5cf640130d2186c512b29"
+      },
+      "evidence_files": [
+        "docs/phase-0-review.md",
+        "docs/security/data-classification.md"
+      ]
+    },
+    {
+      "id": "GOV-005",
+      "phase": 0,
+      "status": "verified within recorded scope",
+      "record": "Record supported Go, PostgreSQL, OPA, Valkey, Kubernetes, OpenAPI, and image-platform versions and the upgrade/support policy. \u2014 completed 2026-08-10, commit `eddf453`, evidence: `docs/supported-versions.md`; exact tested pins are a Phase 1 gate",
+      "commits": {
+        "eddf453": "eddf4536aa11b85e24b5cf640130d2186c512b29"
+      },
+      "evidence_files": [
+        "docs/phase-0-review.md",
+        "docs/supported-versions.md"
+      ]
+    },
+    {
+      "id": "GOV-006",
+      "phase": 0,
+      "status": "verified within recorded scope",
+      "record": "Formalize agent/version, run, reservation, settlement, policy, and revocation state machines including allowed actors and illegal transitions. \u2014 completed 2026-08-10, commit `eddf453`, evidence: `docs/contracts/domain-model.md`",
+      "commits": {
+        "eddf453": "eddf4536aa11b85e24b5cf640130d2186c512b29"
+      },
+      "evidence_files": [
+        "docs/contracts/domain-model.md",
+        "docs/phase-0-review.md"
+      ]
+    },
+    {
+      "id": "GOV-007",
+      "phase": 0,
+      "status": "verified within recorded scope",
+      "record": "Formalize resource units, numeric bounds, rounding, allocation equations, extension rules, exhaustion semantics, and settlement invariants. \u2014 completed 2026-08-10, commit `eddf453`, evidence: `docs/contracts/resource-accounting.md`",
+      "commits": {
+        "eddf453": "eddf4536aa11b85e24b5cf640130d2186c512b29"
+      },
+      "evidence_files": [
+        "docs/contracts/resource-accounting.md",
+        "docs/phase-0-review.md"
+      ]
+    },
+    {
+      "id": "GOV-008",
+      "phase": 0,
+      "status": "verified within recorded scope",
+      "record": "Define revocation scopes, epoch relationships, ordering, staleness classes, fail-closed rules, reconciliation, and lift semantics. \u2014 completed 2026-08-10, commit `eddf453`, evidence: `docs/contracts/revocation.md`",
+      "commits": {
+        "eddf453": "eddf4536aa11b85e24b5cf640130d2186c512b29"
+      },
+      "evidence_files": [
+        "docs/contracts/revocation.md",
+        "docs/phase-0-review.md"
+      ]
+    },
+    {
+      "id": "GOV-009",
+      "phase": 0,
+      "status": "verified within recorded scope",
+      "record": "Define the typed OPA input/output schema, reason-code registry, constraint-narrowing semantics, decision TTL rules, and failure behavior. \u2014 completed 2026-08-10, commit `eddf453`, evidence: `docs/contracts/policy-decision.md`",
+      "commits": {
+        "eddf453": "eddf4536aa11b85e24b5cf640130d2186c512b29"
+      },
+      "evidence_files": [
+        "docs/contracts/policy-decision.md",
+        "docs/phase-0-review.md"
+      ]
+    },
+    {
+      "id": "GOV-010",
+      "phase": 0,
+      "status": "verified within recorded scope",
+      "record": "Draft OpenAPI 3.1 paths and schemas for public lifecycle and trusted/admin APIs, including auth, pagination, limits, idempotency, errors, and event resumption. \u2014 completed 2026-08-10, commit `eddf453`, evidence: `api/openapi/thinkpixelag.yaml`",
+      "commits": {
+        "eddf453": "eddf4536aa11b85e24b5cf640130d2186c512b29"
+      },
+      "evidence_files": [
+        "api/openapi/thinkpixelag.yaml",
+        "docs/phase-0-review.md"
+      ]
+    },
+    {
+      "id": "GOV-011",
+      "phase": 0,
+      "status": "verified within recorded scope",
+      "record": "Define SLOs and capacity targets for API latency/availability, admission, policy evaluation, revocation propagation/freshness, outbox lag, and allocation contention. \u2014 completed 2026-08-10, commit `eddf453`, evidence: `docs/operations/slos.md`",
+      "commits": {
+        "eddf453": "eddf4536aa11b85e24b5cf640130d2186c512b29"
+      },
+      "evidence_files": [
+        "docs/operations/slos.md",
+        "docs/phase-0-review.md"
+      ]
+    },
+    {
+      "id": "GOV-012",
+      "phase": 0,
+      "status": "verified within recorded scope",
+      "record": "Review Phase 0 artifacts against the source blueprint and close all ambiguous trust sources and invariants. \u2014 completed 2026-08-10, commit `eddf453`, evidence: `docs/phase-0-review.md`",
+      "commits": {
+        "eddf453": "eddf4536aa11b85e24b5cf640130d2186c512b29"
+      },
+      "evidence_files": [
+        "docs/phase-0-review.md"
+      ]
+    },
+    {
+      "id": "GOV-013",
+      "phase": 0,
+      "status": "verified within recorded scope",
+      "record": "Run documentation/schema validation and commit Phase 0 with updated plan/checklist evidence. \u2014 completed 2026-08-10, commit `eddf453`, evidence: Redocly CLI 2.3.0 lint passed; `git diff --check` passed",
+      "commits": {
+        "eddf453": "eddf4536aa11b85e24b5cf640130d2186c512b29"
+      },
+      "evidence_files": [
+        "docs/phase-0-review.md"
+      ]
+    },
+    {
+      "id": "ENG-001",
+      "phase": 1,
+      "status": "verified within recorded scope",
+      "record": "Initialize the Go module, pin the Go/toolchain version, and create `cmd`, `internal`, `api`, `policies`, `migrations`, `deploy`, and `test` package boundaries. \u2014 completed 2026-08-10, commit `5287791`, evidence: `go version`; `go mod edit -json`; `go test ./...`; boundary documentation and package compile checks",
+      "commits": {
+        "5287791": "5287791a45499f905486d2a13e2500596306f382"
+      },
+      "evidence_files": [
+        "docs/phase-1-evidence.md"
+      ]
+    },
+    {
+      "id": "ENG-002",
+      "phase": 1,
+      "status": "verified within recorded scope",
+      "record": "Add dependency policy, license/source checks, vulnerability scanning configuration, and reproducible tool pinning. \u2014 completed 2026-08-10, commit `45c422d`, evidence: dependency checker unit/integration tests; pinned `govulncheck` and `go-licenses` gates; `go test ./...`; `git diff --check`",
+      "commits": {
+        "45c422d": "45c422d0955f52394d4b4c05d02f12e20892e505"
+      },
+      "evidence_files": [
+        "docs/phase-1-evidence.md"
+      ]
+    },
+    {
+      "id": "ENG-003",
+      "phase": 1,
+      "status": "verified within recorded scope",
+      "record": "Implement strict typed configuration with defaults, environment/flag loading, startup validation, secret-safe rendering, and unit tests. \u2014 completed 2026-08-10, commit `be384bc`, evidence: configuration unit/redaction tests; `go test -race ./...`; `go vet ./...`; dependency, vulnerability, and license gates",
+      "commits": {
+        "be384bc": "be384bc461f3ae0e31e44c9af6ba45db05ace04e"
+      },
+      "evidence_files": [
+        "docs/phase-1-evidence.md"
+      ]
+    },
+    {
+      "id": "ENG-004",
+      "phase": 1,
+      "status": "verified within recorded scope",
+      "record": "Implement structured logging with request/trace correlation and centralized sensitive-field redaction tests. \u2014 completed 2026-08-10, commit `f6c3a9e`, evidence: logging/config unit and recursive leak tests; `go test -race -cover ./...`; `go vet ./...`; source/license/vulnerability gates",
+      "commits": {
+        "f6c3a9e": "f6c3a9e4911ffcf483feba6e2edbd687cf74fba1"
+      },
+      "evidence_files": [
+        "docs/phase-1-evidence.md"
+      ]
+    },
+    {
+      "id": "ENG-005",
+      "phase": 1,
+      "status": "verified within recorded scope",
+      "record": "Add Prometheus metrics and OpenTelemetry tracing initialization with no-op/local configurations. \u2014 completed 2026-08-10, commit `215bfbf`, evidence: Prometheus exposition/no-op/cardinality tests; OpenTelemetry no-op/OTLP export/propagation/shutdown tests; race/vet/source/license/vulnerability gates",
+      "commits": {
+        "215bfbf": "215bfbff72023aa0870a878f8da70c3662f11df4"
+      },
+      "evidence_files": [
+        "docs/phase-1-evidence.md"
+      ]
+    },
+    {
+      "id": "ENG-006",
+      "phase": 1,
+      "status": "verified within recorded scope",
+      "record": "Add ID, UTC clock, decimal/resource quantity, pagination cursor, and typed error primitives with tests/fuzz cases. \u2014 completed 2026-08-10, commit `8ff8f77`, evidence: deterministic primitive/overflow/tamper tests; three fuzz campaigns; `go test -race -cover ./...`; vet/source/license/vulnerability gates",
+      "commits": {
+        "8ff8f77": "8ff8f7709c780381d608543811c409872fdecb1f"
+      },
+      "evidence_files": [
+        "docs/phase-1-evidence.md"
+      ]
+    },
+    {
+      "id": "ENG-007",
+      "phase": 1,
+      "status": "verified within recorded scope",
+      "record": "Add the HTTP server skeleton, middleware ordering, body/header/time limits, request IDs, RFC 7807 responses, graceful shutdown, `/livez`, and initial `/readyz`. \u2014 completed 2026-08-10, commit `72319f1`, evidence: HTTP race/coverage tests; listener/readiness/shutdown and live process smoke tests; OpenAPI lint; build/vet/source/license/vulnerability gates",
+      "commits": {
+        "72319f1": "72319f1dfbecb319dbb9c8a5a270a598a8c6cff0"
+      },
+      "evidence_files": [
+        "docs/phase-1-evidence.md"
+      ]
+    },
+    {
+      "id": "ENG-008",
+      "phase": 1,
+      "status": "verified within recorded scope",
+      "record": "Create a Makefile with pinned `tools`, `generate`, `fmt`, `lint`, `test`, `test-race`, `test-policy`, `test-integration`, `test-e2e`, `build`, `image`, and aggregate `verify` targets. \u2014 completed 2026-08-10, commit `7e03c72`, evidence: Makefile contract tests; individual target checks; staged clean-checkout `make verify`; intentional pre-ENG-011 image prerequisite failure",
+      "commits": {
+        "7e03c72": "7e03c72c360418c07ca18e9432792ebf00c1bb8c"
+      },
+      "evidence_files": [
+        "docs/phase-1-evidence.md"
+      ]
+    },
+    {
+      "id": "ENG-009",
+      "phase": 1,
+      "status": "verified within recorded scope",
+      "record": "Add local development orchestration for pinned PostgreSQL, OPA, and optional Valkey with isolated test credentials and health checks. \u2014 completed 2026-08-10, commit `610088a`, evidence: immutable Compose image pins and contract tests; healthy full-profile runtime smoke; positive/negative PostgreSQL and Valkey authentication; OPA 1.19.0 endpoint/version check; scoped volume cleanup; `make verify`",
+      "commits": {
+        "610088a": "610088ab758fb99a823e56e5858a5aa92e1b8c03"
+      },
+      "evidence_files": [
+        "docs/phase-1-evidence.md"
+      ]
+    },
+    {
+      "id": "ENG-010",
+      "phase": 1,
+      "status": "verified within recorded scope",
+      "record": "Add CI for formatting, generation drift, lint, unit/race tests, policy tests, integration tests, build, vulnerability/license checks, and image build. \u2014 completed 2026-08-10, commit `47f8519`, evidence: eight least-privilege GitHub Actions jobs; immutable action pins; CI contract tests; `make verify`",
+      "commits": {
+        "47f8519": "47f851901b85bb7ef904fb0bc72004348597184b"
+      },
+      "evidence_files": [
+        "docs/phase-1-evidence.md"
+      ]
+    },
+    {
+      "id": "ENG-011",
+      "phase": 1,
+      "status": "verified within recorded scope",
+      "record": "Add a multi-stage baseline Dockerfile, `.dockerignore`, non-root runtime, build metadata, and container smoke test. \u2014 completed 2026-08-10, commit `5869296`, evidence: immutable Go/distroless base pins; allowlisted build context; UID/GID 65532; OCI labels and embedded build metadata; read-only/capability-dropped probe and SIGTERM smoke; `make verify`",
+      "commits": {
+        "5869296": "5869296e7844d9ca361b13e5ed3fe1044d968b3e"
+      },
+      "evidence_files": [
+        "docs/phase-1-evidence.md"
+      ]
+    },
+    {
+      "id": "ENG-012",
+      "phase": 1,
+      "status": "verified within recorded scope",
+      "record": "Verify a clean checkout passes `make verify`, starts the minimal image as non-root, and commit Phase 1 evidence. \u2014 completed 2026-08-10, commit `5765834`, evidence: `docs/phase-1-evidence.md`; fresh clone of `147cbf4` remained clean after `make verify`; 6.7 MB shell-free image ran as UID/GID 65532 under hardened settings",
+      "commits": {
+        "147cbf4": "147cbf4aa45d35d573a884095e90dca058310078",
+        "5765834": "57658344a578730b563a47cd9f81c7665ac55f72"
+      },
+      "evidence_files": [
+        "docs/phase-1-evidence.md"
+      ]
+    },
+    {
+      "id": "DATA-001",
+      "phase": 2,
+      "status": "verified within recorded scope",
+      "record": "Select and wrap the PostgreSQL driver, migration tool, query approach, and transaction abstraction; record the consequential decision. \u2014 completed 2026-08-19, commit `a0aacd8`, evidence: PostgreSQL adapter unit/race tests; dependency/source/license/vulnerability gates; `make verify`; `docs/adr/0001-postgresql-access-and-migrations.md`",
+      "commits": {
+        "a0aacd8": "a0aacd881f3c48409e2cede62c5f7904920d8d12"
+      },
+      "evidence_files": [
+        "docs/adr/0001-postgresql-access-and-migrations.md",
+        "docs/phase-2-evidence.md"
+      ]
+    },
+    {
+      "id": "DATA-002",
+      "phase": 2,
+      "status": "verified within recorded scope",
+      "record": "Create initial migrations for tenants/principals, agents/versions/capabilities/approvals, policies/activations, and their integrity constraints/indexes. \u2014 completed 2026-08-19, commit `3901d10`, evidence: migration source/schema contract tests; PostgreSQL 18.4 apply/reverse rehearsal; `make verify`; `docs/architecture/database-schema.md`",
+      "commits": {
+        "3901d10": "3901d1071f05647e707fb2ae36ea4f6f99acd2f7"
+      },
+      "evidence_files": [
+        "docs/architecture/database-schema.md",
+        "docs/phase-2-evidence.md"
+      ]
+    },
+    {
+      "id": "DATA-003",
+      "phase": 2,
+      "status": "verified within recorded scope",
+      "record": "Add migrations for runs, run version snapshots, state versions, signals, and append-only ordered run events. \u2014 completed 2026-08-19, commit `3901d10`, evidence: migration source/schema contract tests; PostgreSQL 18.4 apply/reverse rehearsal; `make verify`; `docs/architecture/database-schema.md`",
+      "commits": {
+        "3901d10": "3901d1071f05647e707fb2ae36ea4f6f99acd2f7"
+      },
+      "evidence_files": [
+        "docs/architecture/database-schema.md",
+        "docs/phase-2-evidence.md"
+      ]
+    },
+    {
+      "id": "DATA-004",
+      "phase": 2,
+      "status": "verified within recorded scope",
+      "record": "Add migrations for resource dimensions, envelopes, balances, reservations, trusted usage ledger, settlements, and uniqueness/check constraints. \u2014 completed 2026-08-19, commit `3901d10`, evidence: migration source/schema contract tests; PostgreSQL 18.4 apply/reverse rehearsal; `make verify`; `docs/architecture/database-schema.md`",
+      "commits": {
+        "3901d10": "3901d1071f05647e707fb2ae36ea4f6f99acd2f7"
+      },
+      "evidence_files": [
+        "docs/architecture/database-schema.md",
+        "docs/phase-2-evidence.md"
+      ]
+    },
+    {
+      "id": "DATA-005",
+      "phase": 2,
+      "status": "verified within recorded scope",
+      "record": "Add migrations for revocations, monotonic epochs, ordered revocation log, and gateway checkpoints. \u2014 completed 2026-08-19, commit `3901d10`, evidence: migration source/schema contract tests; PostgreSQL 18.4 apply/reverse rehearsal; `make verify`; `docs/architecture/database-schema.md`",
+      "commits": {
+        "3901d10": "3901d1071f05647e707fb2ae36ea4f6f99acd2f7"
+      },
+      "evidence_files": [
+        "docs/architecture/database-schema.md",
+        "docs/phase-2-evidence.md"
+      ]
+    },
+    {
+      "id": "DATA-006",
+      "phase": 2,
+      "status": "verified within recorded scope",
+      "record": "Add migrations for idempotency records, audit events, and transactional outbox claim/retry/dead-letter fields. \u2014 completed 2026-08-19, commit `3901d10`, evidence: migration source/schema contract tests; PostgreSQL 18.4 apply/reverse rehearsal; `make verify`; `docs/architecture/database-schema.md`",
+      "commits": {
+        "3901d10": "3901d1071f05647e707fb2ae36ea4f6f99acd2f7"
+      },
+      "evidence_files": [
+        "docs/architecture/database-schema.md",
+        "docs/phase-2-evidence.md"
+      ]
+    },
+    {
+      "id": "DATA-007",
+      "phase": 2,
+      "status": "verified within recorded scope",
+      "record": "Implement connection pool configuration, dependency health, transaction helpers, error classification, statement timeouts, and telemetry. \u2014 completed 2026-08-19, commit `42c3211`, evidence: configuration/adapter/telemetry unit and race tests; PostgreSQL 18.4 session-timeout and readiness integration test; `make verify`",
+      "commits": {
+        "42c3211": "42c32111b3d41d235c467214e13de46ce61eaca4"
+      },
+      "evidence_files": [
+        "docs/phase-2-evidence.md"
+      ]
+    },
+    {
+      "id": "DATA-008",
+      "phase": 2,
+      "status": "verified within recorded scope",
+      "record": "Implement tenant-scoped repositories for Phase 2 tables and tests proving rollback and cross-tenant isolation. \u2014 completed 2026-08-19, commit `d58fe3b`, evidence: closed tenant-bound record repository unit/race tests; PostgreSQL 18.4 cross-tenant enumeration and transaction rollback integration test; `make verify`",
+      "commits": {
+        "d58fe3b": "d58fe3b52cff6ea0696fe5af60932d07ccd9c5ee"
+      },
+      "evidence_files": [
+        "docs/phase-2-evidence.md"
+      ]
+    },
+    {
+      "id": "DATA-009",
+      "phase": 2,
+      "status": "verified within recorded scope",
+      "record": "Implement request-hash-bound idempotency acquisition, replay, conflict, expiry, and concurrent-request behavior. \u2014 completed 2026-08-19, commit `7035c44`, evidence: deterministic hash/validation/outcome unit tests; PostgreSQL 18.4 concurrent single-owner, replay, hash-conflict, TTL replacement, lease takeover, and stale-owner fencing integration/race tests; `make verify`",
+      "commits": {
+        "7035c44": "7035c44f4aec289aa7d1e4ce09f44683a8313705"
+      },
+      "evidence_files": [
+        "docs/phase-2-evidence.md"
+      ]
+    },
+    {
+      "id": "DATA-010",
+      "phase": 2,
+      "status": "verified within recorded scope",
+      "record": "Implement transactional audit/outbox writes and a replay-safe publisher with bounded retry, jitter, leases/claims, and poison-message handling. \u2014 completed 2026-08-19, commit `3a6bb36`, evidence: atomic mutation/audit/outbox rollback and commit; PostgreSQL 18.4 concurrent claim, retry, dead-letter, and race tests; `make verify`",
+      "commits": {
+        "3a6bb36": "3a6bb36db6a66a22d85cc7bab65b3efa42fcf063"
+      },
+      "evidence_files": [
+        "docs/phase-2-evidence.md"
+      ]
+    },
+    {
+      "id": "DATA-011",
+      "phase": 2,
+      "status": "verified within recorded scope",
+      "record": "Test migrations from empty DB, upgrade from prior fixture, constraints/index access paths, forward recovery after failure, and compatibility rules. \u2014 completed 2026-08-19, commit `981c856`, evidence: immutable migration checksum manifest; PostgreSQL 18.4 empty install, seeded prior-version upgrade, constraint/index-plan, and transactional failure/recovery integration tests; `make verify`",
+      "commits": {
+        "981c856": "981c85660df4dd86062b093b0fb831e7c9e38147"
+      },
+      "evidence_files": [
+        "docs/phase-2-evidence.md"
+      ]
+    },
+    {
+      "id": "DATA-012",
+      "phase": 2,
+      "status": "verified within recorded scope",
+      "record": "Evaluate PostgreSQL row-level security as defense in depth; implement it or record why repository enforcement is used for RC. \u2014 completed 2026-08-19, commit `73588b6`, evidence: ADR-0002 threat/role/pooling evaluation; tenant repository unit/race tests; PostgreSQL 18.4 cross-tenant isolation test; `make verify`",
+      "commits": {
+        "73588b6": "73588b6064a36bb5f010ed9fffa713908b993bb3"
+      },
+      "evidence_files": [
+        "docs/phase-2-evidence.md"
+      ]
+    },
+    {
+      "id": "DATA-013",
+      "phase": 2,
+      "status": "verified within recorded scope",
+      "record": "Run real-PostgreSQL integration/concurrency tests and commit Phase 2 evidence. \u2014 completed 2026-08-19, commit `b79ca07`, evidence: pinned PostgreSQL 18.4 adapter race/concurrency suite; mandatory real-database `make test-integration`; `make verify`; `docs/phase-2-evidence.md`",
+      "commits": {
+        "b79ca07": "b79ca078f59ff5173f8d77d7e955f983682a18af"
+      },
+      "evidence_files": [
+        "docs/phase-2-evidence.md"
+      ]
+    },
+    {
+      "id": "AUTH-001",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Implement OIDC issuer discovery/JWKS retrieval with pinned issuers/audiences/algorithms, cache bounds, rotation, time validation, and outage behavior. \u2014 completed 2026-08-20, commit `8f3163f`, evidence: OIDC adapter configuration/unit/race tests; same-origin discovery, bounded JWKS cache/rotation/outage tests; `make verify`",
+      "commits": {
+        "8f3163f": "8f3163fc9e62266960312475a60e5bc3acd950b9"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "AUTH-002",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Implement bearer-token middleware and verified principal/tenant/role mapping; reject conflicting body/header tenant hints. \u2014 completed 2026-08-20, commit `8f3163f`, evidence: bearer middleware/context mapping tests; configured role allowlist; forged header and tenant-body-hint rejection; `make verify`",
+      "commits": {
+        "8f3163f": "8f3163fc9e62266960312475a60e5bc3acd950b9"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "AUTH-003",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Add authentication tests for bad signature, issuer, audience, algorithm, expiry/not-before, key rotation, missing tenant, and forged forwarding headers. \u2014 completed 2026-08-20, commit `8f3163f`, evidence: adversarial OIDC and HTTP authentication race suite; `make verify`",
+      "commits": {
+        "8f3163f": "8f3163fc9e62266960312475a60e5bc3acd950b9"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "POL-001",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Implement the typed OPA client/embedded boundary with deadlines, response schema validation, reason codes, decision metadata, and fail-closed errors. \u2014 completed 2026-08-20, commit `49ca54e`, evidence: strict typed contract and bounded HTTP adapter; deadline/outage/malformed response/reason/obligation/TTL/constraint tests; `make verify`",
+      "commits": {
+        "49ca54e": "49ca54e36f0aeace58a54e77aef4df0e9c080cde"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "POL-002",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Implement policy bundle digest/signature verification interfaces, validation/compile testing, persistence, activation, rollback-as-new-activation, and local freshness. \u2014 completed 2026-08-20, commit `49ca54e`, evidence: SHA-256 and Ed25519 verification; compile-validator boundary; PostgreSQL 18.4 append-only activation/rollback integration; bounded monotonic local freshness; `make verify`",
+      "commits": {
+        "49ca54e": "49ca54e36f0aeace58a54e77aef4df0e9c080cde"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "POL-003",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Write baseline Rego for agent discovery/invocation, tenant isolation, admin actions, risk/staleness classes, constraint narrowing, and privileged operations. \u2014 completed 2026-08-20, commit `49ca54e`, evidence: pinned OPA 1.19.0 compile and baseline policy tests; `make test-policy`; `make verify`",
+      "commits": {
+        "49ca54e": "49ca54e36f0aeace58a54e77aef4df0e9c080cde"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "POL-004",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Add Rego unit/golden tests for allow/deny, malformed input/output, policy outage, stale state, cross-tenant access, and non-expansion of constraints. \u2014 completed 2026-08-20, commit `a9d28d2`, evidence: pinned OPA 1.19.0 17-case Rego suite; malformed/mismatched/unknown OPA output and outage race tests; `make verify`",
+      "commits": {
+        "a9d28d2": "a9d28d259941d5a7b50800873883407504139ac8"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "POL-005",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Add optional Valkey-backed decision caching keyed by policy version, relevant epochs, subject/action/resource/input digest, with bounded TTL and safe bypass on failure. \u2014 completed 2026-08-20, commit `a9d28d2`, evidence: normalized hashed cache-key and TTL/freshness tests; HMAC-authenticated RESP adapter; Valkey 9.1.1 auth/expiry/integrity integration; failure/poison bypass race tests; `make verify`",
+      "commits": {
+        "a9d28d2": "a9d28d259941d5a7b50800873883407504139ac8"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "REG-001",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Implement agent creation/update semantics, owner/sponsor/risk validation, and tenant-scoped list/describe repositories/use cases. \u2014 completed 2026-08-20, commit `356c91d`, evidence: agent aggregate/application/PostgreSQL unit and race tests; PostgreSQL 18.4 tenant isolation, principal eligibility, list/describe, and optimistic update integration; OpenAPI lint; `make verify`",
+      "commits": {
+        "356c91d": "356c91d8904ed3c9a4dbe8bf2063057840dd8c11"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "REG-002",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Implement immutable content-addressed agent versions with image digest, model/tool/skill/subagent declarations, limits, and schema validation. \u2014 completed 2026-08-22, commit `05e96a2`, evidence: canonical manifest/digest/schema and application unit/race tests; migration 006 checksum/schema tests; PostgreSQL 18.4 atomic registration, tenant isolation, long skill bound, duplicate digest, and direct mutation rejection integration; OpenAPI lint; `make verify`",
+      "commits": {
+        "05e96a2": "05e96a21fb740b82108e872bde8eaff182d0ff58"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "REG-003",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Implement approval/deprecation/revocation eligibility state and authorized admin endpoints with evidence records. \u2014 completed 2026-08-22, commit `ce63077`, evidence: lifecycle/application/HTTP authorization unit and race tests; migration 007 checksum/schema tests; PostgreSQL 18.4 concurrent transition, tenant isolation, atomic audit/outbox, and append-only integration tests; OpenAPI lint; `make verify`",
+      "commits": {
+        "ce63077": "ce63077e83c3968fe6fe9b37d20b19612b7a82bf"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "REG-004",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Implement policy-driven version resolution, optional controlled rollback/test pinning, and persisted resolution snapshots. \u2014 completed 2026-08-22, commit `1b31cbe`, evidence: resolver/domain unit and race tests; pinned OPA 1.19.0 19-case policy suite; migration 008 checksum/schema tests; PostgreSQL 18.4 eligibility, tenant isolation, stale-revocation rejection, immutable snapshot, repeatability, and migration integration tests; OpenAPI lint; `make verify`",
+      "commits": {
+        "1b31cbe": "1b31cbe738b6e0987de2640bd5d769f6e170a993"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "REG-005",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Implement public agent list/describe endpoints with cursor pagination, authorization filtering, and enumeration-safe errors. \u2014 completed 2026-08-22, commit `e781742`, evidence: application/HTTP authorization and cursor unit/race tests; OpenAPI lint; `make verify`",
+      "commits": {
+        "e781742": "e78174285d27e3473f212abe9e42afa4692a717b"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "REG-006",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Verify deny-by-default identity/policy behavior, immutable versions, tenant isolation, cache invalidation, and version resolution end to end. \u2014 completed 2026-08-22, commit `c91ed61`, evidence: composed HTTP identity/application/policy-cache/PostgreSQL workflow; repeated end-to-end, unit/race, policy, integration, OpenAPI/static gates; `make verify`",
+      "commits": {
+        "c91ed61": "c91ed61b23975c28e1fe5b63444b750bd7f5fdf7"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "REG-007",
+      "phase": 3,
+      "status": "verified within recorded scope",
+      "record": "Commit Phase 3 with API/policy documentation and verification evidence. \u2014 completed 2026-08-22, commit `d4af502`, evidence: `docs/phase-3-evidence.md`; API/policy documentation reconciliation; clean-tree `make verify`",
+      "commits": {
+        "d4af502": "d4af502cbcf6540c90ba8206b19ada216f00f498"
+      },
+      "evidence_files": [
+        "docs/phase-3-evidence.md"
+      ]
+    },
+    {
+      "id": "RUN-001",
+      "phase": 4,
+      "status": "verified within recorded scope",
+      "record": "Implement the pure run state machine with actor permissions, terminal-state rules, optimistic versioning, table-driven tests, and fuzz/property tests. \u2014 completed 2026-08-22, commit `88f8f25`, evidence: domain table/validation/immutability tests; race detector; 5-second lifecycle property fuzz campaign; `make verify`",
+      "commits": {
+        "88f8f25": "88f8f259fc4c21cf4501cf297a3d1bb25c25c2f0"
+      },
+      "evidence_files": [
+        "docs/phase-4-evidence.md"
+      ]
+    },
+    {
+      "id": "RUN-002",
+      "phase": 4,
+      "status": "verified within recorded scope",
+      "record": "Implement run admission transaction: authenticate, authorize, resolve version, narrow constraints, create initial envelope/run/event/audit/outbox records. \u2014 completed 2026-08-22, commit `a24807e`, evidence: admission domain/application/PostgreSQL unit and race tests; PostgreSQL 18.4 atomic commit, eligibility, evidence, and forced-final-insert rollback integration test; `make verify`",
+      "commits": {
+        "a24807e": "a24807e1c89f67083d40e049d0295c0b718c5fc5"
+      },
+      "evidence_files": [
+        "docs/phase-4-evidence.md"
+      ]
+    },
+    {
+      "id": "RUN-003",
+      "phase": 4,
+      "status": "verified within recorded scope",
+      "record": "Implement `POST /v1/agents/{agent_id}/runs` with request limits, idempotency, server-derived tenant, explicit-version restrictions, and stable errors. \u2014 completed 2026-08-22, commit `b08be0f`, evidence: authenticated HTTP boundary and replay tests; PostgreSQL 18.4 idempotency/admission integration; focused unit/race tests; OpenAPI lint; `make verify`",
+      "commits": {
+        "b08be0f": "b08be0fcfcec51b71756111d7fffdf2c0e1cd5f7"
+      },
+      "evidence_files": [
+        "docs/phase-4-evidence.md"
+      ]
+    },
+    {
+      "id": "RUN-004",
+      "phase": 4,
+      "status": "verified within recorded scope",
+      "record": "Implement tenant-scoped `GET /v1/runs/{run_id}` with authorization and enumeration-safe not-found behavior. \u2014 completed 2026-08-22, commit `636e390`, evidence: tenant-bound PostgreSQL projection and cross-tenant integration test; application policy allow/deny tests; authenticated HTTP and malformed-ID tests; focused unit/race/OpenAPI/full verification",
+      "commits": {
+        "636e390": "636e390400c74f368ae1c69f9c75539ae404b5ed"
+      },
+      "evidence_files": [
+        "docs/phase-4-evidence.md"
+      ]
+    },
+    {
+      "id": "RUN-005",
+      "phase": 4,
+      "status": "verified within recorded scope",
+      "record": "Implement validated, typed, idempotent `POST /v1/runs/{run_id}/signals` with ordered events and delivery semantics. \u2014 completed 2026-08-22, commit `6f3fa4b`, evidence: domain/application/HTTP unit and race tests; PostgreSQL 18.4 atomic evidence, replay, tenant/version, and concurrent ordering integration tests; OpenAPI lint; `make verify`",
+      "commits": {
+        "6f3fa4b": "6f3fa4bffbf911df25310faa23e1dbfc25716b48"
+      },
+      "evidence_files": [
+        "docs/phase-4-evidence.md"
+      ]
+    },
+    {
+      "id": "RUN-006",
+      "phase": 4,
+      "status": "verified within recorded scope",
+      "record": "Implement idempotent authorized `POST /v1/runs/{run_id}/cancel` including races with terminal transitions. \u2014 completed 2026-08-22, commit `1ef9ac1`, evidence: domain/application/HTTP unit and race tests; PostgreSQL 18.4 atomic evidence, tenant/version, replay, and repeated terminal-race integration tests; OpenAPI lint; `make verify`",
+      "commits": {
+        "1ef9ac1": "1ef9ac1dacf4bc7ba4167e8f9a98b1ac5f177263"
+      },
+      "evidence_files": [
+        "docs/phase-4-evidence.md"
+      ]
+    },
+    {
+      "id": "RUN-007",
+      "phase": 4,
+      "status": "verified within recorded scope",
+      "record": "Implement ordered/resumable `GET /v1/runs/{run_id}/events` using SSE, cursor validation, heartbeats, backpressure, retention, and authorization. \u2014 completed 2026-08-22, commit `45d8c14`, evidence: authenticated cursor/application/HTTP unit and race tests; PostgreSQL 18 ordered resume and tenant-isolation integration; OpenAPI lint; `make verify`",
+      "commits": {
+        "45d8c14": "45d8c14e2846d98251c99c517411eaf51f789cd8"
+      },
+      "evidence_files": [
+        "docs/phase-4-evidence.md"
+      ]
+    },
+    {
+      "id": "RUN-008",
+      "phase": 4,
+      "status": "verified within recorded scope",
+      "record": "Implement worker-facing claim/heartbeat/start/complete/fail/timeout operations with leases and fencing so stale workers cannot mutate runs. \u2014 completed 2026-08-22, commit `289dd2f`, evidence: lease/domain/application unit and race tests; PostgreSQL 18.4 expiry/reclaim, concurrent claim, monotonic fencing, ordered-event, lifecycle, and stale-worker integration tests; `make verify`",
+      "commits": {
+        "289dd2f": "289dd2f097c4494c5324013b75cc228585d880e1"
+      },
+      "evidence_files": [
+        "docs/phase-4-evidence.md"
+      ]
+    },
+    {
+      "id": "RUN-009",
+      "phase": 4,
+      "status": "verified within recorded scope",
+      "record": "Add outbox publication for every run mutation and verify at-least-once/replay behavior after worker/process crashes. \u2014 completed 2026-08-22, commit `d0d88df`, evidence: transactional worker event/outbox identity tests; PostgreSQL 18.4 post-send crash and lease-expiry replay integration repeated 10 times; focused race suite; `make verify`",
+      "commits": {
+        "d0d88df": "d0d88df4df360ef816a39eeea598a7131a72117d"
+      },
+      "evidence_files": [
+        "docs/phase-4-evidence.md"
+      ]
+    },
+    {
+      "id": "RUN-010",
+      "phase": 4,
+      "status": "verified within recorded scope",
+      "record": "Run OpenAPI conformance, lifecycle concurrency/idempotency, tenant isolation, SSE reconnect, and complete end-to-end tests. \u2014 completed 2026-08-22, commit `81b7508`, evidence: mounted HTTP/application/PostgreSQL lifecycle workflow; OpenAPI response-shape and lint checks; exact admission/signal/cancel replay and hash conflict; cross-tenant not-found; SSE `Last-Event-ID` reconnect; terminal race repeated 10 times and race detector; complete end-to-end suite; `make verify`",
+      "commits": {
+        "81b7508": "81b7508ce2f028e51658b9735f206da6504db5a2"
+      },
+      "evidence_files": [
+        "docs/phase-4-evidence.md"
+      ]
+    },
+    {
+      "id": "RUN-011",
+      "phase": 4,
+      "status": "verified within recorded scope",
+      "record": "Commit Phase 4 with API examples, state-machine documentation, and evidence. \u2014 completed 2026-08-22, commit `6518df7`, evidence: `docs/api/run-lifecycle.md`, `docs/contracts/domain-model.md`, `docs/phase-4-evidence.md`; OpenAPI lint; clean-tree `make verify`",
+      "commits": {
+        "6518df7": "6518df7231127a5f307b05fe92c2894e3a80a2e3"
+      },
+      "evidence_files": [
+        "docs/api/run-lifecycle.md",
+        "docs/contracts/domain-model.md",
+        "docs/phase-4-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-001",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Implement extensible typed resource dimensions classified as consumable, structural, or deadline-like with explicit units and validation. \u2014 completed 2026-08-25, commit `a1ada23`, evidence: domain definition/value validation unit and race tests; migration 009 checksum/schema tests; PostgreSQL 18.4 forward-upgrade and constraint qualification; `make verify`",
+      "commits": {
+        "a1ada23": "a1ada23f4afee9bcabc9aa946c0a17b71808bbb1"
+      },
+      "evidence_files": [
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-002",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Implement policy-constrained root envelope issuance and persist its immutable grant plus mutable balances. \u2014 completed 2026-08-25, commit `43d04ee`, evidence: exact policy grant-vector domain unit/race tests; PostgreSQL 18.4 atomic issuance, initial conservation, bounds rollback, and grant immutability integration tests; migration 010 upgrade qualification; end-to-end lifecycle; `make verify`",
+      "commits": {
+        "43d04ee": "43d04ee912372d0bae6c52ea7a5a382ea2c9555d"
+      },
+      "evidence_files": [
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-003",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Implement multi-dimension atomic child reservation using PostgreSQL locks/conditional updates and deterministic lock ordering. \u2014 completed 2026-08-26, commit `8a37a87`, evidence: typed vector validation and deterministic-order unit/race tests; PostgreSQL 18.4 multi-resource conservation, insufficient-vector rollback, and inverse-order concurrent oversubscription test repeated 5 times; `make verify`",
+      "commits": {
+        "8a37a87": "8a37a873e1ae91eb242069993c8e9251abf3fc34"
+      },
+      "evidence_files": [
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-004",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Enforce maximum active/total children and delegation depth transactionally during child admission. \u2014 completed 2026-08-26, commit `996d48b`, evidence: atomic authorized-child admission composition; parent-envelope serialization; active/lifetime/depth and non-expansion checks; PostgreSQL 18.4 rollback and concurrent-ceiling integration repeated 3 times; `make verify`",
+      "commits": {
+        "996d48b": "996d48b8dcc3705d75c4f6e7b30b5eee8c6cbe45"
+      },
+      "evidence_files": [
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-005",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Implement trusted metering ingestion with authenticated producers, unique source event IDs, monotonic application, and invalid/negative usage rejection. \u2014 completed 2026-08-26, commit `de85483`, evidence: authenticated/policy-bound HTTP and application tests; deterministic event validation/digest tests; PostgreSQL 18.4 replay, mismatched duplicate, conservation, and over-budget integration; full integration suite; `make verify`",
+      "commits": {
+        "de85483": "de854834e5d42f8e265fc6a8b278aac1468cd0a4"
+      },
+      "evidence_files": [
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-006",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Implement rate enforcement for structural throughput limits; use Valkey only as a conservative accelerator with defined outage behavior. \u2014 completed 2026-08-26, commit `e4adb0f`, evidence: domain/application/Valkey unit and race tests; PostgreSQL 18.4 atomic fixed-window enforcement and 10-way concurrency repeated 3 times; Valkey 9.1.1 marker expiry/outage bypass; `make verify`",
+      "commits": {
+        "e4adb0f": "e4adb0fff8407b818414138dbc0b0c26eca39dc8"
+      },
+      "evidence_files": [
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-007",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Implement consumable exhaustion detection and the `BUDGET_EXHAUSTED`, `PAUSED_FOR_BUDGET`, and `FAILED_BUDGET` transitions. \u2014 completed 2026-08-26, commit `534fdbe`, evidence: domain/application/policy unit and race tests; PostgreSQL 18.4 atomic zero-balance lifecycle/evidence and concurrent exact-exhaustion qualification repeated 3 times; pinned OPA 1.19.0 20-case suite; `make verify`",
+      "commits": {
+        "534fdbe": "534fdbe0238b5a746a8693eca5372e10a3959ac6"
+      },
+      "evidence_files": [
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-008",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Implement authorized deadline/budget extension as an additive ledger action with policy approval and privileged evidence; prevent self-extension. \u2014 completed 2026-08-26, commit `461281e`, evidence: domain/application/HTTP/policy unit and race tests; migration 013 checksum/schema and PostgreSQL 18.4 forward-upgrade qualification; atomic additive grant/deadline/resume/evidence integration; replay/mismatch checks; pinned OPA 1.19.0 21-case suite; `make verify`",
+      "commits": {
+        "461281e": "461281e4db14a5251fc8fabcc0152ed17365e00b"
+      },
+      "evidence_files": [
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-009",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Implement idempotent terminal settlement that atomically closes a reservation and immediately returns unused capacity to the parent. \u2014 completed 2026-08-26, commit `e95c5f1`, evidence: domain/application/authenticated HTTP unit and race tests; migration 014 checksum/schema and PostgreSQL 18.4 forward-upgrade qualification; authoritative multi-dimension consumption, atomic parent credit/close/evidence, concurrent exact replay, and open-descendant rejection; `make verify`",
+      "commits": {
+        "e95c5f1": "e95c5f175eed0816065776c804273470b408cab4"
+      },
+      "evidence_files": [
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-010",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Implement reconciliation for terminal/expired orphan reservations and replay after crashes without double credit. \u2014 completed 2026-08-26, commit `44a247b`, evidence: bounded application worker and tenant-scoped `SYSTEM` authority tests; PostgreSQL 18.4 terminal/expiry selection, atomic timeout/fencing/reclaim/evidence, forced rollback, concurrent claim, and crash replay repeated 3 times; `make verify`",
+      "commits": {
+        "44a247b": "44a247b45ce9ce2412261459b848645959ffb47e"
+      },
+      "evidence_files": [
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-011",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Add invariant/property tests over random reservation/usage/settlement sequences and checked arithmetic bounds. \u2014 completed 2026-08-26, commit `1d9adfc`, evidence: randomized allocation conservation and checked decimal arithmetic fuzz campaigns; PostgreSQL 18.4 settlement conservation integration; domain/PostgreSQL unit and race suites; `make verify`",
+      "commits": {
+        "1d9adfc": "1d9adfc3c5d1fa44ae32931d63ddfba7769fb7cf"
+      },
+      "evidence_files": [
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-012",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Add high-concurrency tests proving no oversubscription, deadlock, lost credit, double settlement, or structural-limit bypass. \u2014 completed 2026-08-26, commit `014954a`, evidence: 32-way synchronized inverse-order multi-dimension reservation, terminal settlement replay, and governed child-admission contention against PostgreSQL 18.4 repeated 5 times; exact conservation, durable-row, and single-settlement assertions; focused race suite; `make verify`",
+      "commits": {
+        "014954a": "014954aa555f818c857fd81499ff2293e91e6aca"
+      },
+      "evidence_files": [
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-013",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Add end-to-end parent/child allocation, exhaustion, extension, settlement, reclaim, and sibling reuse tests. \u2014 completed 2026-08-26, commit `edf1dec`, evidence: composed application/PostgreSQL allocation lifecycle; child exhaustion/pause, authorized additive extension/resume, terminal settlement, expiry timeout/reclaim, and exact sibling capacity reuse; focused race suite; `make verify`",
+      "commits": {
+        "edf1dec": "edf1dec5c7e6524d8ba6adeec2e65816dc41fb3e"
+      },
+      "evidence_files": [
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "RES-014",
+      "phase": 5,
+      "status": "verified within recorded scope",
+      "record": "Commit Phase 5 with resource model documentation, database evidence, and load/concurrency results. \u2014 completed 2026-08-26, commit `775539f`, evidence: `docs/contracts/resource-accounting.md`; `docs/architecture/database-schema.md`; `docs/phase-5-evidence.md`; 32-way PostgreSQL contention and randomized conservation qualification; composed resource lifecycle; clean-tree `make verify`",
+      "commits": {
+        "775539f": "775539f8eddd0d615e7dff8e28e16d64c880cc68"
+      },
+      "evidence_files": [
+        "docs/architecture/database-schema.md",
+        "docs/contracts/resource-accounting.md",
+        "docs/phase-5-evidence.md"
+      ]
+    },
+    {
+      "id": "REV-001",
+      "phase": 6,
+      "status": "verified within recorded scope",
+      "record": "Implement typed revocation creation/lift for every supported scope with authorization, reason, effective/expiry time, and evidence. \u2014 completed 2026-08-27, commit `d77dec1`, evidence: domain/application/authenticated HTTP tests; authoritative OPA policy; PostgreSQL 18.4 atomic change/audit/outbox integration",
+      "commits": {
+        "d77dec1": "d77dec17416b87ef7e4e56ff71f0ef2e36c75623"
+      },
+      "evidence_files": [
+        "docs/phase-6-evidence.md"
+      ]
+    },
+    {
+      "id": "REV-002",
+      "phase": 6,
+      "status": "verified within recorded scope",
+      "record": "Implement atomic monotonic epoch increment plus ordered log/outbox append; prove epochs never decrement or duplicate under concurrency. \u2014 completed 2026-08-27, commit `d77dec1`, evidence: PostgreSQL 18.4 16-way global/tenant epoch concurrency repeated 3 times; exact monotonic epoch and unique sequence assertions; atomic lift evidence",
+      "commits": {
+        "d77dec1": "d77dec17416b87ef7e4e56ff71f0ef2e36c75623"
+      },
+      "evidence_files": [
+        "docs/phase-6-evidence.md"
+      ]
+    },
+    {
+      "id": "REV-003",
+      "phase": 6,
+      "status": "verified within recorded scope",
+      "record": "Enforce revocations and applicable epoch checks in discovery, admission, lifecycle mutations, worker operations, and policy evaluation. \u2014 completed 2026-08-27, commit `72ff9de`, evidence: authoritative policy-evaluator boundary for every scope and exact applicable epochs; governed worker claim/heartbeat/mutation checks plus PostgreSQL claim exclusion; unit/race, PostgreSQL integration, and clean-tree `make verify`",
+      "commits": {
+        "72ff9de": "72ff9deb7ee401183a890ef2b265dbdc492a38b3"
+      },
+      "evidence_files": [
+        "docs/phase-6-evidence.md"
+      ]
+    },
+    {
+      "id": "REV-004",
+      "phase": 6,
+      "status": "verified within recorded scope",
+      "record": "Implement resumable authenticated revocation SSE stream with sequence/epoch cursor, heartbeat, backpressure, retention, and gap signaling. \u2014 completed 2026-08-27, commit `72ff9de`, evidence: HMAC tenant-bound sequence/security-epoch cursor; authenticated reconnect; 256-entry polling, per-write deadlines, heartbeats, logical retention, pre-stream 410 and terminal gap signaling; HTTP/domain tests and `make verify`",
+      "commits": {
+        "72ff9de": "72ff9deb7ee401183a890ef2b265dbdc492a38b3"
+      },
+      "evidence_files": [
+        "docs/phase-6-evidence.md"
+      ]
+    },
+    {
+      "id": "REV-005",
+      "phase": 6,
+      "status": "verified within recorded scope",
+      "record": "Implement authoritative reconciliation/snapshot endpoint and persisted gateway checkpoints. \u2014 completed 2026-08-27, commit `72ff9de`, evidence: authenticated delta-or-content-addressed-snapshot reconciliation; 10,000-change bound; effective/lifted/expired active-state reconstruction; monotonic checkpoint upsert; PostgreSQL 18.4 integration and `make verify`",
+      "commits": {
+        "72ff9de": "72ff9deb7ee401183a890ef2b265dbdc492a38b3"
+      },
+      "evidence_files": [
+        "docs/phase-6-evidence.md"
+      ]
+    },
+    {
+      "id": "REV-006",
+      "phase": 6,
+      "status": "verified within recorded scope",
+      "record": "Implement instance-local freshness tracker with last stream receipt, last reconciliation, last applied epoch, and clock-safe age calculation. \u2014 completed 2026-08-27, commit `8409b99`, evidence: tenant-scoped concurrent tracker; sparse epoch merge and sequence/epoch regression rejection; wall-clock rollback and monotonic-clock fail-closed tests; unit/race suites and `make verify`",
+      "commits": {
+        "8409b99": "8409b993ccec6044f3e4fadc4448207c3958e8bd"
+      },
+      "evidence_files": [
+        "docs/phase-6-evidence.md"
+      ]
+    },
+    {
+      "id": "REV-007",
+      "phase": 6,
+      "status": "verified within recorded scope",
+      "record": "Enforce risk-based freshness: authoritative high-risk writes, default 30-second normal writes, 60-second sensitive reads, and bounded low-risk cache. \u2014 completed 2026-08-27, commit `2398385`, evidence: risk/action classification and tracker-derived security-state enforcement; live zero-TTL high-risk bypass; operation-bound cache keys/TTL; 24-case OPA suite; unit/race and `make verify`",
+      "commits": {
+        "2398385": "2398385a021ab668f25962a385ee91277fdcb473"
+      },
+      "evidence_files": [
+        "docs/phase-6-evidence.md"
+      ]
+    },
+    {
+      "id": "REV-008",
+      "phase": 6,
+      "status": "verified within recorded scope",
+      "record": "Wire revocation/policy activation changes to local and Valkey cache invalidation/versioned cache keys. \u2014 completed 2026-08-27, commit `c7856ff`, evidence: bounded tenant-local decision cache; global/tenant generation-bound Valkey keys; direct revocation create/lift, stream/reconciliation, and policy activation/rollback invalidation; unit/race, PostgreSQL integration, and clean-tree `make verify`",
+      "commits": {
+        "c7856ff": "c7856ff05175fd596849a5005713c5223f3eb470"
+      },
+      "evidence_files": [
+        "docs/phase-6-evidence.md"
+      ]
+    },
+    {
+      "id": "REV-009",
+      "phase": 6,
+      "status": "verified within recorded scope",
+      "record": "Expose revocation age/lag/gap metrics and make readiness reflect inability to meet configured security freshness. \u2014 completed 2026-08-27, commit `90f913a`, evidence: bounded-cardinality scrape-time age/lag/gap/incident/tenant/health metrics; unknown/stale/lag/gap/clock-regression readiness tests; HTTP readiness composition; unit/race and clean-tree `make verify`",
+      "commits": {
+        "90f913a": "90f913a71a66d9263bd014be0fcbf9fb9e35e412"
+      },
+      "evidence_files": [
+        "docs/phase-6-evidence.md"
+      ]
+    },
+    {
+      "id": "REV-010",
+      "phase": 6,
+      "status": "verified within recorded scope",
+      "record": "Test stream gaps, duplicate/out-of-order events, restarts, partitions, expired cache, reconciliation, global revocation, and fail-closed recovery. \u2014 completed 2026-08-27, commit `bf8eae1`, evidence: composed tracker/freshness/cache/authoritative-policy resilience tests; focused unit/race suites; clean-tree `make verify`",
+      "commits": {
+        "bf8eae1": "bf8eae15efa365f40afd639a8b754dc23eae4254"
+      },
+      "evidence_files": [
+        "docs/phase-6-evidence.md"
+      ]
+    },
+    {
+      "id": "REV-011",
+      "phase": 6,
+      "status": "verified within recorded scope",
+      "record": "Measure propagation against SLO targets and commit Phase 6 with documented gateway integration behavior. \u2014 completed 2026-08-27, commit `57888c2`, evidence: 100-change authoritative PostgreSQL-to-authenticated-SSE measurement p50 10.239 ms, p99 22.463 ms, max 33.979 ms against p99 <= 5 s; three-run stability qualification; `docs/phase-6-evidence.md`; clean-tree `make verify`",
+      "commits": {
+        "57888c2": "57888c2540d0afbcc194fc3c2da7a8aa37be929f"
+      },
+      "evidence_files": [
+        "docs/phase-6-evidence.md"
+      ]
+    },
+    {
+      "id": "SEC-001",
+      "phase": 7,
+      "status": "verified within recorded scope",
+      "record": "Classify endpoints/actions by risk and enforce separate least-privilege service/admin roles through policy. \u2014 completed 2026-08-31, evidence: closed fail-conservative action-risk catalog shared with revocation freshness; non-hierarchical caller/workload/meter/settler/gateway and registry/resource/policy/revocation role policy; gateway distribution policy authorization; contract/security documentation; 24-case OPA suite, unit tests, and e2e-tag compile",
+      "commits": {
+        "1386a2f": "1386a2f35f1b56a78a2b3b4a96236c58b8e374f3"
+      },
+      "evidence_files": [
+        "docs/phase-7-evidence.md"
+      ]
+    },
+    {
+      "id": "SEC-002",
+      "phase": 7,
+      "status": "verified within recorded scope",
+      "record": "Implement approval-provider interfaces and four-eyes state for trust-root rotation, global revocation changes, policy bypass/rollback, emergency expansion, and privileged agent classes. \u2014 completed 2026-08-31, evidence: closed protected-action catalog; replaceable challenge/assertion provider port; independent digest-bound, expiring, single-use state machine; append-only PostgreSQL requests/decisions/consumptions; domain/application/schema tests and contract/security documentation",
+      "commits": {
+        "63d8b8f": "63d8b8f3e71bdb0573e58e56b18908c78239aa12"
+      },
+      "evidence_files": [
+        "docs/phase-7-evidence.md"
+      ]
+    },
+    {
+      "id": "SEC-003",
+      "phase": 7,
+      "status": "verified within recorded scope",
+      "record": "Implement signer/verifier abstractions compatible with managed KMS/HSM and ensure production private keys are non-exportable/not file-configured. \u2014 completed 2026-08-31, evidence: provider-neutral SHA-256 digest signer/verifier/key-inspector ports; managed key metadata and signature binding guards; production KMS/HSM-only configuration with no private-key/file fields; substitution, exportability, purpose, outage, and configuration tests; contract/security documentation",
+      "commits": {
+        "a509a04": "a509a04aa7951b9e1e59d3782e5d36f8fe709a6f"
+      },
+      "evidence_files": [
+        "docs/phase-7-evidence.md"
+      ]
+    },
+    {
+      "id": "SEC-004",
+      "phase": 7,
+      "status": "verified within recorded scope",
+      "record": "Require signed/versioned policy and privileged configuration artifacts and reject digest/signature/version mismatch. \u2014 completed 2026-09-01, evidence: closed policy/trust-root/revocation/resource-override/privileged-agent artifact catalog; domain-separated deterministic signed envelope using SEC-003 managed-verifier metadata; payload/digest/kind/schema/revision/key-version/algorithm/signature substitution tests; versioned OpenAPI and contract documentation; migration 016 legacy-validation rejection, unique revisions, PostgreSQL 18.4 activation/rollback integration; unit/race/vet and OpenAPI gates",
+      "commits": {
+        "4d7507b": "4d7507b2f952f9f65e60c2eba68f3a558e119e58"
+      },
+      "evidence_files": [
+        "docs/phase-7-evidence.md"
+      ]
+    },
+    {
+      "id": "SEC-005",
+      "phase": 7,
+      "status": "verified within recorded scope",
+      "record": "Finalize evidence event schemas for policy, revocation, resource overrides, approvals, key lifecycle, version approvals, and break-glass actions. \u2014 completed 2026-09-01, evidence: closed `thinkpixelag.evidence/v1` envelope and seven-type catalog; machine-readable JSON Schema and provider-neutral Go validation boundary; strict unknown-field/type-substitution/digest/bounds/time/epoch tests; contract, compatibility, minimization, and SEC-006 transport-boundary documentation; unit/race/vet and repository verification gates",
+      "commits": {
+        "647e152": "647e15205305558abfb290748adc5b0516c101f0"
+      },
+      "evidence_files": [
+        "docs/phase-7-evidence.md"
+      ]
+    },
+    {
+      "id": "SEC-006",
+      "phase": 7,
+      "status": "verified within recorded scope",
+      "record": "Implement authenticated export to a separately configurable evidence sink with replay, receipt/checkpoint, and tamper-evident hash/link metadata. \u2014 completed 2026-09-01, evidence: closed `thinkpixelag.evidence-delivery/v1` contract; HTTPS bearer-authenticated bounded sink adapter; stable event-ID idempotency; deterministic per-sink SHA-256 chain; leased replay and stale-claim fencing; append-only receipt and monotonic checkpoint migration; receipt-substitution, tampering, replay, configuration-redaction, unit/race, and real-PostgreSQL integration tests",
+      "commits": {
+        "3dca78d": "3dca78d1f1e87eb758147cded2db304f247f6ff3"
+      },
+      "evidence_files": [
+        "docs/phase-7-evidence.md"
+      ]
+    },
+    {
+      "id": "SEC-007",
+      "phase": 7,
+      "status": "verified within recorded scope",
+      "record": "Define and implement a narrow, time-bound, strongly authenticated break-glass workflow with explicit expiry and separate evidence. \u2014 completed 2026-09-01, evidence: closed `thinkpixelag.break-glass/v1` policy/revocation recovery scopes; replaceable phishing-resistant MFA verifier with five-minute freshness and identity binding; exact grant-digest four-eyes consumption; random one-time credential with digest-only storage; database-enforced fifteen-minute maximum, append-only activation/use/expiry/revocation, atomic v1 evidence outbox; substitution, replay, stale-authentication, expiry, unit/race, and real-PostgreSQL tests",
+      "commits": {
+        "acc08c6": "acc08c649096d130f1cdfb4de079654c9b3584ec"
+      },
+      "evidence_files": [
+        "docs/phase-7-evidence.md"
+      ]
+    },
+    {
+      "id": "SEC-008",
+      "phase": 7,
+      "status": "verified within recorded scope",
+      "record": "Add workload-identity/mTLS integration hooks and explicit service-to-service authorization; document local-development exceptions.",
+      "commits": {
+        "6d7771a": "6d7771a79d8f8f746aad28a19cc1bdb72f512fb9"
+      },
+      "evidence_files": [
+        "docs/phase-7-evidence.md"
+      ]
+    },
+    {
+      "id": "SEC-009",
+      "phase": 7,
+      "status": "verified within recorded scope",
+      "record": "Complete secret/token/payload redaction tests across logs, traces, metrics, errors, policy records, audit, and panic paths.",
+      "commits": {
+        "a7790e6": "a7790e693275f4a2ab5eda3d2b3a87d16ec99171"
+      },
+      "evidence_files": [
+        "docs/phase-7-evidence.md"
+      ]
+    },
+    {
+      "id": "SEC-010",
+      "phase": 7,
+      "status": "verified within recorded scope",
+      "record": "Run security tests for privilege escalation, approval bypass, replay, cache poisoning, policy tampering, stale authorization, and evidence suppression. \u2014 completed 2026-09-01, evidence: stable `make test-security` gate covering adversarial Go and 26/26 Rego cases plus real-PostgreSQL approval immutability, replay fencing, transactional audit/outbox atomicity, delivery receipts, and monotonic checkpoints; full `make verify` passed; implementation commit `8fc7875`",
+      "commits": {
+        "8fc7875": "8fc7875d3d57d04698a8bef9a77d01749d6da6ff"
+      },
+      "evidence_files": [
+        "docs/phase-7-evidence.md"
+      ]
+    },
+    {
+      "id": "SEC-011",
+      "phase": 7,
+      "status": "verified within recorded scope",
+      "record": "Review the threat model against implementation, resolve all critical/high findings, and commit Phase 7 evidence. \u2014 completed 2026-09-01, evidence: all T01\u2013T22 controls traced to executable proofs; zero open critical/high findings; medium Phase 8 residual risks explicitly registered; `make test-security` passed 26/26 Rego, selected Go, and real-PostgreSQL security cases; `make verify` passed; `docs/phase-7-evidence.md`; implementation commit `c5f8ddc`",
+      "commits": {
+        "c5f8ddc": "c5f8ddc83e4ed6b06471ff548b659dd31bc7ee71"
+      },
+      "evidence_files": [
+        "docs/phase-7-evidence.md"
+      ]
+    },
+    {
+      "id": "OPS-001",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Finalize reproducible multi-architecture OCI build with pinned base digests, non-root user, read-only filesystem compatibility, CA roots, labels, and graceful shutdown. \u2014 completed 2026-09-02, evidence: digest-pinned Buildx `linux/amd64,linux/arm64` OCI manifest `sha256:b6fc5c9712f1b27ba2046a1fa8bcbdedf5bbb307d782a50035203b42491d7d16`; shell-free UID 65532, CA-root/read-only/SIGTERM smoke; implementation commit `967165a`",
+      "commits": {
+        "967165a": "967165af24765e7e837244ed5c1cf475fddc75e5"
+      },
+      "evidence_files": [
+        "docs/operations/phase-8-closeout.md"
+      ]
+    },
+    {
+      "id": "OPS-002",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Generate SBOM, vulnerability report, checksum, provenance, and image-signing/verification hooks in CI with release thresholds. \u2014 completed 2026-09-02, evidence: CycloneDX, Trivy JSON and zero critical/high threshold, deterministic checksums, SLSA-shaped provenance, BuildKit attestations, cosign hooks; implementation commit `967165a`",
+      "commits": {
+        "967165a": "967165af24765e7e837244ed5c1cf475fddc75e5"
+      },
+      "evidence_files": [
+        "docs/operations/phase-8-closeout.md"
+      ]
+    },
+    {
+      "id": "OPS-003",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Create Kubernetes Deployment, Service, ServiceAccount, ConfigMap, secret references, and pre-deploy migration Job. \u2014 completed 2026-09-02, evidence: Kustomize render and disposable-cluster migration-before-readiness passed; implementation commit `967165a`",
+      "commits": {
+        "967165a": "967165af24765e7e837244ed5c1cf475fddc75e5"
+      },
+      "evidence_files": [
+        "docs/operations/phase-8-closeout.md"
+      ]
+    },
+    {
+      "id": "OPS-004",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Add restricted security context, seccomp, dropped capabilities, NetworkPolicies, resource requests/limits, topology spreading, and PodDisruptionBudget. \u2014 completed 2026-09-02, evidence: contract/render gates plus kind restricted runtime and PDB-blocked drain; implementation commit `967165a`",
+      "commits": {
+        "967165a": "967165af24765e7e837244ed5c1cf475fddc75e5"
+      },
+      "evidence_files": [
+        "docs/operations/phase-8-closeout.md"
+      ]
+    },
+    {
+      "id": "OPS-005",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Add readiness/liveness/startup probes that reflect process health, DB/policy readiness, and revocation freshness appropriately. \u2014 completed 2026-09-02, evidence: process-only startup/liveness; production `/readyz` composition for PostgreSQL, at least one currently valid loaded active policy, and 30-second authoritative revocation reconciliation; stale/empty/failure recovery tests; real PostgreSQL integration; clean-tree `make verify`; implementation commits `e528009`, `01135d6`",
+      "commits": {
+        "01135d6": "01135d6223c4dfc2fd2ed235a87a6489e0479cf7",
+        "e528009": "e5280096ffc41878039c2209a324c33d30991a17"
+      },
+      "evidence_files": [
+        "docs/operations/phase-8-closeout.md"
+      ]
+    },
+    {
+      "id": "OPS-006",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Add optional HPA and ServiceMonitor/PodMonitor plus dashboards for API, policy, database, outbox, allocation, run, revocation, cache, and Go runtime signals. \u2014 completed 2026-09-02, evidence: optional autoscaling/scrape resources; dashboard coverage for every required signal; live HTTP/database/revocation/Go collectors; 15-second PostgreSQL outbox/settlement snapshot publisher; scrape-time pool saturation; zero-initialized bounded outcome vocabularies; focused unit/race and real PostgreSQL integration; clean-tree `make verify`; implementation commit `41ab200`",
+      "commits": {
+        "41ab200": "41ab2003963630abc953a918da58224f7dce9af1"
+      },
+      "evidence_files": [
+        "docs/operations/phase-8-closeout.md"
+      ]
+    },
+    {
+      "id": "OPS-007",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Define actionable alerts tied to SLOs with severity, ownership, runbook links, and anti-noise windows. \u2014 completed 2026-09-02, evidence: 27-rule PrometheusRule matrix for public-read/run-mutation/admin-trusted availability budgets, p95/p99 API and OPA latency, database/policy/cache health, revocation reconciliation, contention, outbox, and settlement; every rule has a sustained `for` window, severity, owner, summary, and linked runbook; native Prometheus 3.5 rule validation, focused unit/race checks, and clean-tree `make verify`; implementation commit `bd203e5` (supersedes the incomplete foundation evidence at `967165a`)",
+      "commits": {
+        "967165a": "967165af24765e7e837244ed5c1cf475fddc75e5",
+        "bd203e5": "bd203e537d6df6fc62876c8a7dc126028df9450f"
+      },
+      "evidence_files": [
+        "docs/operations/phase-8-closeout.md"
+      ]
+    },
+    {
+      "id": "OPS-008",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Write runbooks for install/configure, migration, upgrade/rollback, backup/restore, policy rollback, revocation gaps, DB/OPA/Valkey outage, outbox backlog, key rotation, and break-glass. \u2014 completed 2026-09-02, evidence: `docs/operations/runbooks.md`, recovery and load qualification procedures; implementation commit `967165a`",
+      "commits": {
+        "967165a": "967165af24765e7e837244ed5c1cf475fddc75e5"
+      },
+      "evidence_files": [
+        "docs/operations/phase-8-closeout.md",
+        "docs/operations/runbooks.md"
+      ]
+    },
+    {
+      "id": "OPS-009",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Test PostgreSQL backup/restore, point-in-time recovery assumptions, schema forward recovery, and restoration of epoch/outbox/allocation invariants. \u2014 completed 2026-09-02, evidence: isolated PostgreSQL 18.4 continuous WAL archive; AES-256 encrypted physical base backup; named recovery immediately before and after an atomic governance transaction; exact global/tenant/agent epoch, audit/outbox, and allocation assertions; forward migration from schema 17 to 18; restored invariant checker; observed local RTO 3\u20134 seconds and zero selected-target transaction loss; clean-tree `make verify`; implementation commit `fa04a0c`",
+      "commits": {
+        "fa04a0c": "fa04a0c4939b4217d0134a85a437c88bff91670e"
+      },
+      "evidence_files": [
+        "docs/operations/phase-8-closeout.md"
+      ]
+    },
+    {
+      "id": "OPS-010",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Complete AG load/correctness diagnostics and document the accepted homelab operating envelope. \u2014 closed for the integration-RC scope on 2026-09-19; admission/replay fixes and measured results retained; production throughput, dropped requests, tail latency and full-scale workload qualification are deferred, not passed: `docs/operations/deferred-qualification.md` (DQ-001)",
+      "commits": {
+        "406db54": "406db54c7ecef604a2d9975a0014c987ddbd04b3",
+        "72715e1": "72715e115a277cdd4178708c1663bdff49b2cbc6",
+        "bd148a9": "bd148a9c9fb6cc9163fe01496eb2c922ec0de1e5",
+        "c1d63b0": "c1d63b05a485ca8123676cd04c2a45e3796e0906"
+      },
+      "evidence_files": [
+        "docs/operations/deferred-qualification.md",
+        "docs/operations/phase-8-closeout.md"
+      ]
+    },
+    {
+      "id": "OPS-011",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Complete AG-side dependency, process, disruption and recovery qualification. \u2014 OPA/DB/pod/evidence recovery, worker-lease and stream component checks, plus deployed Valkey throughput-cache loss/recovery passed; production AR/gateway composition and intended-production HA/partition tests are deferred to their available integrations/topology: `docs/operations/phase-8-closeout.md`, `docs/operations/deferred-qualification.md` (DQ-002\u2013004)",
+      "commits": {
+        "30ff25f": "30ff25f113ba6587adcfaa079e0d9dcac6a3f952",
+        "72715e1": "72715e115a277cdd4178708c1663bdff49b2cbc6",
+        "8e3a1de": "8e3a1de5369b490e580c12dd4848f661da3d355a"
+      },
+      "evidence_files": [
+        "docs/operations/deferred-qualification.md",
+        "docs/operations/phase-8-closeout.md"
+      ]
+    },
+    {
+      "id": "OPS-012",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Run disposable-cluster install, restricted-container smoke, migration, core workflow, HPA/disruption, upgrade, rollback, and uninstall tests. \u2014 disposable Kind install/migration/disruption/uninstall evidence at `4fff867`, extended 2026-09-18 by retained ARM64 governed HTTP workflow, 73 passing upgrade/rollback checks across two immutable images, and measured HPA scale-out/scale-in with 1,360 successful reads; hardware diagnostic scaling is separate from unchanged production HPA/SLO targets; evidence: `docs/operations/ops012-evidence.md`",
+      "commits": {
+        "4fff867": "4fff867ebcbf193d78e68c348de4cc6d805131ba"
+      },
+      "evidence_files": [
+        "docs/operations/ops012-evidence.md",
+        "docs/operations/phase-8-closeout.md"
+      ]
+    },
+    {
+      "id": "OPS-013",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Add release automation that produces immutable image digests, manifests/chart package, SBOM/provenance, API artifacts, checksums, and draft notes. \u2014 completed 2026-09-02, evidence: tag-gated `.github/workflows/release.yaml`, deterministic Kubernetes/API archive, image manifest/metadata, SBOM/provenance, checksums, GitHub attestations, draft notes; implementation commit `967165a`",
+      "commits": {
+        "967165a": "967165af24765e7e837244ed5c1cf475fddc75e5"
+      },
+      "evidence_files": [
+        "docs/operations/phase-8-closeout.md"
+      ]
+    },
+    {
+      "id": "OPS-014",
+      "phase": 8,
+      "status": "verified within recorded scope",
+      "record": "Commit Phase 8 operational docs, test reports, artifact-generation evidence and explicit deferrals. \u2014 final source `30ff25f`; full `make verify`, multiarchitecture artifact/checksum and HIGH/CRITICAL image gates passed; integration-RC closeout: `docs/operations/phase-8-closeout.md`",
+      "commits": {
+        "30ff25f": "30ff25f113ba6587adcfaa079e0d9dcac6a3f952",
+        "72715e1": "72715e115a277cdd4178708c1663bdff49b2cbc6"
+      },
+      "evidence_files": [
+        "docs/operations/phase-8-closeout.md"
+      ]
+    },
+    {
+      "id": "RC-001",
+      "phase": 9,
+      "status": "verified within recorded scope",
+      "record": "Freeze the OpenAPI and policy decision contracts; run backward-compatibility and generated-artifact drift checks. \u2014 2026-09-19: metadata-only OpenAPI RC label; unchanged policy wire version; seven-boundary baseline comparison and enforced fingerprints; `make contract-check`, lint/OPA and generated-artifact checks; `docs/releases/contract-freeze.md`",
+      "commits": {
+        "79d2ac9": "79d2ac91cc89846de6baf30c570d562260edafc1"
+      },
+      "evidence_files": [
+        "docs/releases/contract-freeze.md",
+        "docs/releases/verification.md"
+      ]
+    },
+    {
+      "id": "RC-002",
+      "phase": 9,
+      "status": "verified within recorded scope",
+      "record": "Run `make verify` from a clean checkout and archive unit, race, fuzz, policy, integration, contract, end-to-end, security, and Kubernetes smoke evidence. \u2014 2026-09-19: clean `79d2ac9` gate, six fuzz campaigns, live retained-cluster smoke; all initial default-suite skips covered by passing database/race runs; `docs/releases/verification.md`",
+      "commits": {
+        "79d2ac9": "79d2ac91cc89846de6baf30c570d562260edafc1",
+        "c12a2a1": "c12a2a195669846b873c81ecd8587b4a5e52a22b"
+      },
+      "evidence_files": [
+        "docs/releases/verification.md"
+      ]
+    },
+    {
+      "id": "RC-003",
+      "phase": 9,
+      "status": "verified within recorded scope",
+      "record": "Confirm SLO/capacity targets and document accepted performance envelopes and scaling guidance. \u2014 2026-09-19: unchanged production numbers; measured integration envelope, topology limits and scaling guidance in `docs/releases/capacity-envelope.md`; DQ-001 remains deferred.",
+      "commits": {
+        "6edba1d": "6edba1db5366cfe8700ec4fabbb59de100652184"
+      },
+      "evidence_files": [
+        "docs/releases/capacity-envelope.md",
+        "docs/releases/verification.md"
+      ]
+    },
+    {
+      "id": "RC-004",
+      "phase": 9,
+      "status": "verified within recorded scope",
+      "record": "Confirm zero unresolved critical/high vulnerabilities, security findings, migration risks, flaky/skipped required tests, or fail-open paths. \u2014 2026-09-19: scoped evidence/risk review, no known blocking finding; corrected OCI license label; aggregate gate and explicit skip accounting; `docs/releases/risk-review.md`.",
+      "commits": {
+        "af620d1": "af620d16e5bf7634b093e344d2f2bf6972125c61"
+      },
+      "evidence_files": [
+        "docs/releases/risk-review.md",
+        "docs/releases/verification.md"
+      ]
+    },
+    {
+      "id": "RC-005",
+      "phase": 9,
+      "status": "verified within recorded scope",
+      "record": "Exercise and record install, upgrade, rollback/forward, backup/restore, policy rollback, revocation reconciliation, key rotation, and break-glass game days. \u2014 2026-09-19: integration-scope evidence matrix and repeatable component recovery target; sequential managed-key guard rotation; production KMS/IdP ceremony explicitly unqualified; `docs/releases/game-days.md`.",
+      "commits": {
+        "85ba0e7": "85ba0e783c7cde2d1d18568fdba2aa9ff8d3fec3"
+      },
+      "evidence_files": [
+        "docs/releases/game-days.md",
+        "docs/releases/verification.md"
+      ]
+    },
+    {
+      "id": "RC-006",
+      "phase": 9,
+      "status": "remaining release sequencing",
+      "record": "Reconcile every TODO item against implementation, tests, commits, docs, and release artifacts; resolve all blockers and deviations.",
+      "commits": {},
+      "evidence_files": [
+        "docs/releases/verification.md"
+      ]
+    },
+    {
+      "id": "RC-007",
+      "phase": 9,
+      "status": "remaining release sequencing",
+      "record": "Update README with final architecture, supported versions, quick start, configuration, API docs, development commands, deployment, security, and support status.",
+      "commits": {},
+      "evidence_files": [
+        "docs/releases/verification.md"
+      ]
+    },
+    {
+      "id": "RC-008",
+      "phase": 9,
+      "status": "remaining release sequencing",
+      "record": "Create numbered ADRs under `docs/adr/` for all durable decisions and relevant history extracted from `PLAN.md` and `TODO.md`.",
+      "commits": {},
+      "evidence_files": [
+        "docs/releases/verification.md"
+      ]
+    },
+    {
+      "id": "RC-009",
+      "phase": 9,
+      "status": "remaining release sequencing",
+      "record": "Verify ADRs preserve all useful rationale, alternatives, consequences, risks, and implementation/commit references from the living plan.",
+      "commits": {},
+      "evidence_files": [
+        "docs/releases/verification.md"
+      ]
+    },
+    {
+      "id": "RC-010",
+      "phase": 9,
+      "status": "remaining release sequencing",
+      "record": "Prepare RC release notes, known limitations, operator checklist, artifact inventory, upgrade notes, and proposed semantic version/tag.",
+      "commits": {},
+      "evidence_files": [
+        "docs/releases/verification.md"
+      ]
+    },
+    {
+      "id": "RC-011",
+      "phase": 9,
+      "status": "remaining release sequencing",
+      "record": "Remove `PLAN.md` and `TODO.md`, validate links/docs and run `make verify` in the resulting tree.",
+      "commits": {},
+      "evidence_files": [
+        "docs/releases/verification.md"
+      ]
+    },
+    {
+      "id": "RC-012",
+      "phase": 9,
+      "status": "remaining release sequencing",
+      "record": "Commit the final ADR/documentation transition to `main`, build the release artifacts from that exact commit, and verify digest/provenance consistency.",
+      "commits": {},
+      "evidence_files": [
+        "docs/releases/verification.md"
+      ]
+    }
+  ]
+}
