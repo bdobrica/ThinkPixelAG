@@ -1,0 +1,20 @@
+{
+  "tracked_markdown_files_checked": 89,
+  "local_link_targets_checked": 356,
+  "missing_targets": [],
+  "accepted_ADR_decision_bodies_unchanged": {
+    "0001-postgresql-access-and-migrations.md": true,
+    "0002-repository-enforced-tenant-isolation.md": true,
+    "0003-oidc-authentication-and-tenant-authority.md": true,
+    "0004-policy-evaluation-and-activation.md": true
+  },
+  "snapshot_hashes_match": true,
+  "root_planning_files_removed": true,
+  "date": "2026-09-19",
+  "base_commit": "475a495da125ccf6c27632bc32029b34085cafb5",
+  "make_verify_exit_code": 0,
+  "test_and_subtest_passes": 2303,
+  "skipped_tests": 0,
+  "opa_cases_passed": 27,
+  "verify_log_sha256": "34a4ce4b66ec324603ea8c8015e226aebdd699fed9169ce3a3505601f2076745"
+}

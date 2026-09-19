@@ -17,7 +17,8 @@ The integration candidate targets development with ThinkPixelAR and a real
 harness. Its frozen contracts are OpenAPI `0.1.0-rc.1` and policy
 `thinkpixelag.authorization/v1alpha1`. [Verification](docs/releases/verification.md)
 and [game-day evidence](docs/releases/game-days.md) cover the implemented AG
-component. Final release packaging is still in progress.
+component. See [release status](docs/releases/status.md) for exact-source artifact
+qualification and publication status.
 
 Production capacity and unavailable AR/gateway/HA scenarios are
 [explicitly deferred](docs/operations/deferred-qualification.md). The

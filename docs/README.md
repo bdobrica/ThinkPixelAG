@@ -53,7 +53,10 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 
 ## Architecture decisions
 
-Durable decisions live in [Architecture Decision Records](adr/README.md). During implementation, `PLAN.md` and `TODO.md` remain the execution ledger; their durable rationale will be reconciled into ADRs before the release candidate.
+Durable decisions live in [Architecture Decision Records](adr/README.md). The
+root planning files are retired; [historical snapshots](releases/history/README.md)
+preserve their rationale and implementation lineage. Current release completion
+and remaining work live in [release status](releases/status.md).
 
 ## Integration release candidate
 

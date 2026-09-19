@@ -85,7 +85,7 @@ exercises are DATA-011.
 
 ## References and evidence
 
-- `PLAN.md`, sections 3.2, 4, 6, and 10
-- `TODO.md`, DATA-001 and DATA-007 through DATA-011
+- [historical plan](../releases/history/PLAN.md), sections 3.2, 4, 6, and 10
+- [historical checklist](../releases/history/TODO.md), DATA-001 and DATA-007 through DATA-011
 - `internal/adapters/postgres`
 - pgx v5 and Tern v2 package documentation

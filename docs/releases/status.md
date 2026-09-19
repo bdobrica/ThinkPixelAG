@@ -15,8 +15,8 @@ component development; production targets and accepted deferrals remain explicit
 | RC-007 references | Complete | README/support matrix, `5acce19` |
 | RC-008 ADR extraction | Complete | [ADR index](../adr/README.md), `28c706b` |
 | RC-009 preservation | Complete | [Preservation review](preservation-review.md), `95ee42a` |
-| RC-010 release preparation | Complete; commit recorded by the next transition | [Notes and operator checklist](0.1.0-rc.1.md) |
-| RC-011 retire temporary planning files | Pending | Preserve history and validate links/aggregate gate in resulting tree |
+| RC-010 release preparation | Complete | [Notes and operator checklist](0.1.0-rc.1.md), `475a495` |
+| RC-011 retire temporary planning files | Complete | [Transition](planning-transition.md) and [link/aggregate verification](rc011-verification.json); source commit recorded with final artifacts |
 | RC-012 final-source artifacts | Pending | Build immutable multiarchitecture image, scan both platforms, verify checksums/source/digests and record signing/publication status |
 
 The [historical ledger](history/README.md) is immutable evidence, not a current
