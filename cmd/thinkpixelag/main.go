@@ -15,6 +15,7 @@ import (
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc"
 	postgresadapter "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres"
+	"github.com/bdobrica/ThinkPixelAG/internal/adapters/valkey"
 	"github.com/bdobrica/ThinkPixelAG/internal/application"
 	"github.com/bdobrica/ThinkPixelAG/internal/config"
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
@@ -139,6 +140,12 @@ func run(ctx context.Context, args []string) error {
 			return err
 		}
 		routes := &runtimeRoutes{settings: settings, runtime: runtime, repositories: repositories, policies: policyFreshness, verifier: verifier, clock: clock, metrics: metricSet, client: policyHTTPClient(settings.OPA.Timeout), readiness: securityReadiness}
+		if settings.Valkey.URL.IsSet() {
+			routes.accelerator, err = valkey.New(settings.Valkey.URL.Value(), settings.Valkey.Timeout, []byte(settings.Valkey.CacheIntegrityKey.Value()))
+			if err != nil {
+				return fmt.Errorf("initialize throughput cache: %w", err)
+			}
+		}
 		routes.mount(&dependencies, false)
 		if runtime.TrustedAddress != "" {
 			trustedTLS, routes.workload, err = trustedTransport(runtime)

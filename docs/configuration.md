@@ -140,6 +140,16 @@ policy decision checks live authoritative revocation state. This initial
 composition does not enable the optional decision cache or a Run worker.
 Registration/policy-management composition is not included.
 
+When `THINKPIXELAG_VALKEY_URL` and `THINKPIXELAG_VALKEY_CACHE_HMAC_KEY`
+are configured, trusted usage handling uses the existing optional throughput
+accelerator. It stores integrity-protected exhausted-window hints; PostgreSQL
+still validates usage, exact replay, balances and rate limits. Cache connection,
+authentication, integrity and write failures fall back to PostgreSQL without
+changing grants. Valkey is not a readiness dependency. This wiring does not
+enable cached policy decisions: protected requests retain live OPA and
+authoritative revocation checks. Leaving Valkey unset preserves the uncached
+path.
+
 To enable trusted usage, settlement, and revocation distribution, supply all of
 `trusted_address`, `tls_certificate`, `tls_key`, `client_ca`, and
 `workload_bindings`. The first is a separate listen address; the remaining four

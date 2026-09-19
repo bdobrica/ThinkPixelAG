@@ -148,6 +148,7 @@ type runtimeRoutes struct {
 	clock        domain.Clock
 	metrics      *metrics.Metrics
 	client       *http.Client
+	accelerator  ports.ThroughputAccelerator
 }
 
 func (r *runtimeRoutes) mount(d *httpserver.Dependencies, trusted bool) {
@@ -298,7 +299,7 @@ func (r *runtimeRoutes) handler(name string, tenant domain.ID, repo *postgres.Te
 		}
 		return httpserver.RevocationHandler(r.verifier, s, httpserver.RevocationHTTPConfig{SecurityState: live})
 	case "usage":
-		s, e := application.NewTrustedUsageService(repo, evaluator, r.clock)
+		s, e := application.NewTrustedUsageService(repo, evaluator, r.clock, r.accelerator)
 		if e != nil {
 			return nil, e
 		}
