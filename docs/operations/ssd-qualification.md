@@ -145,11 +145,12 @@ intended-topology qualification. The trusted usage/allocation, high-rate
 fanout, settlement and backlog-drain matrix still needs evidence, along with
 production-composed worker/cache and HA/partition scenarios.
 
-The durable evidence fixture is still on Pi USB flash. The warm 200/s admission
-sample left approximately 17,578 pending outbox records and 211 seconds of
-oldest-event age, failing the publication objective. Accepted API writes remain
-durable, but admission throughput alone does not qualify the full system. The
-next storage change is a prepared SSD evidence-sink migration that preserves
-its receipt history and hash-chain position; it requires a second narrowly
-scoped Windows firewall port. No evidence has been discarded. The existing
-sink eventually drained all pending records before the process-crash test. All reusable cluster resources and volumes remain.
+The warm 200/s admission sample with the Pi flash evidence sink left
+approximately 17,578 pending outbox records and 211 seconds of oldest-event
+age. That historical backlog drained before the PostgreSQL crash test. The
+[SSD evidence follow-up](ssd-evidence-qualification.md) now preserves and
+migrates the complete sink history, fixes pending-delivery replay identity,
+and verifies sink-outage/exporter-restart recovery. Even with an SSD-hosted
+exporter, 200 admissions/s with timely publication still fails. Admission
+throughput alone does not qualify the full system. No evidence has been
+discarded, and all reusable cluster resources and volumes remain.
