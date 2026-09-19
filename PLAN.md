@@ -376,7 +376,8 @@ production targets in `docs/releases/capacity-envelope.md`. The integration rele
 `docs/releases/risk-review.md`; integration game-day dispositions and the
 repeatable component rehearsal are in `docs/releases/game-days.md`. Release-wide evidence reconciliation is recorded in
 `docs/releases/reconciliation.md`; reference documentation is updated; ADR-0005–0011 now capture the remaining implemented decisions, with exact
-historical snapshots under `docs/releases/history/`; next is preservation review.
+historical snapshots under `docs/releases/history/`; preservation review passed and is recorded in
+`docs/releases/preservation-review.md`; next is the release package/checklist.
 
 Run all verification gates, resolve critical/high findings, freeze contracts, prepare release notes, convert completed planning decisions/history into ADRs, update README, remove `PLAN.md` and `TODO.md`, and commit the documentation transition. Exit when the repository can produce a traceable, signed/taggable RC artifact from a clean checkout.
 

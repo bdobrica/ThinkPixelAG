@@ -160,7 +160,7 @@ of scope until their qualification is completed.
 - [x] RC-006 Reconcile every TODO item against implementation, tests, commits, docs, and release artifacts; resolve all blockers and deviations. — 2026-09-19: 126 unique entries audited; completed references resolve; scope/deferrals and later release steps explicitly dispositioned; `docs/releases/reconciliation.md`.
 - [x] RC-007 Update README with final architecture, supported versions, quick start, configuration, API docs, development commands, deployment, security, and support status. — 2026-09-19: concise integration entry point, runtime prerequisites, observed platform matrix, best-effort support and durable platform composition; local links checked.
 - [x] RC-008 Create numbered ADRs under `docs/adr/` for all durable decisions and relevant history extracted from `PLAN.md` and `TODO.md`. — 2026-09-19: ADR-0005–0011 extract service, lifecycle, resources, revocation, evidence, privileged controls and deployment/release scope; exact historical snapshots and hashes preserve lineage.
-- [ ] RC-009 Verify ADRs preserve all useful rationale, alternatives, consequences, risks, and implementation/commit references from the living plan.
+- [x] RC-009 Verify ADRs preserve all useful rationale, alternatives, consequences, risks, and implementation/commit references from the living plan. — 2026-09-19: section-by-section coverage map, exact snapshot/hash checks, all 126 historical IDs, resolving ADR commits, original ADRs byte-identical; `docs/releases/preservation-review.md`.
 - [ ] RC-010 Prepare RC release notes, known limitations, operator checklist, artifact inventory, upgrade notes, and proposed semantic version/tag.
 - [ ] RC-011 Remove `PLAN.md` and `TODO.md`, validate links/docs and run `make verify` in the resulting tree.
 - [ ] RC-012 Commit the final ADR/documentation transition to `main`, build the release artifacts from that exact commit, and verify digest/provenance consistency.
@@ -251,7 +251,8 @@ Append one entry per completed atomic item or tightly coupled group. Do not dele
 | 2026-09-19 | RC-005 | `85ba0e7` | Component rotation/recovery target and aggregate verification; prior live/PITR/lifecycle evidence mapped | Production provider ceremonies are not claimed; retained resources unchanged |
 | 2026-09-19 | RC-006 | `482c034` | Per-item audit of all 126 IDs; commit/evidence existence and scope reviewed | No new implementation blocker; final release sequencing and accepted deferrals remain explicit |
 | 2026-09-19 | RC-007 | `5acce19` | README/reference links checked; K3s client/server v1.36.4+k3s1 observed; prior AMD64/ARM64 evidence linked | No production support or unimplemented AR/provider integration claim |
-| 2026-09-19 | RC-008 | pending commit | Seven ADRs with contracts, consequences, security/operations and resolving implementation references; exact snapshot hashes | ADR-0001–0004 meaning unchanged; extraction preservation audit is RC-009 |
+| 2026-09-19 | RC-008 | `28c706b` | Seven ADRs with contracts, consequences, security/operations and resolving implementation references; exact snapshot hashes | ADR-0001–0004 meaning unchanged; extraction preservation audit is RC-009 |
+| 2026-09-19 | RC-009 | pending commit | Preservation map and executable byte/hash/reference audit passed | Historical plan is evidence only; remaining release tasks stay live until RC-010/011 |
 
 ## Active blockers and deviations
 
