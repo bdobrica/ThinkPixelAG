@@ -1092,4 +1092,65 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	if err != nil || timedOut.State != domain.RunTimedOut || timedOut.StateVersion != 2 {
 		t.Fatalf("timed out=%+v error=%v", timedOut, err)
 	}
+	t.Run("idempotent response failure rolls back and stale owners cannot admit", func(t *testing.T) {
+		request := ports.IdempotencyRequest{PrincipalID: principal, Route: "/v1/agents/{agent_id}/runs", Key: "atomic-" + mustNewRepositoryID(t).String(), RequestHash: HashIdempotencyRequest([]byte("synthetic admission")), Lease: time.Second, TTL: time.Hour}
+		first, err := repository.AcquireIdempotency(ctx, request, now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		failed, failedResolution, failedEvidence := makeAdmission()
+		response := ports.IdempotencyResponse{Status: 201, Headers: []byte(`{"Content-Type":"application/json"}`), Body: []byte(`{"synthetic":true}`)}
+		// A database-side completion failure occurs after the entire aggregate has
+		// been inserted, reproducing the former two-commit failure window.
+		trigger := pgx.Identifier{"reject_completion_" + strings.ReplaceAll(tenant.String(), "-", "")}.Sanitize()
+		function := pgx.Identifier{"reject_completion_fn_" + strings.ReplaceAll(tenant.String(), "-", "")}.Sanitize()
+		_, err = pool.Exec(ctx, fmt.Sprintf(`CREATE FUNCTION %s() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.idempotency_key='%s' AND NEW.state='COMPLETED' THEN RAISE EXCEPTION 'synthetic completion failure'; END IF; RETURN NEW; END $$; CREATE TRIGGER %s BEFORE UPDATE ON idempotency_records FOR EACH ROW EXECUTE FUNCTION %s()`, function, request.Key, trigger, function))
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			_, _ = pool.Exec(context.Background(), "DROP TRIGGER IF EXISTS "+trigger+" ON idempotency_records; DROP FUNCTION IF EXISTS "+function+"()")
+		})
+		if err := repository.AdmitRunIdempotently(ctx, failed, failedResolution, failedEvidence, first, response, now); err == nil {
+			t.Fatal("completion failure accepted")
+		}
+		for _, query := range []string{
+			"SELECT count(*) FROM runs WHERE tenant_id=$1 AND id=$2",
+			"SELECT count(*) FROM run_version_resolutions WHERE tenant_id=$1 AND run_id=$2",
+			"SELECT count(*) FROM resource_envelopes WHERE tenant_id=$1 AND run_id=$2",
+			"SELECT count(*) FROM run_events WHERE tenant_id=$1 AND run_id=$2",
+			"SELECT count(*) FROM audit_events WHERE tenant_id=$1 AND resource_id=$2",
+			"SELECT count(*) FROM outbox_messages WHERE tenant_id=$1 AND aggregate_id=$2",
+		} {
+			var count int
+			if err := pool.QueryRow(ctx, query, tenant.String(), failed.RunID.String()).Scan(&count); err != nil || count != 0 {
+				t.Fatalf("rollback count=%d error=%v query=%s", count, err, query)
+			}
+		}
+		if _, err := pool.Exec(ctx, "DROP TRIGGER "+trigger+" ON idempotency_records"); err != nil {
+			t.Fatal(err)
+		}
+		retryAt := now.Add(2 * time.Second)
+		second, err := repository.AcquireIdempotency(ctx, request, retryAt)
+		if err != nil || second.Outcome != ports.IdempotencyAcquired {
+			t.Fatalf("reacquire=%+v error=%v", second, err)
+		}
+		if err := repository.AdmitRunIdempotently(ctx, failed, failedResolution, failedEvidence, first, response, retryAt); domain.ErrorCodeOf(err) != domain.CodeConflict {
+			t.Fatalf("stale owner error=%v", err)
+		}
+		admitted, resolved, proof := makeAdmission()
+		if err := repository.AdmitRunIdempotently(ctx, admitted, resolved, proof, second, response, retryAt); err != nil {
+			t.Fatal(err)
+		}
+		for range 3 {
+			replay, err := repository.AcquireIdempotency(ctx, request, retryAt.Add(time.Second))
+			if err != nil || replay.Outcome != ports.IdempotencyReplay || replay.Response == nil || replay.Response.Status != response.Status || string(replay.Response.Body) != string(response.Body) {
+				t.Fatalf("replay=%+v error=%v", replay, err)
+			}
+		}
+		if err := repository.AdmitRunIdempotently(ctx, failed, failedResolution, failedEvidence, second, response, retryAt); domain.ErrorCodeOf(err) != domain.CodeConflict {
+			t.Fatalf("completed owner error=%v", err)
+		}
+	})
+
 }

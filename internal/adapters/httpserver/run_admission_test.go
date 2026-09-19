@@ -20,12 +20,25 @@ type runAdmissionServiceStub struct {
 	command application.AdmitRun
 	result  domain.RunAdmission
 	calls   int
+	store   *idempotencyStoreStub
 }
 
 func (s *runAdmissionServiceStub) Admit(_ context.Context, command application.AdmitRun) (domain.RunAdmission, error) {
 	s.command = command
 	s.calls++
 	return s.result, nil
+}
+
+func (s *runAdmissionServiceStub) AdmitIdempotent(ctx context.Context, command application.AdmitRun, _ ports.IdempotencyAcquisition, encode ports.RunAdmissionResponseEncoder) (ports.IdempotencyResponse, error) {
+	admission, err := s.Admit(ctx, command)
+	if err != nil {
+		return ports.IdempotencyResponse{}, err
+	}
+	response, err := encode(admission)
+	if err == nil && s.store != nil {
+		s.store.completed = response
+	}
+	return response, err
 }
 
 type idempotencyStoreStub struct {
@@ -59,6 +72,7 @@ func TestRunAdmissionHTTPUsesVerifiedAuthorityAndPersistsReplay(t *testing.T) {
 	digest := "sha256:" + strings.Repeat("a", 64)
 	service := &runAdmissionServiceStub{result: domain.RunAdmission{RunID: run, EnvelopeID: envelope, TenantID: tenant, AgentID: agent, AgentVersionID: version, AgentVersionDigest: digest, RequestedBy: principal, PolicyDecisionID: decision, State: domain.RunAdmitted, StateVersion: 1, Constraints: map[string]any{"max_llm_tokens": float64(10)}, CreatedAt: now, UpdatedAt: now}}
 	store := &idempotencyStoreStub{acquisition: ports.IdempotencyAcquisition{Outcome: ports.IdempotencyAcquired, RecordID: mustHTTPID(t), OwnerToken: mustHTTPID(t)}}
+	service.store = store
 	verifier := &fakeVerifier{principal: oidc.Principal{ID: principal.String(), TenantID: tenant.String(), Roles: []string{"invoker"}}}
 	handler, err := RunAdmissionHandler(verifier, service, store, fixedHTTPClock{now}, RunAdmissionHTTPConfig{AuthorityConstraints: map[string]any{"max_llm_tokens": float64(100)}, Lease: time.Minute, TTL: time.Hour})
 	if err != nil {

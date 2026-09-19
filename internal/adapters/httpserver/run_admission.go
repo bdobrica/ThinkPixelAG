@@ -23,7 +23,7 @@ const runAdmissionRoute = "/v1/agents/{agent_id}/runs"
 var idempotencyKeyPattern = regexp.MustCompile(`^[A-Za-z0-9._:-]{16,128}$`)
 
 type RunAdmissionService interface {
-	Admit(context.Context, application.AdmitRun) (domain.RunAdmission, error)
+	AdmitIdempotent(context.Context, application.AdmitRun, ports.IdempotencyAcquisition, ports.RunAdmissionResponseEncoder) (ports.IdempotencyResponse, error)
 }
 
 type RunAdmissionHTTPConfig struct {
@@ -113,27 +113,23 @@ func RunAdmissionHandler(verifier oidc.Verifier, service RunAdmissionService, id
 			replayRunResponse(writer, request, acquisition.Response)
 			return
 		}
-		admission, err := service.Admit(request.Context(), application.AdmitRun{TenantID: tenantID, PrincipalID: principalID, AgentID: agentID, RequestID: requestID, Roles: principal.Roles, RequestedVersionDigest: body.RequestedVersionDigest, RequestedConstraints: constraints, AuthorityConstraints: cloneJSONMap(config.AuthorityConstraints), SecurityState: config.SecurityState})
+		response, err := service.AdmitIdempotent(request.Context(), application.AdmitRun{TenantID: tenantID, PrincipalID: principalID, AgentID: agentID, RequestID: requestID, Roles: principal.Roles, RequestedVersionDigest: body.RequestedVersionDigest, RequestedConstraints: constraints, AuthorityConstraints: cloneJSONMap(config.AuthorityConstraints), SecurityState: config.SecurityState}, acquisition, func(admission domain.RunAdmission) (ports.IdempotencyResponse, error) {
+			var encoded bytes.Buffer
+			if err := encodeJSON(&encoded, publicRunAdmission(admission)); err != nil {
+				return ports.IdempotencyResponse{}, err
+			}
+			location := "/v1/runs/" + admission.RunID.String()
+			headers, _ := json.Marshal(map[string][]string{"Content-Type": {"application/json"}, "Location": {location}})
+			return ports.IdempotencyResponse{Status: http.StatusCreated, Headers: headers, Body: encoded.Bytes()}, nil
+		})
 		if err != nil {
+			// If commit succeeded but its acknowledgement was lost, COMPLETED
+			// is immutable here: FailIdempotency only changes IN_PROGRESS.
 			_ = idempotency.FailIdempotency(request.Context(), tenantID, acquisition, clock.Now())
 			writeProblem(writer, request, ProblemFromError(err))
 			return
 		}
-		response := publicRunAdmission(admission)
-		var encoded bytes.Buffer
-		if err := encodeJSON(&encoded, response); err != nil {
-			_ = idempotency.FailIdempotency(request.Context(), tenantID, acquisition, clock.Now())
-			writeProblem(writer, request, ProblemFromError(domain.NewError(domain.CodeInternal, "could not encode run response")))
-			return
-		}
-		location := "/v1/runs/" + admission.RunID.String()
-		headers, _ := json.Marshal(map[string][]string{"Content-Type": {"application/json"}, "Location": {location}})
-		if err := idempotency.CompleteIdempotency(request.Context(), tenantID, acquisition, ports.IdempotencyResponse{Status: http.StatusCreated, Headers: headers, Body: encoded.Bytes()}, clock.Now()); err != nil {
-			writeProblem(writer, request, ProblemFromError(domain.NewError(domain.CodeUnavailable, "could not establish idempotent response").WithRetryable()))
-			return
-		}
-		writer.Header().Set("Location", location)
-		writeJSON(writer, http.StatusCreated, response)
+		replayRunResponse(writer, request, &response)
 	})), nil
 }
 

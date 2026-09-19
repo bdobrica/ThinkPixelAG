@@ -25,6 +25,7 @@ import (
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
 	"github.com/bdobrica/ThinkPixelAG/internal/observability/metrics"
 	"github.com/bdobrica/ThinkPixelAG/internal/policy"
+	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 )
 
 // runtimeSettings is deployment configuration, never a request-supplied grant.
@@ -383,4 +384,22 @@ func policyHTTPClient(timeout time.Duration) *http.Client {
 	transport.MaxIdleConns = 32
 	transport.ResponseHeaderTimeout = timeout
 	return &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+}
+
+func (m *measuredAdmission) AdmitIdempotent(ctx context.Context, c application.AdmitRun, acquisition ports.IdempotencyAcquisition, encode ports.RunAdmissionResponseEncoder) (ports.IdempotencyResponse, error) {
+	response, err := m.RunAdmissionService.AdmitIdempotent(ctx, c, acquisition, encode)
+	outcome := "admitted"
+	if err != nil {
+		outcome = "error"
+		var d *domain.Error
+		if errors.As(err, &d) {
+			if d.Code() == domain.CodeForbidden {
+				outcome = "denied"
+			} else if d.Code() == domain.CodeConflict {
+				outcome = "conflict"
+			}
+		}
+	}
+	m.metrics.ObserveRunAdmission(outcome)
+	return response, err
 }

@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+	"time"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
 )
@@ -21,4 +22,15 @@ type RunAdmissionRepository interface {
 // resource delegation as one indivisible admission.
 type ChildRunAdmissionRepository interface {
 	AdmitChildRun(context.Context, domain.RunAdmission, domain.RunVersionResolution, RunAdmissionEvidence, domain.ResourceReservation) (domain.ResourceReservation, error)
+}
+
+// RunAdmissionResponseEncoder constructs the bounded, sanitized replay response
+// before any authoritative admission mutation is committed.
+type RunAdmissionResponseEncoder func(domain.RunAdmission) (IdempotencyResponse, error)
+
+// IdempotentRunAdmissionRepository commits the admission and the acquired
+// request's replay result in the same transaction. Lost ownership or a failed
+// completion must leave neither the Run nor its evidence committed.
+type IdempotentRunAdmissionRepository interface {
+	AdmitRunIdempotently(context.Context, domain.RunAdmission, domain.RunVersionResolution, RunAdmissionEvidence, IdempotencyAcquisition, IdempotencyResponse, time.Time) error
 }

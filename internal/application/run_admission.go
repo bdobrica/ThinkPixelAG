@@ -38,54 +38,83 @@ type AdmitRun struct {
 }
 
 func (service *RunAdmissionService) Admit(ctx context.Context, command AdmitRun) (domain.RunAdmission, error) {
+	admission, resolution, evidence, err := service.prepare(ctx, command)
+	if err != nil {
+		return domain.RunAdmission{}, err
+	}
+	if err := service.repository.AdmitRun(ctx, admission, resolution, evidence); err != nil {
+		return domain.RunAdmission{}, err
+	}
+	return admission, nil
+}
+
+// AdmitIdempotent makes the replay outcome part of the authoritative mutation.
+// Policy resolution and response encoding precede the short database transaction.
+func (service *RunAdmissionService) AdmitIdempotent(ctx context.Context, command AdmitRun, acquisition ports.IdempotencyAcquisition, encode ports.RunAdmissionResponseEncoder) (ports.IdempotencyResponse, error) {
+	repository, ok := service.repository.(ports.IdempotentRunAdmissionRepository)
+	if !ok || encode == nil || acquisition.Outcome != ports.IdempotencyAcquired || acquisition.RecordID.IsZero() || acquisition.OwnerToken.IsZero() {
+		return ports.IdempotencyResponse{}, domain.NewError(domain.CodeUnavailable, "atomic admission persistence is unavailable").WithRetryable()
+	}
+	admission, resolution, evidence, err := service.prepare(ctx, command)
+	if err != nil {
+		return ports.IdempotencyResponse{}, err
+	}
+	response, err := encode(admission)
+	if err != nil {
+		return ports.IdempotencyResponse{}, domain.WrapError(domain.CodeInternal, "could not encode admission response", err)
+	}
+	if err := repository.AdmitRunIdempotently(ctx, admission, resolution, evidence, acquisition, response, service.clock.Now()); err != nil {
+		return ports.IdempotencyResponse{}, err
+	}
+	return response, nil
+}
+
+func (service *RunAdmissionService) prepare(ctx context.Context, command AdmitRun) (domain.RunAdmission, domain.RunVersionResolution, ports.RunAdmissionEvidence, error) {
 	if command.TenantID.IsZero() || command.PrincipalID.IsZero() || command.AgentID.IsZero() || command.RequestID.IsZero() || command.RequestedConstraints == nil || command.AuthorityConstraints == nil {
-		return domain.RunAdmission{}, domain.NewError(domain.CodeUnauthenticated, "authenticated run admission identity is required")
+		return domain.RunAdmission{}, domain.RunVersionResolution{}, ports.RunAdmissionEvidence{}, domain.NewError(domain.CodeUnauthenticated, "authenticated run admission identity is required")
 	}
 	if err := boundedJSONObject(command.RequestedConstraints); err != nil {
-		return domain.RunAdmission{}, err
+		return domain.RunAdmission{}, domain.RunVersionResolution{}, ports.RunAdmissionEvidence{}, err
 	}
 	if err := boundedJSONObject(command.AuthorityConstraints); err != nil {
-		return domain.RunAdmission{}, err
+		return domain.RunAdmission{}, domain.RunVersionResolution{}, ports.RunAdmissionEvidence{}, err
 	}
 	runID, err := domain.NewID()
 	if err != nil {
-		return domain.RunAdmission{}, domain.WrapError(domain.CodeInternal, "could not generate run identifier", err)
+		return domain.RunAdmission{}, domain.RunVersionResolution{}, ports.RunAdmissionEvidence{}, domain.WrapError(domain.CodeInternal, "could not generate run identifier", err)
 	}
 	resolution, err := service.resolver.Resolve(ctx, ResolveAgentVersion{RunID: runID, TenantID: command.TenantID, AgentID: command.AgentID, PrincipalID: command.PrincipalID, RequestID: command.RequestID, Roles: command.Roles, RequestedVersionDigest: command.RequestedVersionDigest, RequestedConstraints: command.RequestedConstraints, AuthorityConstraints: command.AuthorityConstraints, SecurityState: command.SecurityState})
 	if err != nil {
-		return domain.RunAdmission{}, err
+		return domain.RunAdmission{}, domain.RunVersionResolution{}, ports.RunAdmissionEvidence{}, err
 	}
 	if err := boundedJSONObject(resolution.ResolvedConstraints); err != nil {
-		return domain.RunAdmission{}, domain.WrapError(domain.CodeUnavailable, "policy resolved constraints are invalid", err).WithRetryable()
+		return domain.RunAdmission{}, domain.RunVersionResolution{}, ports.RunAdmissionEvidence{}, domain.WrapError(domain.CodeUnavailable, "policy resolved constraints are invalid", err).WithRetryable()
 	}
 	now, err := domain.RequireUTC(service.clock.Now())
 	if err != nil {
-		return domain.RunAdmission{}, domain.WrapError(domain.CodeInternal, "run admission clock is invalid", err)
+		return domain.RunAdmission{}, domain.RunVersionResolution{}, ports.RunAdmissionEvidence{}, domain.WrapError(domain.CodeInternal, "run admission clock is invalid", err)
 	}
 	deadline, err := admissionDeadline(now, resolution.ResolvedConstraints)
 	if err != nil {
-		return domain.RunAdmission{}, err
+		return domain.RunAdmission{}, domain.RunVersionResolution{}, ports.RunAdmissionEvidence{}, err
 	}
 	_, err = domain.RootResourceGrants(resolution.ResolvedConstraints)
 	if err != nil {
-		return domain.RunAdmission{}, domain.WrapError(domain.CodeUnavailable, "policy resolved invalid resource grants", err).WithRetryable()
+		return domain.RunAdmission{}, domain.RunVersionResolution{}, ports.RunAdmissionEvidence{}, domain.WrapError(domain.CodeUnavailable, "policy resolved invalid resource grants", err).WithRetryable()
 	}
 	ids := make([]domain.ID, 4)
 	for index := range ids {
 		ids[index], err = domain.NewID()
 		if err != nil {
-			return domain.RunAdmission{}, domain.WrapError(domain.CodeInternal, "could not generate admission evidence identifier", err)
+			return domain.RunAdmission{}, domain.RunVersionResolution{}, ports.RunAdmissionEvidence{}, domain.WrapError(domain.CodeInternal, "could not generate admission evidence identifier", err)
 		}
 	}
 	admission := domain.RunAdmission{RunID: runID, EnvelopeID: ids[0], TenantID: command.TenantID, AgentID: command.AgentID, AgentVersionID: resolution.AgentVersionID, AgentVersionDigest: resolution.AgentContentDigest, RequestedBy: command.PrincipalID, PolicyDecisionID: resolution.InvocationDecisionID, State: domain.RunAdmitted, StateVersion: 1, Constraints: resolution.ResolvedConstraints, DeadlineAt: deadline, CreatedAt: now, UpdatedAt: now}
 	if err := admission.Validate(); err != nil {
-		return domain.RunAdmission{}, domain.WrapError(domain.CodeInternal, "constructed run admission is invalid", err)
+		return domain.RunAdmission{}, domain.RunVersionResolution{}, ports.RunAdmissionEvidence{}, domain.WrapError(domain.CodeInternal, "constructed run admission is invalid", err)
 	}
 	evidence := ports.RunAdmissionEvidence{EventID: ids[1], AuditID: ids[2], OutboxID: ids[3], RequestID: command.RequestID, ReasonCodes: []string{"agent.invoke.allowed"}}
-	if err := service.repository.AdmitRun(ctx, admission, resolution, evidence); err != nil {
-		return domain.RunAdmission{}, err
-	}
-	return admission, nil
+	return admission, resolution, evidence, nil
 }
 
 func boundedJSONObject(value map[string]any) error {

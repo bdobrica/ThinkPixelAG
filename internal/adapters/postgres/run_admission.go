@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
 	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var _ ports.RunAdmissionRepository = (*TenantRepository)(nil)
@@ -178,4 +180,45 @@ func optionalResolutionID(id domain.ID) string {
 		return ""
 	}
 	return id.String()
+}
+
+var _ ports.IdempotentRunAdmissionRepository = (*TenantRepository)(nil)
+
+func (r *TenantRepository) AdmitRunIdempotently(ctx context.Context, admission domain.RunAdmission, resolution domain.RunVersionResolution, evidence ports.RunAdmissionEvidence, acquisition ports.IdempotencyAcquisition, response ports.IdempotencyResponse, now time.Time) error {
+	if err := r.valid(); err != nil {
+		return err
+	}
+	if acquisition.Outcome != ports.IdempotencyAcquired || acquisition.RecordID.IsZero() || acquisition.OwnerToken.IsZero() || admission.TenantID != r.tenantID {
+		return domain.NewError(domain.CodeConflict, "admission idempotency ownership is invalid")
+	}
+	pool, ok := r.db.(*pgxpool.Pool)
+	if !ok {
+		return domain.NewError(domain.CodeUnavailable, "idempotent admission requires a transaction-owning repository")
+	}
+	transactor, err := NewTransactor(pool)
+	if err != nil {
+		return err
+	}
+	return transactor.WithinTransaction(ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted}, func(ctx context.Context, db DBTX) error {
+		repository := &TenantRepository{db: db, tenantID: r.tenantID}
+		// Hold ownership through the entire mutation. A lease-expiry contender must
+		// wait for this transaction and then replay, or acquire only after rollback.
+		var id string
+		err := repository.db.QueryRow(ctx, `SELECT id::text FROM idempotency_records
+WHERE tenant_id=$1 AND id=$2 AND owner_token=$3 AND principal_id=$4
+AND state='IN_PROGRESS' AND route='/v1/agents/{agent_id}/runs' FOR UPDATE`, r.tenantID.String(), acquisition.RecordID.String(), acquisition.OwnerToken.String(), admission.RequestedBy.String()).Scan(&id)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.NewError(domain.CodeConflict, "admission idempotency ownership lost")
+		}
+		if err != nil {
+			return fmt.Errorf("lock admission idempotency: %w", err)
+		}
+		if err := repository.AdmitRun(ctx, admission, resolution, evidence); err != nil {
+			return err
+		}
+		if err := repository.CompleteIdempotency(ctx, acquisition, response, now); err != nil {
+			return domain.WrapError(domain.CodeUnavailable, "could not establish idempotent response", err).WithRetryable()
+		}
+		return nil
+	})
 }
