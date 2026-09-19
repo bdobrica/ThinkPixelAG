@@ -16,3 +16,11 @@ ADRs record consequential decisions that should remain understandable after the 
 - [ADR-0002: Repository-enforced tenant isolation for the RC](0002-repository-enforced-tenant-isolation.md)
 - [ADR-0003: OIDC authentication and tenant authority](0003-oidc-authentication-and-tenant-authority.md)
 - [ADR-0004: Fail-closed OPA evaluation and append-only activation](0004-policy-evaluation-and-activation.md)
+
+- [ADR-0005: Modular governance service and explicit contracts](0005-service-boundaries-and-contracts.md)
+- [ADR-0006: Atomic Run authority, replay and fenced ownership](0006-run-lifecycle-and-replay.md)
+- [ADR-0007: Transactional resource conservation](0007-authoritative-resource-accounting.md)
+- [ADR-0008: Monotonic revocation and bounded freshness](0008-revocation-freshness-and-reconciliation.md)
+- [ADR-0009: Transactional evidence and replay-safe independent delivery](0009-transactional-and-independent-evidence.md)
+- [ADR-0010: Narrow privileged authority and managed key boundaries](0010-privileged-authority-and-managed-keys.md)
+- [ADR-0011: Restricted deployment and evidence-bound integration releases](0011-restricted-deployment-and-release-evidence.md)

@@ -1,0 +1,13 @@
+{
+  "source_commit": "5acce19e86d88c9a0b58ce3a008ce4753c209fe5",
+  "files": {
+    "PLAN.md": {
+      "sha256": "127859811ceb7a18cde0d5c6ef4bc803afbb802dbce433f38548e973cc88cbca",
+      "bytes": 33463
+    },
+    "TODO.md": {
+      "sha256": "3065c0a11a89ae16b2e2ac120c9b4342924ef8c5134d24fe044e37cba8c14644",
+      "bytes": 82227
+    }
+  }
+}
