@@ -375,7 +375,7 @@ Clean-checkout verification and archived RC evidence are complete; see
 production targets in `docs/releases/capacity-envelope.md`. The integration release risk review is recorded in
 `docs/releases/risk-review.md`; integration game-day dispositions and the
 repeatable component rehearsal are in `docs/releases/game-days.md`. Release-wide evidence reconciliation is recorded in
-`docs/releases/reconciliation.md`; next are final reference documentation and ADR extraction.
+`docs/releases/reconciliation.md`; reference documentation is updated; next is ADR extraction and preservation review.
 
 Run all verification gates, resolve critical/high findings, freeze contracts, prepare release notes, convert completed planning decisions/history into ADRs, update README, remove `PLAN.md` and `TODO.md`, and commit the documentation transition. Exit when the repository can produce a traceable, signed/taggable RC artifact from a clean checkout.
 

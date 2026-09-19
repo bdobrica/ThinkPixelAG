@@ -5,6 +5,7 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 ## Architecture and contracts
 
 - [System architecture](architecture/system.md)
+- [Intended platform composition](architecture/platform-composition.md)
 - [Authoritative PostgreSQL schema](architecture/database-schema.md)
 - [Domain contracts and state machines](contracts/domain-model.md)
 - [Resource accounting](contracts/resource-accounting.md)
@@ -54,14 +55,11 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 
 Durable decisions live in [Architecture Decision Records](adr/README.md). During implementation, `PLAN.md` and `TODO.md` remain the execution ledger; their durable rationale will be reconciled into ADRs before the release candidate.
 
-- [Integration-RC contract freeze](releases/contract-freeze.md)
+## Integration release candidate
 
-Integration-RC verification: [clean-checkout and live smoke evidence](releases/verification.md).
-
-Integration-RC capacity: [measured envelope and scaling guidance](releases/capacity-envelope.md).
-
-Integration-RC risks: [review and outstanding qualification](releases/risk-review.md).
-
-Integration-RC operations: [game-day scope and evidence](releases/game-days.md).
-
-Release traceability: [checklist reconciliation](releases/reconciliation.md).
+- [Contract freeze and compatibility](releases/contract-freeze.md)
+- [Clean-checkout verification and live smoke](releases/verification.md)
+- [Measured operating envelope and scaling](releases/capacity-envelope.md)
+- [Risk review and remaining qualification](releases/risk-review.md)
+- [Game days and component recovery](releases/game-days.md)
+- [Checklist and evidence reconciliation](releases/reconciliation.md)

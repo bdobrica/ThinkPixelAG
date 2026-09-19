@@ -158,7 +158,7 @@ of scope until their qualification is completed.
 - [x] RC-004 Confirm zero unresolved critical/high vulnerabilities, security findings, migration risks, flaky/skipped required tests, or fail-open paths. — 2026-09-19: scoped evidence/risk review, no known blocking finding; corrected OCI license label; aggregate gate and explicit skip accounting; `docs/releases/risk-review.md`.
 - [x] RC-005 Exercise and record install, upgrade, rollback/forward, backup/restore, policy rollback, revocation reconciliation, key rotation, and break-glass game days. — 2026-09-19: integration-scope evidence matrix and repeatable component recovery target; sequential managed-key guard rotation; production KMS/IdP ceremony explicitly unqualified; `docs/releases/game-days.md`.
 - [x] RC-006 Reconcile every TODO item against implementation, tests, commits, docs, and release artifacts; resolve all blockers and deviations. — 2026-09-19: 126 unique entries audited; completed references resolve; scope/deferrals and later release steps explicitly dispositioned; `docs/releases/reconciliation.md`.
-- [ ] RC-007 Update README with final architecture, supported versions, quick start, configuration, API docs, development commands, deployment, security, and support status.
+- [x] RC-007 Update README with final architecture, supported versions, quick start, configuration, API docs, development commands, deployment, security, and support status. — 2026-09-19: concise integration entry point, runtime prerequisites, observed platform matrix, best-effort support and durable platform composition; local links checked.
 - [ ] RC-008 Create numbered ADRs under `docs/adr/` for all durable decisions and relevant history extracted from `PLAN.md` and `TODO.md`.
 - [ ] RC-009 Verify ADRs preserve all useful rationale, alternatives, consequences, risks, and implementation/commit references from the living plan.
 - [ ] RC-010 Prepare RC release notes, known limitations, operator checklist, artifact inventory, upgrade notes, and proposed semantic version/tag.
@@ -249,7 +249,8 @@ Append one entry per completed atomic item or tightly coupled group. Do not dele
 | 2026-09-19 | RC-003 | `6edba1d` | Reconciled measured counts/latencies with archived reports; production targets unchanged | Separate workload samples and deferred production qualification are explicit |
 | 2026-09-19 | RC-004 | `af620d1` | Security/migration/skip evidence reconciled; OCI Apache-2.0 label corrected; aggregate gate | Provider qualification, medium advisories and unsigned artifacts remain explicit |
 | 2026-09-19 | RC-005 | `85ba0e7` | Component rotation/recovery target and aggregate verification; prior live/PITR/lifecycle evidence mapped | Production provider ceremonies are not claimed; retained resources unchanged |
-| 2026-09-19 | RC-006 | pending commit | Per-item audit of all 126 IDs; commit/evidence existence and scope reviewed | No new implementation blocker; final release sequencing and accepted deferrals remain explicit |
+| 2026-09-19 | RC-006 | `482c034` | Per-item audit of all 126 IDs; commit/evidence existence and scope reviewed | No new implementation blocker; final release sequencing and accepted deferrals remain explicit |
+| 2026-09-19 | RC-007 | pending commit | README/reference links checked; K3s client/server v1.36.4+k3s1 observed; prior AMD64/ARM64 evidence linked | No production support or unimplemented AR/provider integration claim |
 
 ## Active blockers and deviations
 

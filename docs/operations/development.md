@@ -11,6 +11,8 @@ clean results.
 | Target | Contract |
 |---|---|
 | `make tools` | download root/tools module graphs and identify the pinned `govulncheck`, `go-licenses`, and Redocly CLI tools |
+| `make contract-check` | reject unexplained frozen OpenAPI/schema/policy drift |
+| `make test-governance-recovery` | rehearse component key rotation, policy rollback, reconciliation and break glass against an isolated database |
 | `make generate` | run `go generate ./...` |
 | `make fmt` | format every tracked Go source file |
 | `make lint` | require formatting, vet both Go modules, verify checksums/read-only package loading, and validate OpenAPI with Redocly CLI 2.3.0 |
@@ -29,7 +31,7 @@ clean results.
 | `make dev-smoke` | check versions, endpoints, and successful plus deliberately rejected database/cache credentials |
 | `make dev-down` | stop the local stack while preserving PostgreSQL state |
 | `make dev-reset` | stop the stack and irreversibly remove this Compose project's local volumes |
-| `make verify` | run generation drift, lint, unit/race/policy/real-PostgreSQL integration/e2e, Compose validation, dependency source, vulnerability, license, binary, image, and container-smoke gates |
+| `make verify` | run generation/contract drift, lint, unit/race/policy/real-PostgreSQL integration/e2e/security, Compose/Kubernetes validation, dependency source, vulnerability, license, binary, image, and container-smoke gates |
 
 `make verify` is intended for a clean checkout. `generate-check` runs generators
 and rejects any resulting unstaged tracked-file difference. CI should invoke the
