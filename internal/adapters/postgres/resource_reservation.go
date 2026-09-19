@@ -95,17 +95,25 @@ func (r *TenantRepository) ReserveChildResources(ctx context.Context, requested 
 	return reservation, nil
 }
 
+func (r *TenantRepository) lockParentResourceEnvelope(ctx context.Context, parentEnvelopeID domain.ID) error {
+	var locked string
+	if err := r.db.QueryRow(ctx, `SELECT id::text FROM resource_envelopes WHERE tenant_id=$1 AND id=$2 FOR UPDATE`, r.tenantID.String(), parentEnvelopeID.String()).Scan(&locked); errors.Is(err, pgx.ErrNoRows) {
+		return domain.NewError(domain.CodeConflict, "parent resource envelope is unavailable")
+	} else if err != nil {
+		return fmt.Errorf("lock parent resource envelope: %w", err)
+	}
+
+	return nil
+}
+
 // enforceChildTopology serializes admissions for one parent by locking its
 // envelope, then evaluates active and lifetime child counts plus the new
 // child's absolute depth against immutable structural grants. Counts are
 // derived from durable reservations, so no cache or caller-supplied value can
 // expand authority.
 func (r *TenantRepository) enforceChildTopology(ctx context.Context, parentEnvelopeID, childEnvelopeID domain.ID) error {
-	var locked string
-	if err := r.db.QueryRow(ctx, `SELECT id::text FROM resource_envelopes WHERE tenant_id=$1 AND id=$2 FOR UPDATE`, r.tenantID.String(), parentEnvelopeID.String()).Scan(&locked); errors.Is(err, pgx.ErrNoRows) {
-		return domain.NewError(domain.CodeConflict, "parent resource envelope is unavailable")
-	} else if err != nil {
-		return fmt.Errorf("lock parent resource envelope: %w", err)
+	if err := r.lockParentResourceEnvelope(ctx, parentEnvelopeID); err != nil {
+		return err
 	}
 
 	var maximumActive, maximumTotal, maximumDepth, childMaximumActive, childMaximumTotal, childMaximumDepth, active, total, childDepth int64

@@ -70,7 +70,9 @@ authoritative `versions.approve` policy ALLOW. The allowed transitions are
 `DEPRECATED -> REVOKED`; rejected and revoked versions are terminal. The
 decision is committed with its policy decision ID, actor, request ID, audit
 event, and outbox event in one PostgreSQL transaction. Competing decisions lock
-the immutable version and exactly one valid transition succeeds.
+the immutable version and exactly one valid transition succeeds. Admissions share a version lock
+through commit and read eligibility after acquiring it, so a version decision
+committed while admission waited is observed before creating the Run.
 
 Automatic resolution considers only currently `APPROVED` versions, newest
 first, and selects the first candidate receiving a `runs.create` policy ALLOW.

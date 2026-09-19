@@ -1152,5 +1152,75 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 			t.Fatalf("completed owner error=%v", err)
 		}
 	})
+	t.Run("independent admissions share the version lock", func(t *testing.T) {
+		first, err := pool.Begin(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = first.Rollback(ctx) }()
+		firstRepo := &TenantRepository{db: first, tenantID: tenant}
+		a, r, e := makeAdmission()
+		if err := firstRepo.AdmitRun(ctx, a, r, e); err != nil {
+			t.Fatal(err)
+		}
+		// Keep the first aggregate uncommitted. A different Run using the same
+		// immutable version must complete without waiting for that transaction.
+		secondCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+		a, r, e = makeAdmission()
+		if err := repository.AdmitRun(secondCtx, a, r, e); err != nil {
+			t.Fatalf("independent admission blocked: %v", err)
+		}
+	})
+	t.Run("revocation committed during lock wait prevents admission", func(t *testing.T) {
+		writer, err := pool.Begin(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = writer.Rollback(ctx) }()
+		writerRepo := &TenantRepository{db: writer, tenantID: tenant}
+		approval := domain.AgentVersionApproval{ID: mustNewRepositoryID(t), TenantID: tenant, AgentID: agentID, AgentVersionID: versionID, Decision: domain.DecisionRevoke, ActorPrincipalID: principal, PolicyDecisionID: mustNewRepositoryID(t), ReasonCode: "registry.version.revoked", CreatedAt: now.Add(time.Hour)}
+		if _, err := writerRepo.RecordAgentVersionDecision(ctx, approval, digest, mustNewRepositoryID(t), mustNewRepositoryID(t), nil); err != nil {
+			t.Fatal(err)
+		}
+		waiting, err := pool.Acquire(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer waiting.Release()
+		waitCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		a, r, e := makeAdmission()
+		result := make(chan error, 1)
+		pid := int32(waiting.Conn().PgConn().PID())
+		go func() {
+			repo := &TenantRepository{db: waiting.Conn(), tenantID: tenant}
+			result <- repo.AdmitRun(waitCtx, a, r, e)
+		}()
+		// Observe a real server-side wait before committing the revocation;
+		// scheduling delays alone do not establish the stale-snapshot race.
+		blocked := false
+		deadline := time.Now().Add(2 * time.Second)
+		for time.Now().Before(deadline) {
+			if err := pool.QueryRow(ctx, `SELECT cardinality(pg_blocking_pids($1)) > 0`, pid).Scan(&blocked); err != nil {
+				t.Fatal(err)
+			}
+			if blocked {
+				break
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+		if err := writer.Commit(ctx); err != nil {
+			t.Fatal(err)
+		}
+		admissionErr := <-result
+		if !blocked || domain.ErrorCodeOf(admissionErr) != domain.CodeConflict {
+			t.Fatalf("blocked=%v admission error=%v", blocked, admissionErr)
+		}
+		var count int
+		if err := pool.QueryRow(ctx, `SELECT count(*) FROM runs WHERE tenant_id=$1 AND id=$2`, tenant.String(), a.RunID.String()).Scan(&count); err != nil || count != 0 {
+			t.Fatalf("revoked version admitted: count=%d error=%v", count, err)
+		}
+	})
 
 }

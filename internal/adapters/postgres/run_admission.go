@@ -59,12 +59,24 @@ func (r *TenantRepository) AdmitRun(ctx context.Context, admission domain.RunAdm
 		return err
 	}
 	return r.withAdmissionTransaction(ctx, func(txRepository *TenantRepository) error {
+		// Admissions can share an immutable version, but must exclude approval
+		// changes until commit. Read eligibility in the next statement so an
+		// approval that committed while this lock waited is visible under READ COMMITTED.
+		var versionID string
+		err := txRepository.db.QueryRow(ctx, `SELECT id::text FROM agent_versions
+WHERE tenant_id=$1 AND agent_id=$2 AND id=$3 AND content_digest=$4 FOR SHARE`, r.tenantID.String(), admission.AgentID.String(), admission.AgentVersionID.String(), resolution.AgentContentDigest).Scan(&versionID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.NewError(domain.CodeConflict, "agent version is no longer eligible for admission")
+		}
+		if err != nil {
+			return fmt.Errorf("lock agent version for admission: %w", err)
+		}
 		var inserted string
-		err := txRepository.db.QueryRow(ctx, `WITH locked_version AS (
+		err = txRepository.db.QueryRow(ctx, `WITH selected_version AS (
  SELECT v.id FROM agent_versions v
- WHERE v.tenant_id=$1 AND v.agent_id=$3 AND v.id=$4 AND v.content_digest=$5 FOR UPDATE
+ WHERE v.tenant_id=$1 AND v.agent_id=$3 AND v.id=$4 AND v.content_digest=$5
 ), eligible_version AS (
- SELECT v.id FROM locked_version v
+ SELECT v.id FROM selected_version v
  JOIN LATERAL (SELECT decision FROM agent_version_approvals a WHERE a.tenant_id=$1 AND a.agent_version_id=v.id ORDER BY a.created_at DESC,a.id DESC LIMIT 1) state ON true
  WHERE state.decision='APPROVED' OR ($12='ROLLBACK' AND state.decision='DEPRECATED')
 ), inserted_run AS (
@@ -101,24 +113,30 @@ func (r *TenantRepository) AdmitRun(ctx context.Context, admission domain.RunAdm
 				return fmt.Errorf("admit run: %w", err)
 			}
 		}
-		for _, grant := range resourceGrants {
-			commandTag, grantErr := txRepository.db.Exec(ctx, `WITH dimension AS (
- SELECT id,unit,scale,minimum_value,maximum_value FROM resource_dimensions
- WHERE tenant_id=$1 AND name=$3
+		if len(resourceGrants) == 0 {
+			return nil
+		}
+		names := make([]string, len(resourceGrants))
+		values := make([]int64, len(resourceGrants))
+		for i, grant := range resourceGrants {
+			names[i], values[i] = grant.DimensionName, grant.Coefficient
+		}
+		commandTag, grantErr := txRepository.db.Exec(ctx, `WITH requested AS (
+ SELECT * FROM unnest($3::text[],$4::bigint[]) AS grants(name,value)
 ), inserted_grant AS (
  INSERT INTO resource_envelope_grants(tenant_id,envelope_id,dimension_id,granted_value,unit,scale)
- SELECT $1,$2,id,$4,unit,scale FROM dimension
- WHERE $4 BETWEEN minimum_value AND maximum_value
- RETURNING dimension_id,unit,scale
+ SELECT $1,$2,d.id,g.value,d.unit,d.scale FROM requested g
+ JOIN resource_dimensions d ON d.tenant_id=$1 AND d.name=g.name
+ WHERE g.value BETWEEN d.minimum_value AND d.maximum_value
+ RETURNING dimension_id,granted_value
 )
 INSERT INTO resource_balances(tenant_id,envelope_id,dimension_id,available_value,direct_consumed_value,allocated_open_value,state_version,updated_at)
-SELECT $1,$2,dimension_id,$4,0,0,1,$5 FROM inserted_grant`, admission.TenantID.String(), admission.EnvelopeID.String(), grant.DimensionName, grant.Coefficient, admission.CreatedAt)
-			if grantErr != nil {
-				return fmt.Errorf("issue root resource grant %q: %w", grant.DimensionName, grantErr)
-			}
-			if commandTag.RowsAffected() != 1 {
-				return domain.NewError(domain.CodeUnavailable, "policy resource dimension is unavailable or outside configured bounds").WithRetryable()
-			}
+SELECT $1,$2,dimension_id,granted_value,0,0,1,$5 FROM inserted_grant`, admission.TenantID.String(), admission.EnvelopeID.String(), names, values, admission.CreatedAt)
+		if grantErr != nil {
+			return fmt.Errorf("issue root resource grants: %w", grantErr)
+		}
+		if commandTag.RowsAffected() != int64(len(resourceGrants)) {
+			return domain.NewError(domain.CodeUnavailable, "policy resource dimension is unavailable or outside configured bounds").WithRetryable()
 		}
 		return nil
 	})
@@ -134,6 +152,11 @@ func (r *TenantRepository) AdmitChildRun(ctx context.Context, admission domain.R
 	var admitted domain.ResourceReservation
 	err := r.withAdmissionTransaction(ctx, func(repository *TenantRepository) error {
 		if err := repository.AdmitRun(ctx, admission, resolution, evidence); err != nil {
+			return err
+		}
+		// Lock before the parent foreign key takes KEY SHARE. Concurrent children
+		// must not each hold KEY SHARE and then try to upgrade it for topology checks.
+		if err := repository.lockParentResourceEnvelope(ctx, reservation.ParentEnvelopeID); err != nil {
 			return err
 		}
 		tag, err := repository.db.Exec(ctx, `UPDATE resource_envelopes SET parent_envelope_id=$3 WHERE tenant_id=$1 AND id=$2 AND parent_envelope_id IS NULL`, r.tenantID.String(), admission.EnvelopeID.String(), reservation.ParentEnvelopeID.String())
