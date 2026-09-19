@@ -1,5 +1,7 @@
 # Threat Model
 
+Current release disposition: [integration-RC risk review](../releases/risk-review.md). The Phase 7 assessment below remains historical evidence.
+
 ## Scope and assets
 
 This model covers the ThinkPixelAG API, its Kubernetes workload, PostgreSQL, optional Valkey, OPA policy artifacts/evaluation, identity verification, signing integration, execution-worker callbacks, revocation distribution, and evidence export.

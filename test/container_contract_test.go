@@ -23,6 +23,7 @@ func TestDockerfileIsPinnedMinimalAndNonRoot(t *testing.T) {
 		"org.opencontainers.image.version=$VERSION",
 		"org.opencontainers.image.revision=$REVISION",
 		"org.opencontainers.image.created=$CREATED",
+		`org.opencontainers.image.licenses="Apache-2.0"`,
 		"/out/thinkpixelag-migrate /thinkpixelag-migrate",
 		"/src/migrations /migrations",
 	} {

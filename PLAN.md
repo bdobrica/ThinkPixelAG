@@ -372,8 +372,8 @@ Contract freeze is implemented: OpenAPI `0.1.0-rc.1` and policy
 `thinkpixelag.authorization/v1alpha1`; see `docs/releases/contract-freeze.md`.
 Clean-checkout verification and archived RC evidence are complete; see
 `docs/releases/verification.md`. The accepted integration capacity envelope is recorded separately from unchanged
-production targets in `docs/releases/capacity-envelope.md`. Next is the release
-risk review.
+production targets in `docs/releases/capacity-envelope.md`. The integration release risk review is recorded in
+`docs/releases/risk-review.md`; next are the operational game-day dispositions.
 
 Run all verification gates, resolve critical/high findings, freeze contracts, prepare release notes, convert completed planning decisions/history into ADRs, update README, remove `PLAN.md` and `TODO.md`, and commit the documentation transition. Exit when the repository can produce a traceable, signed/taggable RC artifact from a clean checkout.
 

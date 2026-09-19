@@ -1,5 +1,7 @@
 # Phase 7 Governance Self-Protection Evidence
 
+Current release disposition: [integration-RC risk review](releases/risk-review.md). The Phase 7 assessment below remains historical evidence.
+
 Phase 7 exited on 2026-09-01 after a threat-model review of the implemented
 identity, authorization, privileged approval, signing, evidence, break-glass,
 workload-identity, and redaction boundaries. No unresolved critical or high
