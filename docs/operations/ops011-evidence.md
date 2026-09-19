@@ -1,5 +1,10 @@
 # OPS-011 retained ARM64 resilience evidence
 
+Current status: [Phase 8 integration-RC closeout](phase-8-closeout.md) supersedes
+the earlier completion blockers below under the owner-approved
+[qualification deferrals](deferred-qualification.md). Historical results and
+production targets remain unchanged.
+
 For the subsequent wired retry, admission atomicity fix and current limits, see
 [wired qualification](wired-qualification.md). The dated results below remain
 historical evidence.

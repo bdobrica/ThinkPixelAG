@@ -1,5 +1,10 @@
 # Phase 8 evidence checkpoint (OPS-014)
 
+Current status: [Phase 8 integration-RC closeout](phase-8-closeout.md) supersedes
+the earlier completion blockers below under the owner-approved
+[qualification deferrals](deferred-qualification.md). Historical results and
+production targets remain unchanged.
+
 Review date: 2026-09-18 UTC. **Phase 8 and OPS-014 remain open.** This checkpoint
 consolidates committed operational evidence and fresh artifact-generation
 results; it is not a release approval or a waiver of OPS-010/OPS-011.

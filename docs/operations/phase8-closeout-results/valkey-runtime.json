@@ -1,0 +1,19 @@
+{
+  "source_revision": "30ff25f113ba6587adcfaa079e0d9dcac6a3f952",
+  "scope": "deployed API trusted usage, optional throughput cache, live OPA and authoritative PostgreSQL",
+  "ha_failover": false,
+  "healthy_status": 202,
+  "healthy_cache_get_observed": true,
+  "malformed_cache_status": 202,
+  "outage_status": 202,
+  "outage_replay_status": 202,
+  "outage_replay_same_receipt": true,
+  "overspend_status": 409,
+  "overspend_no_ledger_change": true,
+  "api_read_during_outage": 200,
+  "recovery_status": 202,
+  "recovery_cache_get_observed": true,
+  "new_ledger_entries": 4,
+  "restored_invariants": true,
+  "passed": true
+}

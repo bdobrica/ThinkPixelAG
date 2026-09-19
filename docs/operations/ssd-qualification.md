@@ -1,5 +1,10 @@
 # SSD-assisted operational qualification
 
+Current status: [Phase 8 integration-RC closeout](phase-8-closeout.md) supersedes
+the earlier completion blockers below under the owner-approved
+[qualification deferrals](deferred-qualification.md). Historical results and
+production targets remain unchanged.
+
 The 2026-09-19 follow-up moves PostgreSQL from the Pi USB flash volume to a
 persistent native Docker volume on the operator's SSD workstation. The API
 and OPA remain on the wired ARM64 Pi cluster. This is a different topology

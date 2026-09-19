@@ -13,16 +13,15 @@ ownership and integration boundaries.
 
 ## Status
 
-Phases 0 through 6 are implemented and verified. The repository includes the
-engineering foundation, PostgreSQL persistence, OIDC authentication, fail-closed
-OPA policy evaluation, the immutable agent registry, governed Run lifecycle,
-authoritative resource accounting, and bounded revocation distribution and
-freshness.
+Phases 0 through 8 are complete for the AG integration-RC scope, including
+PostgreSQL governance state, OIDC/OPA authorization, Run admission/lifecycle,
+resource accounting, revocation, security controls and operational packaging.
+See the [Phase 8 closeout](docs/operations/phase-8-closeout.md).
 
-Governance self-protection, production operations, and release-candidate closure
-remain in progress. [TODO.md](TODO.md) is the ordered execution ledger, and
-[PLAN.md](PLAN.md) records current implementation intent. Completed-phase
-evidence is indexed in the [design documentation](docs/README.md).
+Production-scale capacity and unavailable AR/gateway/HA integration scenarios
+are [explicitly deferred](docs/operations/deferred-qualification.md). Formal RC
+contract/release closure is next. [TODO.md](TODO.md) and [PLAN.md](PLAN.md) track
+that work; completed evidence is indexed in [docs](docs/README.md).
 
 ## Quick start
 

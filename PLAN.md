@@ -349,55 +349,22 @@ The review method, dispositions, and residual-risk register are recorded in
 
 Finalize image, Kubernetes resources, dashboards, alerts, SLOs, runbooks, backup/restore, upgrade/rollback, load testing, SBOM/scanning, and release automation. Exit when a disposable cluster passes installation, upgrade, disruption, recovery, and smoke tests.
 
-Status: in progress as of 2026-09-18. OCI/supply-chain automation,
-Kubernetes packaging/hardening/probe resources, optional monitoring/autoscaling,
-the fully validated SLO alert matrix, runbooks, encrypted physical backup/WAL
-PITR with forward-schema and authoritative-invariant recovery, multi-architecture
-qualification, and the operational disposable-cluster path are implemented and
-recorded in `docs/phase-8-evidence.md`. Deterministic policy and streaming
-component load baselines are executable through the documented Go benchmark
-command; they are regression evidence rather than production capacity proof.
-An opt-in governed runtime and external HTTP fixture/driver now support live
-qualification. Initial ARM64 measurements failed mutation/read capacity;
-OPS-010 production capacity remains open; hardware-limited homelab results are
-recorded separately without changing targets. A reproduced admission/idempotency
-commit-window duplicate is fixed with atomic mutation/replay persistence,
-database regression and deployed concurrent/retry checks. The wired rerun
-demonstrates 200 reads/s, but persistent flash writes and higher read rates
-still miss production targets (see `docs/operations/wired-qualification.md`).
-An SSD-backed PostgreSQL follow-up plus admission concurrency/approval-race
-fix now passes warm 1,000 reads/s and 200 admissions/s samples. Durable
-evidence now uses an SSD sink with preserved history and a replay-identity fix.
-Sink outage and evidence-exporter restart pass, but serial durable publication
-still misses the 200 admissions/s target even with an SSD-hosted exporter.
-The owner accepts the measured publication-lag p99 miss as a Phase 8 homelab
-closeout exception, without changing production SLOs. Qualifying throughput,
-backlog-drain capacity, bursts and the remaining workload matrix remains
-necessary (see `docs/operations/ssd-evidence-qualification.md`).
-Repository-local resilience and lifecycle gates now cover fail-closed OPA
-responses, conservative cache loss, revocation partitions, worker fencing,
-evidence retry, bounded PostgreSQL latency/process restart, API pod loss,
-rolling restart, schema-version assertion, restricted runtime, declared HPA
-bounds, PDB behavior, configuration rollback, and complete uninstall. Phase
-exit remains blocked on production-shaped load; composed Valkey/worker faults
-and intended-topology partition/failover qualification. Those gates remain unchecked
-rather than being weakened to documentation or synthetic proof.
+Status: complete for the integration-RC scope as of 2026-09-19. The owner
+prioritizes an AG candidate that enables dependent-component development and
+real-harness integration. Phase 8 foundation, lifecycle, available AG recovery,
+repository and artifact gates are complete; see `docs/operations/phase-8-closeout.md`.
 
-Retained ARM64 resilience evidence now includes quiesced PostgreSQL replica
-promotion, latency, deployed OPA faults, eviction and rolling restart. Real-adapter
-cache, worker and stream probes do not close production composition gates; see
-`docs/operations/ops011-evidence.md`. Production targets remain unchanged.
+Production throughput/dropped-request/tail qualification and remaining full-scale
+workloads are deferred. AR worker/harness, production gateway and intended-HA
+fault scenarios are deferred until those integrations/topologies exist. These
+are explicit scope deferrals, not passing tests or changed production targets;
+see `docs/operations/deferred-qualification.md`. Admission/replay correctness,
+lease fencing, authoritative accounting, revocation freshness, evidence integrity
+and security gates remain required.
 
-OPS-012 lifecycle qualification now includes the governed core HTTP workflow,
-observed hardware-diagnostic HPA scale-out/scale-in and two-digest application
-upgrade/rollback, alongside the earlier disposable install/uninstall evidence.
-See `docs/operations/ops012-evidence.md`; production scaling capacity and SLO
-qualification remain part of OPS-010.
-
-OPS-014 has a consolidated evidence/artifact checkpoint at
-`docs/operations/phase-8-checkpoint.md`. The fresh image gate required the gRPC
-security patch at `99c8ae9`; final Phase 8 closeout still depends on OPS-010 and
-OPS-011 and is not implied by committing the checkpoint.
+Next: finish the Phase 9 contract/release documentation and exact-source RC
+packaging for integration testing. Do not add harness execution or a speculative
+worker API to AG merely to satisfy a cross-component operational test.
 
 ### Phase 9 — Release-candidate closure
 

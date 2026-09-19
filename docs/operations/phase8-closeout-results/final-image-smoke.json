@@ -1,0 +1,19 @@
+{
+  "final_image": "quay.io/bdobrica/thinkpixelag@sha256:73f5929a7e3319a84e95d9e943cf1721638d57e4a0143e4f09cd9191ef204d87",
+  "metadata_rebuild_filesystem_layers_identical": {
+    "amd64": true,
+    "arm64": true
+  },
+  "smoke": {
+    "mode": "smoke",
+    "result": "passed",
+    "checks": [
+      "admission",
+      "idempotent_replay",
+      "cross_tenant_denial",
+      "forged_token_denial",
+      "run_read"
+    ]
+  },
+  "api_read_status": 200
+}

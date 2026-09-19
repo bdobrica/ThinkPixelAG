@@ -40,6 +40,8 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 - [Load qualification](operations/load-testing.md)
 - [SSD-assisted operational qualification](operations/ssd-qualification.md)
 - [Durable evidence on SSD](operations/ssd-evidence-qualification.md)
+- [Phase 8 integration-RC closeout](operations/phase-8-closeout.md)
+- [Deferred production and cross-component qualification](operations/deferred-qualification.md)
 - [Development and verification commands](operations/development.md)
 - [Phase 0 blueprint review](phase-0-review.md)
 - [Phase 1 engineering foundation evidence](phase-1-evidence.md)

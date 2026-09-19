@@ -1,0 +1,170 @@
+{
+  "source_revision": "30ff25f113ba6587adcfaa079e0d9dcac6a3f952",
+  "image_index": "quay.io/bdobrica/thinkpixelag@sha256:73f5929a7e3319a84e95d9e943cf1721638d57e4a0143e4f09cd9191ef204d87",
+  "version": "phase8-closeout",
+  "signing_executed": false,
+  "published_release": false,
+  "platforms": {
+    "amd64": {
+      "manifest_digest": "sha256:101721afd3e09fd32e390d2f3c8478d8a4c3c2b66fec705208eefb90623ff30f",
+      "observed_architecture": "amd64",
+      "threshold_passed": true,
+      "checksum_verification_passed": true,
+      "vulnerability_counts_by_binary_occurrence": {
+        "MEDIUM": 4,
+        "UNKNOWN": 2
+      },
+      "findings": [
+        {
+          "target": "thinkpixelag",
+          "id": "CVE-2026-56855",
+          "severity": "MEDIUM",
+          "package": "golang.org/x/crypto",
+          "installed": "v0.55.0",
+          "fixed": "0.56.0"
+        },
+        {
+          "target": "thinkpixelag",
+          "id": "CVE-2026-78662",
+          "severity": "MEDIUM",
+          "package": "golang.org/x/crypto",
+          "installed": "v0.55.0",
+          "fixed": "0.56.0"
+        },
+        {
+          "target": "thinkpixelag",
+          "id": "GO-2026-5932",
+          "severity": "UNKNOWN",
+          "package": "golang.org/x/crypto",
+          "installed": "v0.55.0",
+          "fixed": null
+        },
+        {
+          "target": "thinkpixelag-migrate",
+          "id": "CVE-2026-56855",
+          "severity": "MEDIUM",
+          "package": "golang.org/x/crypto",
+          "installed": "v0.55.0",
+          "fixed": "0.56.0"
+        },
+        {
+          "target": "thinkpixelag-migrate",
+          "id": "CVE-2026-78662",
+          "severity": "MEDIUM",
+          "package": "golang.org/x/crypto",
+          "installed": "v0.55.0",
+          "fixed": "0.56.0"
+        },
+        {
+          "target": "thinkpixelag-migrate",
+          "id": "GO-2026-5932",
+          "severity": "UNKNOWN",
+          "package": "golang.org/x/crypto",
+          "installed": "v0.55.0",
+          "fixed": null
+        }
+      ],
+      "artifacts_sha256": {
+        "SHA256SUMS": "143292f560b1c3a464ecfa9c35c98780b561c2c254e0046b97a8ce54a94394af",
+        "break-glass-v1.json": "fe676fca84aac270e671c276f1a3ed8811e767203b5b26eb68dba3b78b0482d0",
+        "evidence-delivery-v1.json": "181a1d381aa600a1b25fd92d3cf9c1532bcca54c7bbc01aab3841839b20617f7",
+        "evidence-event-v1.json": "f57520941b1caadaab578b487790d8671b4f76554cc2e218bc3272a2126f6fdd",
+        "provenance.json": "612ff3bae8cfa2ba234fd50da1abce418df37bc324f024fe8cb7600ba0c88e9d",
+        "thinkpixelag-kubernetes-phase8-closeout.tar.gz": "f79ad515b4e23aa59f1244f45ac3f340a950748c504cbeb3d736d59b636e417e",
+        "thinkpixelag-openapi-phase8-closeout.yaml": "f8f616f2991a40c79625c36726c4ed8d9cf3f7f1f7d072a20aef37469597e5f2",
+        "thinkpixelag-phase8-closeout.sbom.cdx.json": "15d001c620e821ca7de6fdc7034eba80eed39e9d0041201cdb2d972d7445d265",
+        "vulnerability-report.json": "a9ec078e427829907e64e97e008042f84769d410cfcd9d99eb4e200b0f5277a4",
+        "workload-identity-v1.json": "41b3967bd05d5f1ff87aebd81dc75f72422f94c340641624a79df8548df04538"
+      },
+      "source_labels_verified": true
+    },
+    "arm64": {
+      "manifest_digest": "sha256:c27127edfefd21b0c7f978fa8911b31b6061f3396c8da7b97e9489e4ab2373e0",
+      "observed_architecture": "arm64",
+      "threshold_passed": true,
+      "checksum_verification_passed": true,
+      "vulnerability_counts_by_binary_occurrence": {
+        "MEDIUM": 4,
+        "UNKNOWN": 2
+      },
+      "findings": [
+        {
+          "target": "thinkpixelag",
+          "id": "CVE-2026-56855",
+          "severity": "MEDIUM",
+          "package": "golang.org/x/crypto",
+          "installed": "v0.55.0",
+          "fixed": "0.56.0"
+        },
+        {
+          "target": "thinkpixelag",
+          "id": "CVE-2026-78662",
+          "severity": "MEDIUM",
+          "package": "golang.org/x/crypto",
+          "installed": "v0.55.0",
+          "fixed": "0.56.0"
+        },
+        {
+          "target": "thinkpixelag",
+          "id": "GO-2026-5932",
+          "severity": "UNKNOWN",
+          "package": "golang.org/x/crypto",
+          "installed": "v0.55.0",
+          "fixed": null
+        },
+        {
+          "target": "thinkpixelag-migrate",
+          "id": "CVE-2026-56855",
+          "severity": "MEDIUM",
+          "package": "golang.org/x/crypto",
+          "installed": "v0.55.0",
+          "fixed": "0.56.0"
+        },
+        {
+          "target": "thinkpixelag-migrate",
+          "id": "CVE-2026-78662",
+          "severity": "MEDIUM",
+          "package": "golang.org/x/crypto",
+          "installed": "v0.55.0",
+          "fixed": "0.56.0"
+        },
+        {
+          "target": "thinkpixelag-migrate",
+          "id": "GO-2026-5932",
+          "severity": "UNKNOWN",
+          "package": "golang.org/x/crypto",
+          "installed": "v0.55.0",
+          "fixed": null
+        }
+      ],
+      "artifacts_sha256": {
+        "SHA256SUMS": "650a788b79162d00387347519ca98fc272c29e627784fe5e25115afad71aa41e",
+        "break-glass-v1.json": "fe676fca84aac270e671c276f1a3ed8811e767203b5b26eb68dba3b78b0482d0",
+        "evidence-delivery-v1.json": "181a1d381aa600a1b25fd92d3cf9c1532bcca54c7bbc01aab3841839b20617f7",
+        "evidence-event-v1.json": "f57520941b1caadaab578b487790d8671b4f76554cc2e218bc3272a2126f6fdd",
+        "provenance.json": "264107e86ba5d2832465a64cce09ffebe94d0294c0c3d5ce28ff0bdae8b634be",
+        "thinkpixelag-kubernetes-phase8-closeout.tar.gz": "f79ad515b4e23aa59f1244f45ac3f340a950748c504cbeb3d736d59b636e417e",
+        "thinkpixelag-openapi-phase8-closeout.yaml": "f8f616f2991a40c79625c36726c4ed8d9cf3f7f1f7d072a20aef37469597e5f2",
+        "thinkpixelag-phase8-closeout.sbom.cdx.json": "f027eeb6b19c1e68f23cd7d57fbc0fd6b90eeeeb3148542279bf0242f68a9a27",
+        "vulnerability-report.json": "58a7e7349a088c610e1e7999a5f16cfc30fce82bb5a442332ea9959e31851524",
+        "workload-identity-v1.json": "41b3967bd05d5f1ff87aebd81dc75f72422f94c340641624a79df8548df04538"
+      },
+      "source_labels_verified": true
+    }
+  },
+  "make_verify_exit_code": 0,
+  "make_verify_log_sha256": "4b473ef5d1f33ec85ce2384123f5a37afc9f7d987e1b77aa229b54ec044d7fa0",
+  "vulnerability_database": {
+    "Version": 2,
+    "NextUpdate": "2026-09-20T07:03:12.311489134Z",
+    "UpdatedAt": "2026-09-19T07:03:12.311489574Z",
+    "DownloadedAt": "2026-09-19T09:47:49.238131903Z"
+  },
+  "common_outputs_identical": true,
+  "attestation_manifests": [
+    "sha256:ee874514825b30d5c48d0f9ea4bedc1e8ea7c3397e441d0aeb293308539e075f",
+    "sha256:e8e1a8a33a6e0051a37ed423d766b13e8d61fda4d975c0e73145e9af5ec08a3b"
+  ],
+  "initial_runtime_image": "quay.io/bdobrica/thinkpixelag@sha256:724015085529ff29401bdb269c9f950ef7d8f161cd580c97a53bc332ddea50be",
+  "source_created": "2026-09-19T12:42:42+03:00"
+}

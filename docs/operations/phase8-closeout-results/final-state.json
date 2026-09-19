@@ -1,0 +1,13 @@
+{
+  "temporary_identity_binding_restored": true,
+  "synthetic_run_cancel_status": 200,
+  "api_read_status": 200,
+  "pending_outbox": 0,
+  "hpa_minimum": 3,
+  "valkey_ready": 1,
+  "api_ready": 3,
+  "fsync": "on",
+  "synchronous_commit": "on",
+  "restored_invariants": true,
+  "api_image": "quay.io/bdobrica/thinkpixelag@sha256:73f5929a7e3319a84e95d9e943cf1721638d57e4a0143e4f09cd9191ef204d87"
+}

@@ -1,5 +1,10 @@
 # Durable evidence on SSD
 
+Current status: [Phase 8 integration-RC closeout](phase-8-closeout.md) supersedes
+the earlier completion blockers below under the owner-approved
+[qualification deferrals](deferred-qualification.md). Historical results and
+production targets remain unchanged.
+
 The 2026-09-19 follow-up moves the test evidence sink onto persistent SSD
 storage and fixes evidence replay identity across a released or expired claim.
 It extends [SSD PostgreSQL qualification](ssd-qualification.md). Production

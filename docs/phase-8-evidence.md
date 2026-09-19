@@ -1,10 +1,10 @@
 # Phase 8 production operations evidence
 
-- Status: in progress
-- Review date: 2026-09-18
+- Status: complete for the integration-RC scope; production/cross-component qualification explicitly deferred
+- Review date: 2026-09-19
 - Foundation implementation commit: `967165a`; follow-up revisions are linked below
 - Initial host: Linux/amd64, Docker, kind v0.30.0 (Kubernetes v1.34.0), kubectl v1.35.0, PostgreSQL 18.4
-- Current closeout checkpoint: [OPS-014 evidence and artifact inventory](operations/phase-8-checkpoint.md); Phase 8 remains open.
+- Current closeout: [Phase 8 integration-RC evidence](operations/phase-8-closeout.md) and [accepted deferrals](operations/deferred-qualification.md). The earlier [checkpoint](operations/phase-8-checkpoint.md) remains historical evidence.
 
 ## Implemented controls
 
