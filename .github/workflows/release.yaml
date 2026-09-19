@@ -29,12 +29,15 @@ jobs:
       - name: Build reproducible multi-architecture image
         env:
           IMAGE: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
-          CREATED: ${{ github.event.repository.updated_at }}
         run: |
+          CREATED="$(git show -s --format=%cI HEAD)"
           docker buildx build --platform linux/amd64,linux/arm64 --provenance=mode=max --sbom=true --push \
             --build-arg VERSION="${GITHUB_REF_NAME}" --build-arg REVISION="${GITHUB_SHA}" --build-arg CREATED="$CREATED" \
             --label org.opencontainers.image.created="$CREATED" --tag "${IMAGE,,}" --metadata-file image-metadata.json .
-          docker buildx imagetools inspect "${IMAGE,,}" --format '{{json .Manifest}}' > image-manifest.json
+          docker buildx imagetools inspect "${IMAGE,,}" --raw > image-manifest.json
+          digest="$(python3 -c 'import json; print(json.load(open("image-metadata.json"))["containerimage.digest"])')"
+          echo "RELEASE_IMAGE=${IMAGE,,}@${digest}" >> "$GITHUB_ENV"
+          echo "SOURCE_DATE_EPOCH=$(git show -s --format=%ct HEAD)" >> "$GITHUB_ENV"
       - name: Install pinned Trivy
         run: |
           curl --fail --location --silent --show-error https://github.com/aquasecurity/trivy/releases/download/v0.69.3/trivy_0.69.3_Linux-64bit.tar.gz -o /tmp/trivy.tar.gz
@@ -44,14 +47,22 @@ jobs:
         env:
           VERSION: ${{ github.ref_name }}
           REVISION: ${{ github.sha }}
-          IMAGE: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
-          SOURCE_DATE_EPOCH: ${{ github.event.repository.pushed_at }}
-        run: bash scripts/release-artifacts.sh
-      - name: Attest image and artifacts with GitHub OIDC
+          IMAGE: ${{ env.RELEASE_IMAGE }}
+        run: |
+          mkdir -p .cache/release-metadata
+          mv image-manifest.json image-metadata.json .cache/release-metadata/
+          for architecture in amd64 arm64; do
+            digest="$(python3 -c 'import json,sys; m=json.load(open(".cache/release-metadata/image-manifest.json")); d=[x["digest"] for x in m["manifests"] if x["platform"].get("os")=="linux" and x["platform"].get("architecture")==sys.argv[1]]; assert len(d)==1; print(d[0])' "$architecture")"
+            IMAGE="${RELEASE_IMAGE%@*}@$digest" OUTPUT_DIR="dist/$architecture" bash scripts/release-artifacts.sh
+            tar --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner \
+              -czf "dist/thinkpixelag-$VERSION-$architecture.tar.gz" -C "dist/$architecture" .
+          done
+          (cd dist && sha256sum -- *.tar.gz > SHA256SUMS)
+      - name: Attest artifact archives with GitHub OIDC
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v3.0.0
         with:
           subject-checksums: dist/SHA256SUMS
       - name: Draft immutable release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* image-manifest.json image-metadata.json --draft --generate-notes --verify-tag
+        run: gh release create "$GITHUB_REF_NAME" dist/*.tar.gz dist/SHA256SUMS .cache/release-metadata/image-manifest.json .cache/release-metadata/image-metadata.json --draft --generate-notes --verify-tag

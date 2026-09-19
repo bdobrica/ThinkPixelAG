@@ -1,7 +1,7 @@
 # Development and Verification Commands
 
 The repository-root `Makefile` is the stable local and CI interface. Run targets
-from the repository root with GNU Make, Bash, Git, the pinned Go toolchain, and
+from the repository root with GNU Make, Bash, Git, Python 3, the pinned Go toolchain, and
 network access for authenticated tool/module and vulnerability database reads.
 Targets fail on command errors; scanners do not convert network failures into
 clean results.
@@ -68,7 +68,8 @@ build context. Production Kubernetes settings must additionally enforce the
 documented security context; the local smoke uses read-only root, a restricted
 temporary filesystem, dropped capabilities, and `no-new-privileges`.
 
-Build outputs live only below ignored `.cache/`. Override `BUILD_DIR`, `VERSION`,
+Development build outputs live below ignored `.cache/`; release artifacts
+default to ignored `dist/`. Override `BUILD_DIR`, `VERSION`,
 `REVISION`, or `IMAGE` for controlled builds. `make clean` removes only the fixed
 repository-local `.cache/bin` directory.
 

@@ -64,3 +64,5 @@ Durable decisions live in [Architecture Decision Records](adr/README.md). During
 - [Game days and component recovery](releases/game-days.md)
 - [Checklist and evidence reconciliation](releases/reconciliation.md)
 - [Decision/history preservation review](releases/preservation-review.md)
+- [0.1.0-rc.1 notes and operator checklist](releases/0.1.0-rc.1.md)
+- [Current release completion and remaining work](releases/status.md)
