@@ -1,0 +1,12 @@
+{
+  "scenario": "SSD PostgreSQL SIGKILL followed by explicit container restart",
+  "api_recovery_seconds": 2.716,
+  "api_recovered": true,
+  "tables": 42,
+  "ha_failover": false,
+  "table_hashes_equal": true,
+  "restored_invariants": true,
+  "fsync": "on",
+  "synchronous_commit": "on",
+  "passed": true
+}

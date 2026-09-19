@@ -1,0 +1,12 @@
+{
+  "scenario": "quiesced ARM64 to AMD64 logical PostgreSQL migration",
+  "tables_compared": 42,
+  "all_row_counts_and_hashes_equal": true,
+  "restored_invariants": true,
+  "api_read_status": 200,
+  "fsync": "on",
+  "synchronous_commit": "on",
+  "old_writers_fenced": true,
+  "resources_retained": true,
+  "ha_failover": false
+}

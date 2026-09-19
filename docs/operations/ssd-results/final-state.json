@@ -1,0 +1,9 @@
+{
+  "readiness_status": 200,
+  "authenticated_read_status": 200,
+  "pending_outbox": 0,
+  "durability": [
+    "on",
+    "on"
+  ]
+}

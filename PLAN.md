@@ -365,6 +365,11 @@ commit-window duplicate is fixed with atomic mutation/replay persistence,
 database regression and deployed concurrent/retry checks. The wired rerun
 demonstrates 200 reads/s, but persistent flash writes and higher read rates
 still miss production targets (see `docs/operations/wired-qualification.md`).
+An SSD-backed PostgreSQL follow-up plus admission concurrency/approval-race
+fix now passes warm 1,000 reads/s and 200 admissions/s samples. Durable
+evidence export remains limited by the Pi flash sink; moving that sink and
+qualifying bursts and the remaining workload matrix are next
+(see `docs/operations/ssd-qualification.md`).
 Repository-local resilience and lifecycle gates now cover fail-closed OPA
 responses, conservative cache loss, revocation partitions, worker fencing,
 evidence retry, bounded PostgreSQL latency/process restart, API pod loss,
