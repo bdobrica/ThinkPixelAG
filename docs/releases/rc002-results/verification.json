@@ -1,0 +1,314 @@
+{
+  "source_commit": "79d2ac91cc89846de6baf30c570d562260edafc1",
+  "date": "2026-09-19",
+  "clean_before_and_after": true,
+  "make_verify_exit_code": 0,
+  "test_cache_disabled": true,
+  "go_invocations": [
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "-run",
+        "^TestReleaseContractsFrozen$",
+        "./test"
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 8
+      },
+      "packages": [
+        "github.com/bdobrica/ThinkPixelAG/test"
+      ]
+    },
+    {
+      "arguments": [
+        "test",
+        "-cover",
+        "./..."
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 472,
+        "skip": 7
+      },
+      "packages": [
+        "github.com/bdobrica/ThinkPixelAG/cmd/thinkpixelag",
+        "github.com/bdobrica/ThinkPixelAG/cmd/thinkpixelag-migrate",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/evidencehttp",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/mtls",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/opa",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/valkey",
+        "github.com/bdobrica/ThinkPixelAG/internal/application",
+        "github.com/bdobrica/ThinkPixelAG/internal/artifact",
+        "github.com/bdobrica/ThinkPixelAG/internal/config",
+        "github.com/bdobrica/ThinkPixelAG/internal/cryptography",
+        "github.com/bdobrica/ThinkPixelAG/internal/domain",
+        "github.com/bdobrica/ThinkPixelAG/internal/evidence",
+        "github.com/bdobrica/ThinkPixelAG/internal/identity",
+        "github.com/bdobrica/ThinkPixelAG/internal/observability/logging",
+        "github.com/bdobrica/ThinkPixelAG/internal/observability/metrics",
+        "github.com/bdobrica/ThinkPixelAG/internal/observability/tracing",
+        "github.com/bdobrica/ThinkPixelAG/internal/policy",
+        "github.com/bdobrica/ThinkPixelAG/internal/ports",
+        "github.com/bdobrica/ThinkPixelAG/test",
+        "github.com/bdobrica/ThinkPixelAG/test/operations",
+        "github.com/bdobrica/ThinkPixelAG/test/operations/fixture",
+        "github.com/bdobrica/ThinkPixelAG/test/operations/load",
+        "github.com/bdobrica/ThinkPixelAG/test/operations/resilienceprobe"
+      ]
+    },
+    {
+      "arguments": [
+        "test",
+        "-cover",
+        "./..."
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 8
+      },
+      "packages": [
+        "github.com/bdobrica/ThinkPixelAG/tools/cmd/dependencycheck"
+      ]
+    },
+    {
+      "arguments": [
+        "test",
+        "-race",
+        "./..."
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 472,
+        "skip": 7
+      },
+      "packages": [
+        "github.com/bdobrica/ThinkPixelAG/cmd/thinkpixelag",
+        "github.com/bdobrica/ThinkPixelAG/cmd/thinkpixelag-migrate",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/evidencehttp",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/mtls",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/opa",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/valkey",
+        "github.com/bdobrica/ThinkPixelAG/internal/application",
+        "github.com/bdobrica/ThinkPixelAG/internal/artifact",
+        "github.com/bdobrica/ThinkPixelAG/internal/config",
+        "github.com/bdobrica/ThinkPixelAG/internal/cryptography",
+        "github.com/bdobrica/ThinkPixelAG/internal/domain",
+        "github.com/bdobrica/ThinkPixelAG/internal/evidence",
+        "github.com/bdobrica/ThinkPixelAG/internal/identity",
+        "github.com/bdobrica/ThinkPixelAG/internal/observability/logging",
+        "github.com/bdobrica/ThinkPixelAG/internal/observability/metrics",
+        "github.com/bdobrica/ThinkPixelAG/internal/observability/tracing",
+        "github.com/bdobrica/ThinkPixelAG/internal/policy",
+        "github.com/bdobrica/ThinkPixelAG/internal/ports",
+        "github.com/bdobrica/ThinkPixelAG/test",
+        "github.com/bdobrica/ThinkPixelAG/test/operations",
+        "github.com/bdobrica/ThinkPixelAG/test/operations/fixture",
+        "github.com/bdobrica/ThinkPixelAG/test/operations/load",
+        "github.com/bdobrica/ThinkPixelAG/test/operations/resilienceprobe"
+      ]
+    },
+    {
+      "arguments": [
+        "test",
+        "-race",
+        "./..."
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 8
+      },
+      "packages": [
+        "github.com/bdobrica/ThinkPixelAG/tools/cmd/dependencycheck"
+      ]
+    },
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "-tags=integration",
+        "./..."
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 499
+      },
+      "packages": [
+        "github.com/bdobrica/ThinkPixelAG/cmd/thinkpixelag",
+        "github.com/bdobrica/ThinkPixelAG/cmd/thinkpixelag-migrate",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/evidencehttp",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/mtls",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/opa",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/valkey",
+        "github.com/bdobrica/ThinkPixelAG/internal/application",
+        "github.com/bdobrica/ThinkPixelAG/internal/artifact",
+        "github.com/bdobrica/ThinkPixelAG/internal/config",
+        "github.com/bdobrica/ThinkPixelAG/internal/cryptography",
+        "github.com/bdobrica/ThinkPixelAG/internal/domain",
+        "github.com/bdobrica/ThinkPixelAG/internal/evidence",
+        "github.com/bdobrica/ThinkPixelAG/internal/identity",
+        "github.com/bdobrica/ThinkPixelAG/internal/observability/logging",
+        "github.com/bdobrica/ThinkPixelAG/internal/observability/metrics",
+        "github.com/bdobrica/ThinkPixelAG/internal/observability/tracing",
+        "github.com/bdobrica/ThinkPixelAG/internal/policy",
+        "github.com/bdobrica/ThinkPixelAG/internal/ports",
+        "github.com/bdobrica/ThinkPixelAG/test",
+        "github.com/bdobrica/ThinkPixelAG/test/operations",
+        "github.com/bdobrica/ThinkPixelAG/test/operations/fixture",
+        "github.com/bdobrica/ThinkPixelAG/test/operations/load",
+        "github.com/bdobrica/ThinkPixelAG/test/operations/resilienceprobe"
+      ]
+    },
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "-tags=e2e",
+        "./..."
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 487
+      },
+      "packages": [
+        "github.com/bdobrica/ThinkPixelAG/cmd/thinkpixelag",
+        "github.com/bdobrica/ThinkPixelAG/cmd/thinkpixelag-migrate",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/evidencehttp",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/mtls",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/opa",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/valkey",
+        "github.com/bdobrica/ThinkPixelAG/internal/application",
+        "github.com/bdobrica/ThinkPixelAG/internal/artifact",
+        "github.com/bdobrica/ThinkPixelAG/internal/config",
+        "github.com/bdobrica/ThinkPixelAG/internal/cryptography",
+        "github.com/bdobrica/ThinkPixelAG/internal/domain",
+        "github.com/bdobrica/ThinkPixelAG/internal/evidence",
+        "github.com/bdobrica/ThinkPixelAG/internal/identity",
+        "github.com/bdobrica/ThinkPixelAG/internal/observability/logging",
+        "github.com/bdobrica/ThinkPixelAG/internal/observability/metrics",
+        "github.com/bdobrica/ThinkPixelAG/internal/observability/tracing",
+        "github.com/bdobrica/ThinkPixelAG/internal/policy",
+        "github.com/bdobrica/ThinkPixelAG/internal/ports",
+        "github.com/bdobrica/ThinkPixelAG/test",
+        "github.com/bdobrica/ThinkPixelAG/test/operations",
+        "github.com/bdobrica/ThinkPixelAG/test/operations/fixture",
+        "github.com/bdobrica/ThinkPixelAG/test/operations/load",
+        "github.com/bdobrica/ThinkPixelAG/test/operations/resilienceprobe"
+      ]
+    },
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "./internal/artifact",
+        "./internal/application",
+        "./internal/domain",
+        "./internal/evidence",
+        "./internal/policy",
+        "./internal/adapters/httpserver",
+        "./internal/adapters/mtls",
+        "./internal/adapters/opa"
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 303
+      },
+      "packages": [
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/mtls",
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/opa",
+        "github.com/bdobrica/ThinkPixelAG/internal/application",
+        "github.com/bdobrica/ThinkPixelAG/internal/artifact",
+        "github.com/bdobrica/ThinkPixelAG/internal/domain",
+        "github.com/bdobrica/ThinkPixelAG/internal/evidence",
+        "github.com/bdobrica/ThinkPixelAG/internal/policy"
+      ]
+    },
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "-tags=integration",
+        "-run",
+        "^(TestTransactionalEvidenceAndReplaySafeOutbox|TestEvidenceDeliveryReplayReceiptAndCheckpoint|TestAgentApprovalLifecycleEvidenceIsolationConcurrencyAndImmutability)$",
+        "./internal/adapters/postgres"
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 3
+      },
+      "packages": [
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres"
+      ]
+    },
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "-run",
+        "^(TestKubernetes|TestRelease)",
+        "./test"
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 12
+      },
+      "packages": [
+        "github.com/bdobrica/ThinkPixelAG/test"
+      ]
+    },
+    {
+      "arguments": [
+        "test",
+        "-race",
+        "./internal/adapters/postgres"
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 52
+      },
+      "packages": [
+        "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres"
+      ]
+    }
+  ],
+  "initial_default_suite_skips": [
+    "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres/TestBreakGlassApprovalExpiryAndEvidenceIntegration",
+    "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres/TestEvidenceDeliveryReplayReceiptAndCheckpoint",
+    "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres/TestIdempotencyConcurrencyReplayConflictAndExpiry",
+    "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres/TestMigrationQualification",
+    "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres/TestPoolSessionPolicyAndReadiness",
+    "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres/TestTenantRepositoriesRollbackAndIsolation",
+    "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres/TestTransactionalEvidenceAndReplaySafeOutbox"
+  ],
+  "unresolved_skips": [],
+  "initial_skips_without_passing_race_run": [],
+  "opa_cases_passed": 27,
+  "logs": {
+    "FuzzCheckedDecimalArithmeticBounds.log": "3371cf318c0e43ce9b85cb5b684836a1458d241d5a5bb551460bada278d67e12",
+    "FuzzCursorDecode.log": "f3ca53eb75c4d69f872a2c18d233f849b5c478d933bf80e56b1a82eba7519f21",
+    "FuzzParseDecimal.log": "0088b6a992b75cfdbd66d0b0778b32789c79b5fb0fc5205fb4e540f2bd36d159",
+    "FuzzParseID.log": "b750f3fa1cb74f2ed116e9f5ee31a90e63fc9e23dfd18c43fdf6c022ef27a22b",
+    "FuzzResourceAllocationConservation.log": "7177f60009f9dc49a0ce8c5ecbf4962bdfae92917fe61c7d8e330fbea83f29c9",
+    "FuzzRunLifecycleProperties.log": "2bba350b4bcc4da5ece3ee616485e1ce5c14ac370ac4c69bf2a2bba42bd884be",
+    "postgres-race.log": "caba55fe80d0b39af72651cbb2b931f14cada3da0f1082c0b91673ce13d76f5e",
+    "rc002-verify.log": "73f78443d2a1ab482b873c4f79f266cf76d33ff941f410d10a4a72b27b57c697"
+  }
+}

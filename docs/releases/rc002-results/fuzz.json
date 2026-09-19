@@ -1,0 +1,86 @@
+[
+  {
+    "target": "FuzzParseID",
+    "seconds_requested": 10,
+    "workers": 2,
+    "exit_code": 0,
+    "progress": [
+      "fuzz: elapsed: 0s, gathering baseline coverage: 0/69 completed",
+      "fuzz: elapsed: 0s, gathering baseline coverage: 69/69 completed, now fuzzing with 2 workers",
+      "fuzz: elapsed: 3s, execs: 55240 (18409/sec), new interesting: 0 (total: 69)",
+      "fuzz: elapsed: 6s, execs: 114440 (19738/sec), new interesting: 1 (total: 70)",
+      "fuzz: elapsed: 9s, execs: 172949 (19499/sec), new interesting: 1 (total: 70)",
+      "fuzz: elapsed: 10s, execs: 193149 (18839/sec), new interesting: 1 (total: 70)"
+    ]
+  },
+  {
+    "target": "FuzzParseDecimal",
+    "seconds_requested": 10,
+    "workers": 2,
+    "exit_code": 0,
+    "progress": [
+      "fuzz: elapsed: 0s, gathering baseline coverage: 0/80 completed",
+      "fuzz: elapsed: 0s, gathering baseline coverage: 80/80 completed, now fuzzing with 2 workers",
+      "fuzz: elapsed: 3s, execs: 67609 (22529/sec), new interesting: 2 (total: 82)",
+      "fuzz: elapsed: 6s, execs: 131160 (21184/sec), new interesting: 3 (total: 83)",
+      "fuzz: elapsed: 9s, execs: 193912 (20918/sec), new interesting: 5 (total: 85)",
+      "fuzz: elapsed: 10s, execs: 212998 (17518/sec), new interesting: 5 (total: 85)"
+    ]
+  },
+  {
+    "target": "FuzzCursorDecode",
+    "seconds_requested": 10,
+    "workers": 2,
+    "exit_code": 0,
+    "progress": [
+      "fuzz: elapsed: 0s, gathering baseline coverage: 0/40 completed",
+      "fuzz: elapsed: 0s, gathering baseline coverage: 40/40 completed, now fuzzing with 2 workers",
+      "fuzz: elapsed: 3s, execs: 60354 (20112/sec), new interesting: 1 (total: 41)",
+      "fuzz: elapsed: 6s, execs: 134423 (24695/sec), new interesting: 3 (total: 43)",
+      "fuzz: elapsed: 9s, execs: 214794 (26787/sec), new interesting: 5 (total: 45)",
+      "fuzz: elapsed: 10s, execs: 241334 (23883/sec), new interesting: 6 (total: 46)"
+    ]
+  },
+  {
+    "target": "FuzzResourceAllocationConservation",
+    "seconds_requested": 10,
+    "workers": 2,
+    "exit_code": 0,
+    "progress": [
+      "fuzz: elapsed: 0s, gathering baseline coverage: 0/3 completed",
+      "fuzz: elapsed: 0s, gathering baseline coverage: 3/3 completed, now fuzzing with 2 workers",
+      "fuzz: elapsed: 3s, execs: 5278 (1758/sec), new interesting: 21 (total: 24)",
+      "fuzz: elapsed: 6s, execs: 5278 (0/sec), new interesting: 21 (total: 24)",
+      "fuzz: elapsed: 9s, execs: 5278 (0/sec), new interesting: 21 (total: 24)",
+      "fuzz: elapsed: 11s, execs: 5278 (0/sec), new interesting: 21 (total: 24)"
+    ]
+  },
+  {
+    "target": "FuzzCheckedDecimalArithmeticBounds",
+    "seconds_requested": 10,
+    "workers": 2,
+    "exit_code": 0,
+    "progress": [
+      "fuzz: elapsed: 0s, gathering baseline coverage: 0/3 completed",
+      "fuzz: elapsed: 0s, gathering baseline coverage: 3/3 completed, now fuzzing with 2 workers",
+      "fuzz: elapsed: 3s, execs: 60387 (20122/sec), new interesting: 8 (total: 11)",
+      "fuzz: elapsed: 6s, execs: 127878 (22497/sec), new interesting: 8 (total: 11)",
+      "fuzz: elapsed: 9s, execs: 195662 (22597/sec), new interesting: 8 (total: 11)",
+      "fuzz: elapsed: 10s, execs: 216718 (19571/sec), new interesting: 8 (total: 11)"
+    ]
+  },
+  {
+    "target": "FuzzRunLifecycleProperties",
+    "seconds_requested": 10,
+    "workers": 2,
+    "exit_code": 0,
+    "progress": [
+      "fuzz: elapsed: 0s, gathering baseline coverage: 0/2 completed",
+      "fuzz: elapsed: 0s, gathering baseline coverage: 2/2 completed, now fuzzing with 2 workers",
+      "fuzz: elapsed: 3s, execs: 56447 (18814/sec), new interesting: 35 (total: 37)",
+      "fuzz: elapsed: 6s, execs: 114135 (19230/sec), new interesting: 35 (total: 37)",
+      "fuzz: elapsed: 9s, execs: 173453 (19770/sec), new interesting: 35 (total: 37)",
+      "fuzz: elapsed: 10s, execs: 195250 (19818/sec), new interesting: 35 (total: 37)"
+    ]
+  }
+]

@@ -55,3 +55,5 @@ These documents define the release-candidate contracts for ThinkPixelAG. Normati
 Durable decisions live in [Architecture Decision Records](adr/README.md). During implementation, `PLAN.md` and `TODO.md` remain the execution ledger; their durable rationale will be reconciled into ADRs before the release candidate.
 
 - [Integration-RC contract freeze](releases/contract-freeze.md)
+
+Integration-RC verification: [clean-checkout and live smoke evidence](releases/verification.md).
