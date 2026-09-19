@@ -2,7 +2,7 @@
 
 ## Versioning and entry point
 
-The RC contract version is `thinkpixelag.authorization/v1alpha1`; it remains experimental until Phase 3 freezes it. The Rego entry point is `data.thinkpixelag.authorization.decision`. Unsupported versions, missing fields, unknown output fields where strict decoding applies, or invalid types produce a deny/error outcome.
+The frozen integration-RC contract version is `thinkpixelag.authorization/v1alpha1`. The existing wire identifier is retained for compatibility; the freeze does not rename it to v1. See the [RC contract freeze](../releases/contract-freeze.md). The Rego entry point is `data.thinkpixelag.authorization.decision`. Unsupported versions, missing fields, unknown output fields where strict decoding applies, or invalid types produce a deny/error outcome.
 
 ## Input
 

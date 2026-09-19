@@ -1,13 +1,13 @@
 openapi: 3.1.0
 info:
   title: ThinkPixelAG Governance API
-  version: 0.1.0-phase0
+  version: 0.1.0-rc.1
   summary: Harness-independent agent governance and run lifecycle API
   license:
     name: Apache License 2.0
     identifier: Apache-2.0
   description: |
-    Phase 0 contract. All protected operations authenticate a bearer principal or
+    Integration RC contract. All protected operations authenticate a bearer principal or
     workload and authorize the action through policy. Tenant context is derived
     from verified identity and is never accepted from an ordinary request body.
 servers:

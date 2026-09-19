@@ -368,6 +368,10 @@ worker API to AG merely to satisfy a cross-component operational test.
 
 ### Phase 9 — Release-candidate closure
 
+Contract freeze is implemented: OpenAPI `0.1.0-rc.1` and policy
+`thinkpixelag.authorization/v1alpha1`; see `docs/releases/contract-freeze.md`.
+Next is clean-checkout verification and archived RC evidence.
+
 Run all verification gates, resolve critical/high findings, freeze contracts, prepare release notes, convert completed planning decisions/history into ADRs, update README, remove `PLAN.md` and `TODO.md`, and commit the documentation transition. Exit when the repository can produce a traceable, signed/taggable RC artifact from a clean checkout.
 
 ## 10. Coding-agent operating instructions

@@ -20,7 +20,7 @@ REVISION ?= $(shell git rev-parse --verify HEAD 2>/dev/null || printf unknown)
 CREATED ?= $(shell git show -s --format=%cI HEAD 2>/dev/null || printf unknown)
 IMAGE ?= thinkpixelag:dev
 GO_FILES := $(shell git ls-files '*.go')
-.PHONY: help tools generate generate-check fmt fmt-check lint test test-race \
+.PHONY: contract-check help tools generate generate-check fmt fmt-check lint test test-race \
 	test-policy test-integration test-e2e dependency-check vulnerability-check \
 	license-check security build image container-smoke verify clean compose-check dev-up \
 	dev-up-valkey dev-status dev-smoke dev-down dev-reset test-security \
@@ -39,6 +39,9 @@ tools: ## Download and identify all exactly pinned verification tools.
 
 generate: ## Run all Go generators.
 	$(GO) generate ./...
+
+contract-check: ## Check the frozen integration-RC contracts.
+	$(GO) test -count=1 -run '^TestReleaseContractsFrozen$$' ./test
 
 generate-check: generate ## Fail when generation changes tracked files.
 	@git diff --exit-code -- .
@@ -185,7 +188,7 @@ test-lifecycle: ## Check lifecycle drill rollback and uncertain-mutation safety.
 test-retained-lifecycle: ## Run retained-cluster lifecycle qualification with explicit LIFECYCLE_ARGS.
 	python3 test/operations/lifecycle.py $(LIFECYCLE_ARGS)
 
-verify: generate-check lint test test-race test-policy test-integration test-e2e test-security compose-check kubernetes-check security build container-smoke ## Run the complete clean-checkout gate.
+verify: generate-check contract-check lint test test-race test-policy test-integration test-e2e test-security compose-check kubernetes-check security build container-smoke ## Run the complete clean-checkout gate.
 
 clean: ## Remove repository-local build outputs.
 	rm -rf .cache/bin

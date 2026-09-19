@@ -1,0 +1,15 @@
+{
+  "baseline_revision": "72715e115a277cdd4178708c1663bdff49b2cbc6",
+  "openapi_version": "0.1.0-rc.1",
+  "policy_version": "thinkpixelag.authorization/v1alpha1",
+  "normalization": "CRLF to LF; no other normalization",
+  "files": {
+    "api/openapi/thinkpixelag.yaml": "183dfa83db9ad2153ea7e30ba374d778a317690ffd22ab0c5387292bd6420be3",
+    "api/schemas/break-glass-v1.json": "fe676fca84aac270e671c276f1a3ed8811e767203b5b26eb68dba3b78b0482d0",
+    "api/schemas/evidence-delivery-v1.json": "181a1d381aa600a1b25fd92d3cf9c1532bcca54c7bbc01aab3841839b20617f7",
+    "api/schemas/evidence-event-v1.json": "f57520941b1caadaab578b487790d8671b4f76554cc2e218bc3272a2126f6fdd",
+    "api/schemas/workload-identity-v1.json": "41b3967bd05d5f1ff87aebd81dc75f72422f94c340641624a79df8548df04538",
+    "docs/contracts/policy-decision.md": "15d38ff01f7ee5eff9813aae92412bdac1b988293e34ae64874e271a10b39703",
+    "internal/policy/contract.go": "79dac0257bfbc49909c1edb332892d6e006b13c36823b2384db4efdfa92eb473"
+  }
+}

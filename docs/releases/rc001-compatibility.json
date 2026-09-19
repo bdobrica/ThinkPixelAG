@@ -1,0 +1,16 @@
+{
+  "baseline_revision": "72715e115a277cdd4178708c1663bdff49b2cbc6",
+  "candidate_openapi_version": "0.1.0-rc.1",
+  "policy_wire_version_unchanged": "thinkpixelag.authorization/v1alpha1",
+  "comparison": "Exact LF-normalized equality, excluding only OpenAPI info version/description and policy freeze-status paragraph",
+  "checks": {
+    "api/openapi/thinkpixelag.yaml": true,
+    "api/schemas/break-glass-v1.json": true,
+    "api/schemas/evidence-delivery-v1.json": true,
+    "api/schemas/evidence-event-v1.json": true,
+    "api/schemas/workload-identity-v1.json": true,
+    "docs/contracts/policy-decision.md": true,
+    "internal/policy/contract.go": true
+  },
+  "prior_release_tags": []
+}
