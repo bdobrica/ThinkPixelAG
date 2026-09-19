@@ -370,8 +370,10 @@ fix now passes warm 1,000 reads/s and 200 admissions/s samples. Durable
 evidence now uses an SSD sink with preserved history and a replay-identity fix.
 Sink outage and evidence-exporter restart pass, but serial durable publication
 still misses the 200 admissions/s target even with an SSD-hosted exporter.
-Qualifying publication throughput, bursts and the remaining workload matrix
-remains necessary (see `docs/operations/ssd-evidence-qualification.md`).
+The owner accepts the measured publication-lag p99 miss as a Phase 8 homelab
+closeout exception, without changing production SLOs. Qualifying throughput,
+backlog-drain capacity, bursts and the remaining workload matrix remains
+necessary (see `docs/operations/ssd-evidence-qualification.md`).
 Repository-local resilience and lifecycle gates now cover fail-closed OPA
 responses, conservative cache loss, revocation partitions, worker fencing,
 evidence retry, bounded PostgreSQL latency/process restart, API pod loss,

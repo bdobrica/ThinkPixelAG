@@ -163,3 +163,13 @@ publication or twice-peak drain, and it does not substitute for the remaining
 burst, usage/allocation/settlement, large-fanout, Run-worker/cache composition,
 or intended-topology failover/partition qualification. The fixture and exporter
 share the workstation failure domain with PostgreSQL.
+
+## Accepted homelab exception
+
+On 2026-09-19, the project owner accepted the observed publication-lag p99
+miss as an exception for Phase 8 homelab closeout. This removes that percentile
+miss as a closeout blocker; the measured failures remain in the evidence and
+production SLOs are unchanged. The exception does not qualify dropped requests,
+sustained throughput, backlog-drain capacity, unexecuted workload scenarios,
+or failover/recovery behavior. Evidence preservation, replay correctness and
+security freshness requirements remain required.
