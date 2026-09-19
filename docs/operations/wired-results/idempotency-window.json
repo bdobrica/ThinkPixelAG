@@ -1,0 +1,12 @@
+{
+  "scenario": "admission completion failure followed by lease-expiry retry",
+  "injection": "20-second delay before completing one synthetic idempotency record",
+  "runs_before": 101,
+  "first_status": 500,
+  "first_seconds": 15.025,
+  "runs_after_failure": 101,
+  "retry_status": 500,
+  "runs_after_retry": 101,
+  "new_runs_for_one_key": 0,
+  "passed": false
+}

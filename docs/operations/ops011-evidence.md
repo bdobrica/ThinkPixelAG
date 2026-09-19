@@ -1,5 +1,9 @@
 # OPS-011 retained ARM64 resilience evidence
 
+For the subsequent wired retry, admission atomicity fix and current limits, see
+[wired qualification](wired-qualification.md). The dated results below remain
+historical evidence.
+
 Qualification date: 2026-09-18 UTC. **OPS-011 remains open.** These results
 extend the repository-local matrix with actual homelab faults and real-adapter
 probes. Production targets are unchanged. Neither the optional Valkey cache nor

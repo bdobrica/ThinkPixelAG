@@ -1,0 +1,32 @@
+{
+  "LateDropped": 0,
+  "BusyDropped": 0,
+  "CompleteStreams": 256,
+  "StreamSetupSeconds": 0.881188438,
+  "mode": "streams",
+  "started": "2026-09-19T06:34:16.589517072Z",
+  "duration_seconds": 80.004370632,
+  "Offered": 2,
+  "Completed": 2,
+  "Success": 2,
+  "Dropped": 0,
+  "TransportErrors": 0,
+  "InvariantFailures": 0,
+  "Statuses": {
+    "201": 2
+  },
+  "Throughput": 0.024998634252114765,
+  "P50MS": 270.787967,
+  "P95MS": 270.787967,
+  "P99MS": 270.787967,
+  "StreamClients": 256,
+  "PeakStreams": 256,
+  "StreamEvents": 512,
+  "Reconnects": 64,
+  "StreamGaps": 0,
+  "LagP99MS": 2860,
+  "exit_code": 0,
+  "configured_rate": 0.025,
+  "configured_duration_seconds": 80,
+  "workers": 1
+}

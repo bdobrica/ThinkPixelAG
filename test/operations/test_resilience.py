@@ -1,4 +1,4 @@
-"""Safety regressions for the opt-in promotion orchestrator; no cluster needed."""
+"""Safety regressions for retained-cluster fault boundaries; no cluster needed."""
 import json
 from pathlib import Path
 import tempfile
@@ -96,6 +96,63 @@ class PromotionSafetyTests(unittest.TestCase):
             self.assertTrue(drill.routed)
             self.assertTrue(all(c['passed'] for c in drill.report['checks']))
 
+
+
+class DrainingFaultFixture(Drill):
+    """Old healthy endpoints remain usable after new replicas become ready."""
+    def __init__(self):
+        self.a = SimpleNamespace(api='api', policy='policy')
+        self.report = {'checks': []}
+        self.pending = set()
+        self.port_fault = False
+        self.policy = {'authorization.rego': 'valid'}
+
+    def save(self):
+        pass
+
+    def run_path(self):
+        return '/run'
+
+    def rollout(self):
+        pass  # New replicas ready; old pods are still draining.
+
+    def disruptions(self):
+        pass
+
+    def request(self, path):
+        faulty = self.port_fault or 'invalid' in self.policy['authorization.rego']
+        return (503 if faulty and not self.pending else 200), ''
+
+    def k(self, *args, **kwargs):
+        if args[:2] == ('get', 'deployment/api'):
+            return json.dumps({'spec': {'template': {'spec': {'containers': [{'name': 'opa', 'args': ['--addr=127.0.0.1:8181']}]}}}})
+        if args[:2] == ('get', 'configmap/policy'):
+            return json.dumps({'data': self.policy})
+        if args[:2] == ('get', 'pod'):
+            return json.dumps({'items': [{'metadata': {'name': n}} for n in ['api-old-1', 'api-old-2']]})
+        if args[:2] == ('patch', 'configmap/policy'):
+            self.policy = json.loads(args[-1])['data']
+            return ''
+        if args[:2] == ('patch', 'deployment/api'):
+            self.port_fault = '8182' in args[-1]
+            self.pending = {'api-old-1', 'api-old-2'}
+            return ''
+        if args[:2] == ('rollout', 'restart'):
+            self.pending = {'api-old-1', 'api-old-2'}
+            return ''
+        if args[:2] == ('wait', '--for=delete'):
+            self.pending.remove(args[2].split('/')[1])
+            return ''
+        raise AssertionError(args)
+
+
+class FaultBoundaryTests(unittest.TestCase):
+    def test_faults_are_checked_only_after_healthy_old_endpoints_stop(self):
+        drill = DrainingFaultFixture()
+        drill.runtime()
+        self.assertTrue(all(c['passed'] for c in drill.report['checks']))
+        self.assertEqual([c['statuses'] for c in drill.report['checks'] if 'statuses' in c], [[503]*3, [503]*3])
+        self.assertFalse(drill.pending)
 
 if __name__ == '__main__':
     unittest.main()

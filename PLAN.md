@@ -361,9 +361,10 @@ An opt-in governed runtime and external HTTP fixture/driver now support live
 qualification. Initial ARM64 measurements failed mutation/read capacity;
 OPS-010 production capacity remains open; hardware-limited homelab results are
 recorded separately without changing targets. A reproduced admission/idempotency
-commit-window duplicate now has an atomic mutation/replay-outcome fix with
-database regression coverage; deployed retry qualification remains required (see
-`docs/operations/homelab-qualification.md`).
+commit-window duplicate is fixed with atomic mutation/replay persistence,
+database regression and deployed concurrent/retry checks. The wired rerun
+demonstrates 200 reads/s, but persistent flash writes and higher read rates
+still miss production targets (see `docs/operations/wired-qualification.md`).
 Repository-local resilience and lifecycle gates now cover fail-closed OPA
 responses, conservative cache loss, revocation partitions, worker fencing,
 evidence retry, bounded PostgreSQL latency/process restart, API pod loss,

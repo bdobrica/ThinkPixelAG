@@ -82,6 +82,16 @@ class Drill:
         self.k('rollout', 'status', 'deployment/' + self.a.api, '--timeout=240s')
         self.ready()
 
+    def replace_api(self, *command):
+        # Deployment availability does not mean old serving processes have
+        # finished their drain. Fault assertions require the whole fleet to
+        # have the injected configuration, including terminating old pods.
+        previous = json.loads(self.k('get', 'pod', '-l', 'app=' + self.a.api, '-o', 'json'))['items']
+        self.k(*command)
+        self.rollout()
+        for pod in previous:
+            self.k('wait', '--for=delete', 'pod/' + pod['metadata']['name'], '--timeout=180s')
+
     def run_path(self):
         run = self.sql("SELECT id FROM runs WHERE tenant_id='" + self.tenant + "' ORDER BY created_at DESC,id DESC LIMIT 1;")
         return '/v1/runs/' + str(uuid.UUID(run))
@@ -163,8 +173,7 @@ fi
         original_args = opa['args']
         def set_args(args):
             patch = {'spec': {'template': {'spec': {'containers': [{'name': 'opa', 'args': args}]}}}}
-            self.k('patch', 'deployment/' + self.a.api, '--type=strategic', '-p', json.dumps(patch))
-            self.rollout()
+            self.replace_api('patch', 'deployment/' + self.a.api, '--type=strategic', '-p', json.dumps(patch))
         try:
             set_args([a.replace('127.0.0.1:8181', '127.0.0.1:8182') for a in original_args])
             statuses = [self.request(path)[0] for _ in range(3)]
@@ -177,14 +186,12 @@ fi
         malformed = {'authorization.rego': 'package thinkpixelag.authorization\nimport rego.v1\ndecision := {"allow": "invalid"}\n'}
         try:
             self.k('patch', 'configmap/' + self.a.policy, '--type=merge', '-p', json.dumps({'data': malformed}))
-            self.k('rollout', 'restart', 'deployment/' + self.a.api)
-            self.rollout()
+            self.replace_api('rollout', 'restart', 'deployment/' + self.a.api)
             statuses = [self.request(path)[0] for _ in range(3)]
             self.check('opa_malformed_fail_closed', all(s in (0, 503) for s in statuses) and 503 in statuses, statuses=statuses, transport_failures=statuses.count(0))
         finally:
             self.k('patch', 'configmap/' + self.a.policy, '--type=merge', '-p', json.dumps({'data': policy}))
-            self.k('rollout', 'restart', 'deployment/' + self.a.api)
-            self.rollout()
+            self.replace_api('rollout', 'restart', 'deployment/' + self.a.api)
         self.check('opa_malformed_recovered', self.request(path)[0] == 200)
         self.disruptions()
 

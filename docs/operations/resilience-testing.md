@@ -55,6 +55,10 @@ Replace `--scenario prepare` with:
 | `latency` | PostgreSQL five-second pre-auth delay, closed old connections, protected requests fail closed, original zero delay restored |
 | `promote` | Quiesced standby promotion and application reconnection; topology changes persist |
 
+OPA configuration changes wait for both replacement readiness and termination
+of every previously serving API Pod before fault assertions. Deployment rollout
+completion alone can overlap an old healthy Pod's drain period.
+
 Use a separate aggregate `--report` path for each scenario. HTTP status zero
 means transport failure, not HTTP success. OPA fault assertions require at
 least one explicit 503 and no successful protected response; transport failures

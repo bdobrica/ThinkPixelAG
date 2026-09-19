@@ -1,0 +1,48 @@
+{
+  "scenario": "runtime",
+  "started_utc": "2026-09-19T06:24:33Z",
+  "checks": [
+    {
+      "name": "baseline_authorized_read",
+      "passed": true
+    },
+    {
+      "name": "opa_outage_fail_closed",
+      "passed": true,
+      "statuses": [
+        503,
+        503,
+        503
+      ],
+      "transport_failures": 0
+    },
+    {
+      "name": "opa_outage_recovered",
+      "passed": true
+    },
+    {
+      "name": "opa_malformed_fail_closed",
+      "passed": true,
+      "statuses": [
+        503,
+        503,
+        503
+      ],
+      "transport_failures": 0
+    },
+    {
+      "name": "opa_malformed_recovered",
+      "passed": true
+    },
+    {
+      "name": "pod_eviction_recovered",
+      "passed": true
+    },
+    {
+      "name": "rolling_restart_sampled_availability",
+      "passed": true,
+      "samples": 20,
+      "errors": 0
+    }
+  ]
+}

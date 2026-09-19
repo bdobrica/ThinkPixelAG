@@ -1,5 +1,9 @@
 # OPS-010 ARM64 diagnostic qualification — 2026-09-18
 
+For the subsequent wired retry, admission atomicity fix and current limits, see
+[wired qualification](wired-qualification.md). The dated results below remain
+historical evidence.
+
 Follow-up: [homelab operating envelope and recovery](homelab-qualification.md) records hardware-limited measurements separately from production qualification.
 
 Status: **not qualified; OPS-010 remains open**. The governed executable and

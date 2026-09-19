@@ -104,15 +104,15 @@ Updated documentation links resolve; diff/credential checks passed, and
 
 | Gate | Required evidence before OPS-014 can close |
 | --- | --- |
-| OPS-010 correctness | Repair the admission/idempotency commit window and prove uncertain-completion recovery creates exactly one Run and one replay outcome. Do not automatically retry uncertain admissions meanwhile. |
 | OPS-010 capacity | Complete the API/policy/admission/allocation/SSE/outbox/revocation workload matrix on the intended topology; preserve original production targets and report hardware limits separately. |
 | OPS-011 resilience | Qualify production-composed Valkey/Run-worker failures and intended-topology partition/failover behavior. Test-process probes and quiesced promotion do not close those gates. |
 | Final closeout | After those gates pass, refresh image/artifact evidence and run the full repository gate on the final source, then commit the Phase 8 completion record. |
 
-The admission defect is a correctness blocker independent of homelab throughput.
-This checkpoint does not fix it, weaken an invariant, or start unrelated
-cross-component implementation. Phase 9 release-candidate closure must not treat
-this checkpoint as Phase 8 completion.
+The admission defect identified at this checkpoint was subsequently fixed in
+`406db54`, with deployed retry and concurrent-key checks recorded in the
+[wired retry](wired-qualification.md). The remaining workload and topology
+gates above still prevent Phase 8 completion and Phase 9 release-candidate
+closure.
 
 ## Retained environment
 

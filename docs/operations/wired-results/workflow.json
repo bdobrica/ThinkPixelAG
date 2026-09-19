@@ -1,0 +1,37 @@
+{
+  "scenario": "workflow",
+  "started_utc": "2026-09-19T06:16:05Z",
+  "checks": [
+    {
+      "name": "workflow_admitted",
+      "passed": true,
+      "status": 201
+    },
+    {
+      "name": "workflow_admission_replay",
+      "passed": true
+    },
+    {
+      "name": "workflow_key_conflict",
+      "passed": true
+    },
+    {
+      "name": "workflow_authorized_read",
+      "passed": true
+    },
+    {
+      "name": "workflow_tenant_isolation",
+      "passed": true
+    },
+    {
+      "name": "workflow_forged_token_denied",
+      "passed": true
+    },
+    {
+      "name": "workflow_signal",
+      "passed": false,
+      "status": 500
+    }
+  ],
+  "error_category": "RuntimeError"
+}

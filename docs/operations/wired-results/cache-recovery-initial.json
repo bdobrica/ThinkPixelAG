@@ -1,0 +1,6 @@
+{
+  "scenario": "first cache recovery probe immediately after Deployment readiness",
+  "exit_code": 1,
+  "aggregate_emitted": false,
+  "later_probe_passed": true
+}
