@@ -61,3 +61,5 @@ Integration-RC verification: [clean-checkout and live smoke evidence](releases/v
 Integration-RC capacity: [measured envelope and scaling guidance](releases/capacity-envelope.md).
 
 Integration-RC risks: [review and outstanding qualification](releases/risk-review.md).
+
+Integration-RC operations: [game-day scope and evidence](releases/game-days.md).

@@ -1,0 +1,171 @@
+{
+  "base_commit": "af620d16e5bf7634b093e344d2f2bf6972125c61",
+  "date": "2026-09-19",
+  "make_verify_exit_code": 0,
+  "focused_recovery_exit_code": 0,
+  "empty_database_url_rejected": true,
+  "test_and_subtest_counts": {
+    "pass": 2309
+  },
+  "go_invocations": [
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "-race",
+        "-run",
+        "^(TestManaged|TestRevocationReconcile|TestFreshnessEvaluatorFailsClosedDuringLagGapAndPartitionThenRecovers|TestBreakGlass)",
+        "./internal/cryptography",
+        "./internal/application"
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 8
+      }
+    },
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "-tags=integration",
+        "-run",
+        "^(TestPolicyActivationAndRollbackAppendVersions|TestRevocationAtomicEvidenceAndConcurrentMonotonicEpochs|TestBreakGlassApprovalExpiryAndEvidenceIntegration)$",
+        "./internal/adapters/postgres"
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 3
+      }
+    },
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "-run",
+        "^TestReleaseContractsFrozen$",
+        "./test"
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 8
+      }
+    },
+    {
+      "arguments": [
+        "test",
+        "-cover",
+        "./..."
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 484
+      }
+    },
+    {
+      "arguments": [
+        "test",
+        "-cover",
+        "./..."
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 8
+      }
+    },
+    {
+      "arguments": [
+        "test",
+        "-race",
+        "./..."
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 484
+      }
+    },
+    {
+      "arguments": [
+        "test",
+        "-race",
+        "./..."
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 8
+      }
+    },
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "-tags=integration",
+        "./..."
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 500
+      }
+    },
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "-tags=e2e",
+        "./..."
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 488
+      }
+    },
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "./internal/artifact",
+        "./internal/application",
+        "./internal/domain",
+        "./internal/evidence",
+        "./internal/policy",
+        "./internal/adapters/httpserver",
+        "./internal/adapters/mtls",
+        "./internal/adapters/opa"
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 303
+      }
+    },
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "-tags=integration",
+        "-run",
+        "^(TestTransactionalEvidenceAndReplaySafeOutbox|TestEvidenceDeliveryReplayReceiptAndCheckpoint|TestAgentApprovalLifecycleEvidenceIsolationConcurrencyAndImmutability)$",
+        "./internal/adapters/postgres"
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 3
+      }
+    },
+    {
+      "arguments": [
+        "test",
+        "-count=1",
+        "-run",
+        "^(TestKubernetes|TestRelease)",
+        "./test"
+      ],
+      "exit_code": 0,
+      "test_and_subtest_counts": {
+        "pass": 12
+      }
+    }
+  ],
+  "log_sha256": {
+    "rc005-focused.log": "361454a0fcadba4098fc2488b904f4987fa9f5ffc0360183fe04cc0b6019685d",
+    "rc005-verify.log": "98085e3ba18d52cdc45917ef1aa35d3eaabb5bc5f094b1a8012a6d6452e9e67a"
+  }
+}

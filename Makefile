@@ -163,6 +163,13 @@ test-postgres-pitr: ## Exercise encrypted physical backup, WAL PITR, forward mig
 	CGO_ENABLED=0 $(GO) build -trimpath -buildvcs=false -o $(BUILD_DIR)/thinkpixelag-migrate ./cmd/thinkpixelag-migrate
 	DOCKER=$(DOCKER) POSTGRES_IMAGE=$$(awk '/^[[:space:]]*image: postgres:/{print $$2; exit}' compose.yaml) bash test/postgres_pitr.sh
 
+.PHONY: test-governance-recovery
+test-governance-recovery: ## Rehearse component key rotation, policy rollback, reconciliation, and break glass.
+	@test -n '$(TEST_DATABASE_URL)' || { echo 'TEST_DATABASE_URL is required'; exit 1; }
+	$(GO) test -count=1 -race -run '^(TestManaged|TestRevocationReconcile|TestFreshnessEvaluatorFailsClosedDuringLagGapAndPartitionThenRecovers|TestBreakGlass)' ./internal/cryptography ./internal/application
+	THINKPIXELAG_TEST_DATABASE_URL='$(TEST_DATABASE_URL)' $(GO) test -count=1 -tags=integration \
+		-run '^(TestPolicyActivationAndRollbackAppendVersions|TestRevocationAtomicEvidenceAndConcurrentMonotonicEpochs|TestBreakGlassApprovalExpiryAndEvidenceIntegration)$$' ./internal/adapters/postgres
+
 test-resilience: ## Exercise provider-neutral policy, cache, stream, worker, and evidence fault handling.
 	python3 -m unittest discover -s test/operations -p test_resilience.py
 	$(GO) test -count=1 -run '^(TestClientFailsClosed|TestClientRejectsAdversarialOutput)$$' ./internal/adapters/opa

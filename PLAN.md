@@ -373,7 +373,9 @@ Contract freeze is implemented: OpenAPI `0.1.0-rc.1` and policy
 Clean-checkout verification and archived RC evidence are complete; see
 `docs/releases/verification.md`. The accepted integration capacity envelope is recorded separately from unchanged
 production targets in `docs/releases/capacity-envelope.md`. The integration release risk review is recorded in
-`docs/releases/risk-review.md`; next are the operational game-day dispositions.
+`docs/releases/risk-review.md`; integration game-day dispositions and the
+repeatable component rehearsal are in `docs/releases/game-days.md`. Next is
+release-wide evidence reconciliation.
 
 Run all verification gates, resolve critical/high findings, freeze contracts, prepare release notes, convert completed planning decisions/history into ADRs, update README, remove `PLAN.md` and `TODO.md`, and commit the documentation transition. Exit when the repository can produce a traceable, signed/taggable RC artifact from a clean checkout.
 

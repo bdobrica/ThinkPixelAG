@@ -156,7 +156,7 @@ of scope until their qualification is completed.
 - [x] RC-002 Run `make verify` from a clean checkout and archive unit, race, fuzz, policy, integration, contract, end-to-end, security, and Kubernetes smoke evidence. — 2026-09-19: clean `79d2ac9` gate, six fuzz campaigns, live retained-cluster smoke; all initial default-suite skips covered by passing database/race runs; `docs/releases/verification.md`
 - [x] RC-003 Confirm SLO/capacity targets and document accepted performance envelopes and scaling guidance. — 2026-09-19: unchanged production numbers; measured integration envelope, topology limits and scaling guidance in `docs/releases/capacity-envelope.md`; DQ-001 remains deferred.
 - [x] RC-004 Confirm zero unresolved critical/high vulnerabilities, security findings, migration risks, flaky/skipped required tests, or fail-open paths. — 2026-09-19: scoped evidence/risk review, no known blocking finding; corrected OCI license label; aggregate gate and explicit skip accounting; `docs/releases/risk-review.md`.
-- [ ] RC-005 Exercise and record install, upgrade, rollback/forward, backup/restore, policy rollback, revocation reconciliation, key rotation, and break-glass game days.
+- [x] RC-005 Exercise and record install, upgrade, rollback/forward, backup/restore, policy rollback, revocation reconciliation, key rotation, and break-glass game days. — 2026-09-19: integration-scope evidence matrix and repeatable component recovery target; sequential managed-key guard rotation; production KMS/IdP ceremony explicitly unqualified; `docs/releases/game-days.md`.
 - [ ] RC-006 Reconcile every TODO item against implementation, tests, commits, docs, and release artifacts; resolve all blockers and deviations.
 - [ ] RC-007 Update README with final architecture, supported versions, quick start, configuration, API docs, development commands, deployment, security, and support status.
 - [ ] RC-008 Create numbered ADRs under `docs/adr/` for all durable decisions and relevant history extracted from `PLAN.md` and `TODO.md`.
@@ -247,7 +247,8 @@ Append one entry per completed atomic item or tightly coupled group. Do not dele
 | 2026-09-19 | RC-001 | `79d2ac9` | Seven-boundary comparison against `72715e1`; contract freeze guard, static/OpenAPI validation, 27/27 policy tests and aggregate gate | No wire behavior or migration change; policy v1alpha1 retained for compatibility |
 | 2026-09-19 | RC-002 | `c12a2a1` | Clean `79d2ac9` aggregate gate; six fuzz targets; live Kubernetes smoke; zero unresolved skips | Aggregate evidence in `docs/releases/rc002-results/`; resources retained |
 | 2026-09-19 | RC-003 | `6edba1d` | Reconciled measured counts/latencies with archived reports; production targets unchanged | Separate workload samples and deferred production qualification are explicit |
-| 2026-09-19 | RC-004 | pending commit | Security/migration/skip evidence reconciled; OCI Apache-2.0 label corrected; aggregate gate | Provider qualification, medium advisories and unsigned artifacts remain explicit |
+| 2026-09-19 | RC-004 | `af620d1` | Security/migration/skip evidence reconciled; OCI Apache-2.0 label corrected; aggregate gate | Provider qualification, medium advisories and unsigned artifacts remain explicit |
+| 2026-09-19 | RC-005 | pending commit | Component rotation/recovery target and aggregate verification; prior live/PITR/lifecycle evidence mapped | Production provider ceremonies are not claimed; retained resources unchanged |
 
 ## Active blockers and deviations
 
