@@ -57,3 +57,5 @@ Durable decisions live in [Architecture Decision Records](adr/README.md). During
 - [Integration-RC contract freeze](releases/contract-freeze.md)
 
 Integration-RC verification: [clean-checkout and live smoke evidence](releases/verification.md).
+
+Integration-RC capacity: [measured envelope and scaling guidance](releases/capacity-envelope.md).

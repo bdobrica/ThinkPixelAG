@@ -1,6 +1,6 @@
 # Service-Level Objectives and Capacity Targets
 
-These are initial RC targets for a single region. Phase 8 load and resilience testing must validate or revise them with evidence. Security invariants are not traded against availability SLOs.
+These are unchanged production qualification targets for a single region. The first integration RC uses the separately recorded [measured operating envelope](../releases/capacity-envelope.md) and [accepted qualification deferrals](deferred-qualification.md). Short homelab samples do not establish production capacity or 30-day availability. Security invariants are not traded against availability SLOs.
 
 ## Measurement rules
 
@@ -11,7 +11,7 @@ These are initial RC targets for a single region. Phase 8 load and resilience te
 
 ## SLOs
 
-| Indicator | RC objective over rolling 30 days | Alert windows |
+| Indicator | Production objective over rolling 30 days | Alert windows |
 |---|---:|---|
 | Public read API availability | 99.9% | fast burn 1h; slow burn 6h/3d |
 | Run create/mutation API availability | 99.9% | fast burn 1h; slow burn 6h/3d |
