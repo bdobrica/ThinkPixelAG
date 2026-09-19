@@ -27,7 +27,10 @@ checkpoint. Receipts are append-only. A crash after remote acceptance but
 before local commit reclaims the same event after lease expiry and recreates
 the same delivery hash, allowing sink-side deduplication. Mismatched, unknown,
 oversized, non-2xx, or malformed receipts fail closed and do not advance the
-checkpoint.
+checkpoint. An outstanding delivery retains its event identity when its lease
+expires or ownership is released after an uncertain response. A newly committed
+event, including one with an earlier occurrence timestamp, cannot replace that
+delivery at the same sequence. Release fences the previous owner immediately.
 
 Sink endpoint and credentials are deployment configuration, not governance
 authority. Production deployments MUST use HTTPS and an independently
