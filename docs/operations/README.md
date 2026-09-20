@@ -29,3 +29,6 @@ Start with the [quick start](../quickstart.md) for an isolated test or the
 The current RC qualifies the implemented AG component. The
 [accepted deferrals](../adr/0012-integration-rc-qualification-deferrals.md)
 identify the production and cross-component evidence still needed.
+
+[Policy administration](administration.md) covers draft editing, promotion,
+activation and independent local rollback approval through the API.

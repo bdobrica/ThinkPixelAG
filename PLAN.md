@@ -1,7 +1,7 @@
 # Next integration release candidate
 
 Status: implementation in progress; RC-101 decisions and RC-102 constraint
-inheritance are implemented. The administration and harness features remain pending.
+inheritance are implemented. Signed policy administration and editor/rollback APIs are implemented; managed configuration, bootstrap and harness features remain pending.
 Execution checklist: [TODO.md](TODO.md). Scope: dynamic harness guidance and
 usable administration through APIs and an optional UI.
 
@@ -44,7 +44,7 @@ partially supersede the older static-mapping/local-signing decisions explicitly.
 
 The owner selected the explicit local-development signing profile and two
 OIDC-authenticated operators in [ADR-0016](docs/adr/0016-local-development-policy-promotion.md).
-No cloud setup is required. RC-103/104 must implement the software-key adapter
+No cloud setup is required. RC-103/104 implement the software-key adapter
 and authenticated approval receipts; production KMS/HSM and external-provider
 qualification remain separate. [ADR-0015](docs/adr/0015-managed-governance-configuration.md)
 selects the OPA decision connection as the first integration setting; RC-106

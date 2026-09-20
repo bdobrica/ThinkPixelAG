@@ -62,3 +62,11 @@ OPA/cache JSON decoding retains exact numbers instead of float64 rounding.
 The policy reference and Go contract fingerprints are regenerated intentionally
 for this reviewed correction; existing signed bundles are not rewritten or
 silently reactivated. Release images predating this change still need an upgrade.
+
+## RC-104 administration additions
+
+Editor, policy read/history and local approval routes are additive OpenAPI
+operations. Existing upload/activation request and response schemas are retained.
+The policy wire identifier is unchanged. The OpenAPI fingerprint was explicitly
+regenerated for the new paths and schemas; schemas 19/20 only add policy history
+protection and draft/receipt storage. No existing signed artifact is rewritten.

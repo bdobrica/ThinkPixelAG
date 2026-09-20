@@ -49,7 +49,7 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   transactional replay/evidence and schema 19 immutability. Focused Go and
   PostgreSQL/OPA HTTP integration checks passed. Editor/approval APIs follow in RC-104.
 
-- [ ] **RC-104 — Add policy editor support and rollback.** Depends on RC-103.
+- [x] **RC-104 — Add policy editor support and rollback.** Depends on RC-103.
   Specify and implement tenant-scoped list/detail/source, draft validation and
   activation-history operations with bounded payloads and pagination where
   needed. Persist revisioned drafts; editing creates a new revision and cannot
@@ -58,7 +58,10 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   than free-form approval references. Done: CLI can edit, validate, promote,
   activate and roll back; rollback appends history. Check: stale edits, invalid
   Rego, requester/approver separation, expired/replayed approvals, source access
-  isolation and unchanged active policy on failure.
+  isolation and unchanged active policy on failure. Completed: additive editor/
+  history APIs, immutable drafts and authenticated local approval receipts
+  (schema 20), exact promotion and transactional rollback. HTTP/PostgreSQL/OPA
+  workflow, expiry/replay/isolation checks, focused tests and OpenAPI lint passed.
 
 - [ ] **RC-105 — Implement managed external role mappings.** Depends on RC-101.
   Add tenant-scoped revisioned storage, read/update API and the selected narrow

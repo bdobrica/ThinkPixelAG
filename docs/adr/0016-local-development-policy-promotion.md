@@ -2,7 +2,8 @@
 
 - Status: Accepted
 - Date: 2026-09-20
-- Implementation: selected path for RC-103/104/107; adapters are not implemented yet
+- Implementation: RC-103/104 provide local signing and authenticated approval
+  receipts; RC-107 operator provisioning remains pending
 - Supersedes: ADR-0010 only where local/test signing was limited to disabled or
   test-only keys; production managed-key requirements are unchanged
 

@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver"
+	"github.com/bdobrica/ThinkPixelAG/internal/adapters/localapprovals"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/localkeys"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/opa"
@@ -68,6 +69,9 @@ func newAdministrationFixture(t *testing.T) *administrationFixture {
 	}
 	t.Cleanup(pool.Close)
 	tenant, actor := mustNewRepositoryID(t), mustNewRepositoryID(t)
+	t.Cleanup(func() {
+		_, _ = pool.Exec(context.Background(), `DELETE FROM outbox_messages WHERE tenant_id=$1`, tenant.String())
+	})
 	now := time.Now().UTC().Add(-time.Second)
 	if _, err = pool.Exec(ctx, `INSERT INTO tenants(id,slug,display_name,created_at,updated_at)VALUES($1,$2,$2,$3,$3)`, tenant.String(), "admin-"+tenant.String(), now); err != nil {
 		t.Fatal(err)
@@ -106,7 +110,7 @@ func newAdministrationFixture(t *testing.T) *administrationFixture {
 		t.Fatal(err)
 	}
 	evaluator := &opa.ArtifactEvaluator{Store: repo, Modules: modules, Verifier: key, Channel: "stable", MaxTTL: time.Minute}
-	service := &application.PolicyAdministration{Store: repo, Evaluator: evaluator, Modules: modules, Verifier: key, Channel: "stable", Clock: domain.SystemClock{}}
+	service := &application.PolicyAdministration{Store: repo, Evaluator: evaluator, Modules: modules, Verifier: key, Signer: key, SigningKeyID: key.ID(), ApprovalProvider: &localapprovals.Provider{Store: repo}, Channel: "stable", Clock: domain.SystemClock{}}
 	initial, err := repo.PolicyArtifact(ctx, "stable", digest)
 	if err != nil {
 		t.Fatal(err)
@@ -114,20 +118,28 @@ func newAdministrationFixture(t *testing.T) *administrationFixture {
 	return &administrationFixture{pool: pool, repo: repo, tenant: tenant, actor: actor, key: key, modules: modules, service: service, initial: initial}
 }
 
-type administrationVerifier struct{ tenant, actor domain.ID }
+type administrationVerifier struct{ tenant, actor, approver domain.ID }
 
 func (v administrationVerifier) Verify(_ context.Context, token string) (oidc.Principal, error) {
 	roles := []string{"agent-invoker"}
-	if token == "admin" {
+	if token == "admin" || token == "approver" {
 		roles = []string{"policy-admin"}
 	}
-	return oidc.Principal{TenantID: v.tenant.String(), ID: v.actor.String(), Roles: roles}, nil
+	actor := v.actor
+	if token == "approver" {
+		actor = v.approver
+	}
+	return oidc.Principal{TenantID: v.tenant.String(), ID: actor.String(), Roles: roles}, nil
 }
 func administrationHTTP(t *testing.T, f *administrationFixture) http.Handler {
+	return administrationHTTPWithApprover(t, f, domain.ID{})
+}
+func administrationHTTPWithApprover(t *testing.T, f *administrationFixture, approver domain.ID) http.Handler {
+	codec, _ := domain.NewCursorCodec(bytes.Repeat([]byte{1}, 32))
 	logger, _ := logging.New(io.Discard, "info")
 	metric, _ := metrics.New(false, metrics.BuildInfo{})
 	trace, _ := tracing.New(context.Background(), tracing.Config{Mode: "noop"})
-	server, err := httpserver.New(config.Defaults().HTTP, httpserver.Dependencies{Logger: logger, Metrics: metric, Tracing: trace, NewID: func() (string, error) { id, err := domain.NewID(); return id.String(), err }, PolicyAdministration: httpserver.PolicyAdministrationHandler(administrationVerifier{f.tenant, f.actor}, f.service)})
+	server, err := httpserver.New(config.Defaults().HTTP, httpserver.Dependencies{Logger: logger, Metrics: metric, Tracing: trace, NewID: func() (string, error) { id, err := domain.NewID(); return id.String(), err }, PolicyAdministration: httpserver.PolicyAdministrationHandler(administrationVerifier{f.tenant, f.actor, approver}, f.service), PolicyEditor: httpserver.PolicyEditorHandler(administrationVerifier{f.tenant, f.actor, approver}, f.service, codec)})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -16,12 +16,15 @@ var adminKey = regexp.MustCompile(`^[A-Za-z0-9._:-]{16,128}$`)
 var adminIdentifier = regexp.MustCompile(`^[a-zA-Z0-9._:-]{1,128}$`)
 
 type PolicyAdministration struct {
-	Store     ports.PolicyAdministrationStore
-	Evaluator policy.Evaluator
-	Modules   ports.PolicyModuleRuntime
-	Verifier  ports.Verifier
-	Channel   string
-	Clock     domain.Clock
+	Store            ports.PolicyAdministrationStore
+	Evaluator        policy.Evaluator
+	Modules          ports.PolicyModuleRuntime
+	Verifier         ports.Verifier
+	Signer           ports.Signer
+	SigningKeyID     string
+	ApprovalProvider ports.ApprovalProvider
+	Channel          string
+	Clock            domain.Clock
 }
 type AdminCaller struct {
 	TenantID, PrincipalID, RequestID domain.ID

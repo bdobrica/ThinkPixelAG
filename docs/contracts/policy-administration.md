@@ -55,3 +55,44 @@ profile in `local`/`test` environments only; production startup rejects it.
 Deployments without that setting retain their existing static policy composition.
 The optional console is not required. Initial operator provisioning and editor
 workflows are tracked separately in [TODO.md](../../TODO.md).
+
+## Editor and local approvals
+
+The optional local profile now also exposes:
+
+| Operation | API |
+|---|---|
+| List metadata, read exact source | `GET /v1/admin/policies`, `GET /v1/admin/policies/{digest}`, `GET /v1/admin/policies/{digest}/source` |
+| Read activation history/current | `GET /v1/admin/policy-activations`, `GET /v1/admin/policy-activations/current` |
+| Create/list/read/revise drafts | `POST/GET /v1/admin/policy-drafts`, `GET/PUT /v1/admin/policy-drafts/{id}` |
+| Validate/promote reviewed source | `POST /v1/admin/policy-drafts/{id}/validation`, `POST /v1/admin/policy-drafts/{id}/promotions` |
+| Request rollback approval | `POST /v1/admin/policies/{digest}/rollback-approvals` |
+| Inspect/decide approval | `GET /v1/admin/approvals/{id}`, `POST /v1/admin/approvals/{id}/decisions` |
+
+Read/list/source operations require live `policies.manage` authorization.
+Lists are bounded to 100 items and use authenticated cursors bound to the caller,
+tenant, channel and endpoint. List projections exclude source; source is returned
+only by explicit detail operations. History is paginated by stable activation ID;
+`policy_epoch` establishes authoritative activation order.
+
+Draft saves require `source` and `expected_revision` (zero for creation). Every
+save appends an immutable revision; stale writes conflict. A `revision` query on
+draft detail selects an exact revision, with zero/absence selecting the latest.
+Validation compiles without activating. Promotion requires the exact `revision`,
+`digest` and positive `artifact_revision`; it signs that immutable revision with
+the development key and calls the same verified upload service. A later draft
+edit cannot change the promoted bytes. Draft source never enters idempotency
+response storage or audit/outbox metadata.
+
+Rollback requests supply `expected_policy_epoch`, `lifetime_seconds` (1–3600)
+and `reason_code`. The returned approval identifies the exact action digest.
+Another operator uses `{"approved":true}` or `false` to decide it; the caller's
+verified identity supplies the approver. AG records an immutable authenticated
+receipt and verifies it through the local ApprovalProvider adapter before
+recording the decision. A free-form approval reference is insufficient.
+Requesters cannot approve themselves. Expired or consumed approvals cannot be
+used; the API projects expiry without rewriting the append-only history.
+
+Schema 20 adds draft revisions and authenticated approval receipts. OIDC-backed
+local receipts exercise the protocol but do not establish an independent
+enterprise approval service or production MFA qualification.

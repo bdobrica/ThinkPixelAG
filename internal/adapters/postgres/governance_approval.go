@@ -87,6 +87,16 @@ LEFT JOIN governance_approval_consumptions c ON c.tenant_id=r.tenant_id AND c.ap
 	if approval.ConsumedAt != nil {
 		approval.State = domain.GovernanceApprovalConsumed
 	}
+	approval.RequestedAt = approval.RequestedAt.UTC()
+	approval.ExpiresAt = approval.ExpiresAt.UTC()
+	if approval.DecidedAt != nil {
+		at := approval.DecidedAt.UTC()
+		approval.DecidedAt = &at
+	}
+	if approval.ConsumedAt != nil {
+		at := approval.ConsumedAt.UTC()
+		approval.ConsumedAt = &at
+	}
 	if err := approval.Validate(); err != nil {
 		return domain.GovernanceApproval{}, fmt.Errorf("validate stored governance approval: %w", err)
 	}

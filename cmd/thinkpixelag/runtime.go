@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver"
+	"github.com/bdobrica/ThinkPixelAG/internal/adapters/localapprovals"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/localkeys"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/mtls"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc"
@@ -162,6 +163,7 @@ func (r *runtimeRoutes) mount(d *httpserver.Dependencies, trusted bool) {
 	} else {
 		if r.localKey != nil {
 			d.PolicyAdministration = r.route("policy-admin", false)
+			d.PolicyEditor = r.route("policy-editor", false)
 		}
 		d.AgentDiscovery = r.route("discovery", false)
 		d.AgentApprovals = r.route("approval", false)
@@ -238,8 +240,16 @@ func (r *runtimeRoutes) handler(name string, tenant domain.ID, repo *postgres.Te
 		return m.Sum(nil)
 	}
 	switch name {
-	case "policy-admin":
-		return httpserver.PolicyAdministrationHandler(r.verifier, &application.PolicyAdministration{Store: repo, Evaluator: evaluator, Modules: modules, Verifier: r.localKey, Channel: r.runtime.PolicyChannel, Clock: r.clock}), nil
+	case "policy-admin", "policy-editor":
+		s := &application.PolicyAdministration{Store: repo, Evaluator: evaluator, Modules: modules, Verifier: r.localKey, Signer: r.localKey, SigningKeyID: r.localKey.ID(), ApprovalProvider: &localapprovals.Provider{Store: repo}, Channel: r.runtime.PolicyChannel, Clock: r.clock}
+		if name == "policy-admin" {
+			return httpserver.PolicyAdministrationHandler(r.verifier, s), nil
+		}
+		codec, e := domain.NewCursorCodec(key("policy-administration-pages"))
+		if e != nil {
+			return nil, e
+		}
+		return httpserver.PolicyEditorHandler(r.verifier, s, codec), nil
 	case "discovery":
 		s, e := application.NewAgentDiscovery(repo, evaluator, r.clock)
 		if e != nil {

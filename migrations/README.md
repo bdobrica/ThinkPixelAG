@@ -75,3 +75,5 @@ database triggers to reject direct updates or deletes.
 
 - `019` prevents rewriting signed policy artifacts and closed activation history;
   closing the current activation interval remains permitted.
+- `020` adds immutable policy draft revisions and authenticated local approval
+  receipts, with tenant-bound foreign keys to governance approval requests.

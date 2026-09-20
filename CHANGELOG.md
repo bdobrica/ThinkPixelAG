@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add policy draft editing, validation, exact promotion, paginated history and
+  independent OIDC-operator rollback approvals (schema 20).
+
 - Add opt-in local signed policy upload/activation, immutable artifact evaluation
   through OPA, transactional replay/evidence and policy-history protection (schema 19).
 
