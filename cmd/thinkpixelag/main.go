@@ -13,6 +13,7 @@ import (
 
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/evidencehttp"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver"
+	"github.com/bdobrica/ThinkPixelAG/internal/adapters/localkeys"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc"
 	postgresadapter "github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/valkey"
@@ -140,6 +141,15 @@ func run(ctx context.Context, args []string) error {
 			return err
 		}
 		routes := &runtimeRoutes{settings: settings, runtime: runtime, repositories: repositories, policies: policyFreshness, verifier: verifier, clock: clock, metrics: metricSet, client: policyHTTPClient(settings.OPA.Timeout), readiness: securityReadiness}
+		if runtime.LocalPolicyKey != "" {
+			if settings.Environment != config.EnvironmentLocal && settings.Environment != config.EnvironmentTest {
+				return fmt.Errorf("local policy administration is forbidden in production")
+			}
+			routes.localKey, err = localkeys.Open(runtime.LocalPolicyKey)
+			if err != nil {
+				return err
+			}
+		}
 		if settings.Valkey.URL.IsSet() {
 			routes.accelerator, err = valkey.New(settings.Valkey.URL.Value(), settings.Valkey.Timeout, []byte(settings.Valkey.CacheIntegrityKey.Value()))
 			if err != nil {

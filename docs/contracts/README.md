@@ -31,3 +31,6 @@ AG owns the governance database. Peer components use versioned contracts and
 stable IDs, never direct database access or Go `internal` types. Skills,
 marketplace metadata and harness output cannot grant Run authority. See
 [ALIGNMENT](../../ALIGNMENT.md) and [ADRs](../adr/README.md) for ownership and rationale.
+
+[Policy administration](policy-administration.md) explains signed upload,
+activation, replay and exact-artifact OPA selection in the local development profile.

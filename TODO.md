@@ -36,7 +36,7 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
 
 ## 2. Administration API before UI
 
-- [ ] **RC-103 — Compose signed policy upload and activation.** Depends on RC-101.
+- [x] **RC-103 — Compose signed policy upload and activation.** Depends on RC-101.
   Reuse existing bundle/persistence services and published upload/activation
   schemas. Wire authenticated handlers, action authorization, validation/signing
   adapters and runtime dependencies. Reconcile the actual OPA bundle with active
@@ -45,6 +45,9 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   uploaded and activated using HTTP, with a subsequent decision demonstrably
   using that digest/version. Check: invalid signatures, incompatible artifacts,
   denied tenants/roles, retries and failed OPA load/activation recovery.
+  Completed: opt-in local signed upload/activation, per-artifact OPA selection,
+  transactional replay/evidence and schema 19 immutability. Focused Go and
+  PostgreSQL/OPA HTTP integration checks passed. Editor/approval APIs follow in RC-104.
 
 - [ ] **RC-104 — Add policy editor support and rollback.** Depends on RC-103.
   Specify and implement tenant-scoped list/detail/source, draft validation and

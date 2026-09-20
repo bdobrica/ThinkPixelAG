@@ -17,8 +17,8 @@ adaptation; TG and LLMGW own their respective enforcement and credentials. The U
 does not own governance data or become necessary for AG startup or operation.
 
 The current executable evaluates policy, admits and manages Runs, and exposes
-some administrative operations. Policy upload/activation are defined in OpenAPI
-but lack HTTP/runtime composition. Roles currently come from deployment-owned
+some administrative operations. Policy upload/activation are composed in the opt-in local-development profile
+(RC-103); production managed-key adapters remain a separate prerequisite. Roles currently come from deployment-owned
 OIDC mappings. Dynamic instructions are accepted but unimplemented in
 [ADR-0013](docs/adr/0013-dynamic-harness-instructions.md). RC-102 corrects omitted
 caller/policy limits and applies approved manifest ceilings in root admission;

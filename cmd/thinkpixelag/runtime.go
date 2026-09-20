@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver"
+	"github.com/bdobrica/ThinkPixelAG/internal/adapters/localkeys"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/mtls"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/oidc"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/opa"
@@ -31,6 +32,7 @@ import (
 // runtimeSettings is deployment configuration, never a request-supplied grant.
 // Secrets are supplied separately through Secret or mounted TLS files.
 type runtimeSettings struct {
+	LocalPolicyKey       string         `json:"local_policy_key,omitempty"`
 	PolicyChannel        string         `json:"policy_channel"`
 	AuthorityConstraints map[string]any `json:"authority_constraints"`
 	TrustedAddress       string         `json:"trusted_address"`
@@ -149,6 +151,7 @@ type runtimeRoutes struct {
 	metrics      *metrics.Metrics
 	client       *http.Client
 	accelerator  ports.ThroughputAccelerator
+	localKey     *localkeys.Key
 }
 
 func (r *runtimeRoutes) mount(d *httpserver.Dependencies, trusted bool) {
@@ -157,6 +160,9 @@ func (r *runtimeRoutes) mount(d *httpserver.Dependencies, trusted bool) {
 		d.ResourceSettlement = r.route("settlement", true)
 		d.RevocationDistribution = r.route("distribution", true)
 	} else {
+		if r.localKey != nil {
+			d.PolicyAdministration = r.route("policy-admin", false)
+		}
 		d.AgentDiscovery = r.route("discovery", false)
 		d.AgentApprovals = r.route("approval", false)
 		d.RunAdmission = r.route("admission", false)
@@ -214,7 +220,12 @@ func (r *runtimeRoutes) handler(name string, tenant domain.ID, repo *postgres.Te
 	if err != nil {
 		return nil, err
 	}
-	evaluator, err := policy.NewRevocationEvaluator(&measuredPolicy{client, r.metrics}, r.repositories, r.clock.Now)
+	var base policy.Evaluator = client
+	modules := &opa.Modules{Base: r.settings.OPA.URL, Token: r.settings.OPA.BearerToken.Value(), Client: r.client, Timeout: r.settings.OPA.Timeout}
+	if r.localKey != nil {
+		base = &opa.ArtifactEvaluator{Store: repo, Modules: modules, Verifier: r.localKey, Channel: r.runtime.PolicyChannel, MaxTTL: r.settings.OPA.DecisionMaxTTL}
+	}
+	evaluator, err := policy.NewRevocationEvaluator(&measuredPolicy{base, r.metrics}, r.repositories, r.clock.Now)
 	if err != nil {
 		return nil, err
 	}
@@ -227,6 +238,8 @@ func (r *runtimeRoutes) handler(name string, tenant domain.ID, repo *postgres.Te
 		return m.Sum(nil)
 	}
 	switch name {
+	case "policy-admin":
+		return httpserver.PolicyAdministrationHandler(r.verifier, &application.PolicyAdministration{Store: repo, Evaluator: evaluator, Modules: modules, Verifier: r.localKey, Channel: r.runtime.PolicyChannel, Clock: r.clock}), nil
 	case "discovery":
 		s, e := application.NewAgentDiscovery(repo, evaluator, r.clock)
 		if e != nil {

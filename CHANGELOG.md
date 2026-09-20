@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add opt-in local signed policy upload/activation, immutable artifact evaluation
+  through OPA, transactional replay/evidence and policy-history protection (schema 19).
+
 - Preserve approved agent/deployment limits when Run callers or policy responses
   omit constraints; reject policy expansion and retain exact OPA/cache numbers.
 - Accept the next-RC harness bootstrap, optional console and managed-configuration

@@ -74,6 +74,7 @@ type Dependencies struct {
 	Tracing                *tracing.Tracing
 	Readiness              ReadinessProbe
 	NewID                  IDGenerator
+	PolicyAdministration   http.Handler
 	AgentApprovals         http.Handler
 	AgentDiscovery         http.Handler
 	RunAdmission           http.Handler
@@ -159,6 +160,10 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 		}
 		dependencies.Metrics.Handler().ServeHTTP(writer, request)
 	}))
+	if dependencies.PolicyAdministration != nil {
+		mount("POST /v1/admin/policies", dependencies.PolicyAdministration)
+		mount("POST /v1/admin/policies/{policy_digest}/activations", dependencies.PolicyAdministration)
+	}
 	if dependencies.AgentApprovals != nil {
 		mount("POST /v1/admin/agents/{agent_id}/versions/{version_digest}/approvals", dependencies.AgentApprovals)
 	}

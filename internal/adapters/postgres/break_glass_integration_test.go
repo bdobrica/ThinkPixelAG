@@ -18,7 +18,7 @@ func TestBreakGlassApprovalExpiryAndEvidenceIntegration(t *testing.T) {
 	}
 	ctx := context.Background()
 	conn := newMigrationTestDatabase(t, databaseURL)
-	migrateAndRequireVersion(t, ctx, conn, os.DirFS(projectMigrationsDir(t)), 18)
+	migrateAndRequireVersion(t, ctx, conn, os.DirFS(projectMigrationsDir(t)), 19)
 	repositories, err := NewRepositories(conn)
 	if err != nil {
 		t.Fatal(err)

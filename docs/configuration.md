@@ -180,3 +180,21 @@ heartbeats, five-second stream write deadlines, and 24-hour revocation cursor
 retention. OPA HTTP connections are bounded to 32 per process; size replica
 pools against the database connection budget. These are implementation bounds,
 not measured production capacity guarantees.
+
+## Local policy administration (unreleased)
+
+The optional runtime JSON field `local_policy_key` points to an ADR-0016
+Ed25519 seed file (32 bytes), mode `0600`, in a private directory (`0700`). The
+trusted API process reads it; never mount it into a browser, harness or console.
+This setting is accepted only with environment `local` or `test`; production
+startup rejects it. No key is automatically created on API startup. Protect and
+back up the key separately from ordinary source/configuration files.
+
+Enabling it switches the runtime to verified per-artifact OPA evaluation and
+mounts the [policy administration API](contracts/policy-administration.md).
+Existing policy records must be signed by that development key; old fixture
+signatures are not silently trusted. Operator provisioning is covered by RC-107.
+OPA must expose its management API privately to AG, and the HTTP body limit must
+allow the chosen base64-encoded artifact size. Other listeners/clients should
+not have OPA write access. Key replacement is an operator maintenance operation;
+this RC does not supply automatic online key rotation.
