@@ -35,7 +35,7 @@ in this checkout. Comparison against that committed baseline found:
 - The policy reference's input/output and validation sections are unchanged;
   only its experimental/freeze-status paragraph changes.
 
-See [machine-readable comparison](../evidence/rc/rc001-compatibility.json). No migration or
+See [machine-readable comparison](../evidence/results/compatibility.json). No migration or
 request/response behavior changes in this item. Breaking changes still require
 a new wire version and an explicit compatibility/migration plan under the
 accepted ADRs and contract documentation; a new image tag is insufficient.

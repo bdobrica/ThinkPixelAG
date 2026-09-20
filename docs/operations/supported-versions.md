@@ -1,8 +1,8 @@
 # Supported Versions and Upgrade Policy
 
 This matrix records tested integration-RC baselines, not all upstream-supported
-versions or every production distribution. See [verification](../evidence/rc/verification.md)
-and [operational scope](../evidence/rc/game-days.md) for evidence and limitations.
+versions or every production distribution. See [verification](../evidence/README.md#verification)
+and [operational scope](../evidence/README.md#recovery) for evidence and limitations.
 
 | Component | RC support baseline | Pinning rule | Support policy |
 |---|---|---|---|
@@ -49,11 +49,10 @@ vulnerability gate identified reachable standard-library advisories fixed in
 patch listed by the official Go release history. The module/package checks and pinned builder passed
 on `linux/amd64`; the distroless runtime passed non-root, read-only, health, build
 metadata, and graceful-shutdown smoke tests. Subsequent Phase 8 multiarchitecture publication and ARM64 runtime evidence are
-recorded in [closeout](../evidence/homelab/phase-8-closeout.md); RC-002 adds a fresh
-retained-cluster smoke. On 2026-09-19, `kubectl version -o json` reported the
+recorded in the [artifact and runtime evidence](../evidence/README.md#artifacts). On 2026-09-19, `kubectl version -o json` reported the
 retained K3s client/server as `v1.36.4+k3s1`, platform `linux/arm64`.
 
 The complete Phase 1 matrix and engineering foundation were reverified from a
 clean clone of `147cbf4` on `linux/amd64`; see
-[`phase-1-evidence.md`](../evidence/implementation/phase-1-evidence.md) for the environment, commands,
+[`phase-1-evidence.md`](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/implementation/phase-1-evidence.md) for the environment, commands,
 artifact identity, and declared later-phase qualifications.

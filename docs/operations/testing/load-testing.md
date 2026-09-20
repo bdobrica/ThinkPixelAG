@@ -95,6 +95,6 @@ drain window follows offered traffic. Connection setup time is reported
 separately. This controlled measurement does not implement durable gateway
 state or replace partition/reconciliation checks.
 
-See [homelab qualification](../../evidence/homelab/homelab-qualification.md) for hardware-limited
+See [homelab qualification](../../evidence/README.md#capacity) for hardware-limited
 measurements and recovery evidence; the production objectives remain in
 [slos.md](../slos.md).

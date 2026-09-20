@@ -1,9 +1,0 @@
-{
-  "authorized_after_reconciliation": true,
-  "normal_write_denied_after_bound": true,
-  "partition_seconds": 31,
-  "reconciliation_monotonic": true,
-  "scenario": "stream_partition",
-  "scope": "test consumer with real mTLS endpoint and freshness boundary; not a production gateway",
-  "stream_connected": true
-}

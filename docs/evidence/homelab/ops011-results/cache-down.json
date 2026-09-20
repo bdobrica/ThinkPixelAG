@@ -1,8 +1,0 @@
-{
-  "allow_from_real_opa": true,
-  "authoritative_cache_bypass": true,
-  "cache_down": true,
-  "cache_status": "miss",
-  "scenario": "real_valkey_and_opa",
-  "scope": "test composition; production API cache remains disabled"
-}

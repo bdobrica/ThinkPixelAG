@@ -63,5 +63,5 @@ detect drift but do not prove semantic compatibility.
 
 - [Alignment](../../ALIGNMENT.md), [architecture](../architecture/system.md)
 - [Primitive contract](../contracts/primitives.md), [contract freeze](../contracts/compatibility.md)
-- [Historical plan](../evidence/rc/history/PLAN.md), sections 2–5; ENG-001–012 in the [ledger](../evidence/rc/history/TODO.md)
+- [Historical plan](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/PLAN.md), sections 2–5; ENG-001–012 in the [ledger](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/TODO.md)
 - Commits `5287791`, `8ff8f77`, `72319f1`, `7e03c72`, `562cc4d`, `79d2ac9`

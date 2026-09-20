@@ -1,9 +1,0 @@
-{
-  "fence_increased": true,
-  "new_heartbeat_accepted": true,
-  "same_run_reclaimed": true,
-  "scenario": "worker_process_kill",
-  "scope": "real application and PostgreSQL adapters; test process, not production worker composition",
-  "stale_heartbeat_rejected": true,
-  "stale_mutation_rejected": true
-}

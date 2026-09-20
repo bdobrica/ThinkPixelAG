@@ -61,6 +61,6 @@ bugs and their regression evidence remain part of the release record.
 ## References and evidence
 
 - [Lifecycle contract](../contracts/domain-model.md), [API examples](../api/run-lifecycle.md)
-- [Phase 4 evidence](../evidence/implementation/phase-4-evidence.md), [SSD qualification](../evidence/homelab/ssd-qualification.md)
-- [Historical plan](../evidence/rc/history/PLAN.md), sections 3.5/5; RUN entries in the [ledger](../evidence/rc/history/TODO.md)
+- [Phase 4 evidence](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/implementation/phase-4-evidence.md), [SSD qualification](../evidence/README.md#capacity)
+- [Historical plan](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/PLAN.md), sections 3.5/5; RUN entries in the [ledger](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/TODO.md)
 - Commits `1b31cbe`, `406db54`, `bd148a9`; `internal/application/run_worker.go`, `internal/adapters/postgres/run_admission.go`

@@ -90,4 +90,4 @@ capacity**. The production HPA manifest and SLOs remain unchanged. Container CPU
 metrics intentionally isolate application demand from the OPA sidecar; see the
 [Kubernetes HPA documentation](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/).
 
-See [OPS-012 evidence](../../evidence/homelab/ops012-evidence.md) for exact outcomes and image provenance.
+See [OPS-012 evidence](../../evidence/README.md#recovery) for exact outcomes and image provenance.

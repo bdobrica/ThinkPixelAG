@@ -3,13 +3,15 @@
 ## Unreleased
 
 - Reorganize documentation into quick start, runnable local evaluation, team
-  Kubernetes PoC, operator/security/contract guides and a historical evidence archive.
+  Kubernetes PoC, operator/security/contract guides and focused RC qualification evidence.
+- Remove redundant phase reports, copied planning snapshots and diagnostic histories;
+  retain selected original results supporting RC claims and limitations.
 - Centralize the accepted integration-RC qualification deferrals in ADR-0012.
 
 ## 0.1.0-rc.1 — integration candidate
 
 The candidate version is `0.1.0-rc.1`; no semantic Git tag or formal release has
-been published. [Exact source, OCI digests and validation](docs/evidence/rc/final-artifacts.md)
+been published. [Exact source, OCI digests and validation](docs/evidence/README.md#artifacts)
 identify the qualified artifacts.
 
 - Initial governance component: identity and policy, immutable agent/version

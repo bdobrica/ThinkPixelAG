@@ -60,7 +60,7 @@ not qualify 5,000-client production fanout or network failure domains.
 
 ## References and evidence
 
-- [Revocation contract](../contracts/revocation.md), [Phase 6 evidence](../evidence/implementation/phase-6-evidence.md)
+- [Revocation contract](../contracts/revocation.md), [Phase 6 evidence](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/implementation/phase-6-evidence.md)
 - [ADR-0004](0004-policy-evaluation-and-activation.md), [deferrals](0012-integration-rc-qualification-deferrals.md)
-- [Historical plan](../evidence/rc/history/PLAN.md), section 3.7; REV-001–011 in the [ledger](../evidence/rc/history/TODO.md)
+- [Historical plan](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/PLAN.md), section 3.7; REV-001–011 in the [ledger](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/TODO.md)
 - Commits `72ff9de`, `8409b99`, `2398385`, `c7856ff`, `90f913a`, `bf8eae1`, `57888c2`

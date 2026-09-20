@@ -70,7 +70,7 @@ Formal publication and signing must be distinguished from local artifact builds.
 ## References and evidence
 
 - [Runbooks](../operations/runbooks.md), [supported versions](../operations/supported-versions.md)
-- [Phase 8 closeout](../evidence/homelab/phase-8-closeout.md), [deferrals](0012-integration-rc-qualification-deferrals.md)
-- [RC verification](../evidence/rc/verification.md), [capacity](../operations/capacity.md), [risks](../evidence/rc/risk-review.md)
-- [Historical plan](../evidence/rc/history/PLAN.md), sections 7–13; OPS and RC entries in the [ledger](../evidence/rc/history/TODO.md)
+- [Phase 8 closeout](../evidence/README.md#recovery), [deferrals](0012-integration-rc-qualification-deferrals.md)
+- [RC verification](../evidence/README.md#verification), [capacity](../operations/capacity.md), [risks](../security/qualification.md)
+- [Historical plan](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/PLAN.md), sections 7–13; OPS and RC entries in the [ledger](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/TODO.md)
 - Commits `967165a`, `fa04a0c`, `3da7230`, `72715e1`, `79d2ac9`, `af620d1`

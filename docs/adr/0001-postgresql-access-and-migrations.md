@@ -85,7 +85,7 @@ exercises are DATA-011.
 
 ## References and evidence
 
-- [historical plan](../evidence/rc/history/PLAN.md), sections 3.2, 4, 6, and 10
-- [historical checklist](../evidence/rc/history/TODO.md), DATA-001 and DATA-007 through DATA-011
+- [historical plan](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/PLAN.md), sections 3.2, 4, 6, and 10
+- [historical checklist](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/TODO.md), DATA-001 and DATA-007 through DATA-011
 - `internal/adapters/postgres`
 - pgx v5 and Tern v2 package documentation

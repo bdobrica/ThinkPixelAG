@@ -22,7 +22,7 @@ predicates; it does not claim PostgreSQL RLS enforcement.
 
 Use the [incident guide](../operations/incidents.md) when these controls fail.
 A performance deferral never permits fail-open authorization or evidence loss.
-The [dated RC risk review](../evidence/rc/risk-review.md) records scan results
+The [dated RC risk review](qualification.md) records scan results
 and provider qualification limits; refresh deployment-specific checks before
 promotion. Test fixtures and software signing keys are not production identity
 or key-management integrations.

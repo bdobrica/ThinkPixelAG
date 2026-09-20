@@ -59,5 +59,5 @@ integration-scoped candidate with explicit revisit criteria instead.
 
 The remaining work is required before advertising the corresponding production
 capability. Correctness and security release gates remain unchanged. See the
-[measured capacity](../operations/capacity.md), [risk review](../evidence/rc/risk-review.md)
-and [closeout evidence](../evidence/homelab/phase-8-closeout.md).
+[measured capacity](../operations/capacity.md), [risk review](../security/qualification.md)
+and [closeout evidence](../evidence/README.md#recovery).

@@ -49,6 +49,6 @@ then returns retryable service unavailability.
 
 ## References
 
-- [historical checklist](../evidence/rc/history/TODO.md): AUTH-001 through AUTH-003
+- [historical checklist](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/TODO.md): AUTH-001 through AUTH-003
 - `docs/security/authentication.md`
 - `docs/security/threat-model.md`: T01 through T03 and T19

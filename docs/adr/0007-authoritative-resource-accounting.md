@@ -59,7 +59,7 @@ waits, exhaustion, settlement age and outbox lag before scaling concurrency.
 
 ## References and evidence
 
-- [Resource contract](../contracts/resource-accounting.md), [Phase 5 evidence](../evidence/implementation/phase-5-evidence.md)
-- [Deployed Valkey drill](../evidence/homelab/phase-8-closeout.md)
-- [Historical plan](../evidence/rc/history/PLAN.md), section 3.6; RES-001–014 in the [ledger](../evidence/rc/history/TODO.md)
+- [Resource contract](../contracts/resource-accounting.md), [Phase 5 evidence](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/implementation/phase-5-evidence.md)
+- [Deployed Valkey drill](../evidence/README.md#recovery)
+- [Historical plan](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/PLAN.md), section 3.6; RES-001–014 in the [ledger](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/TODO.md)
 - Commits `8a37a87`, `996d48b`, `de85483`, `e95c5f1`, `44a247b`, `014954a`, `30ff25f`

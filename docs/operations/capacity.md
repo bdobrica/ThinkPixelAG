@@ -15,9 +15,8 @@ No 30-day availability SLO has been established by these short tests.
 | Admissions with durable evidence, 200/s for 60 seconds | 9,587/12,000 successful; 2,413 dropped; publication p99 107.7 s | Fails production throughput/publication qualification |
 | Read burst, 2,000/s for 5 minutes, best recorded run | 599,230/600,000 successful; 770 dropped | Fails offered-load completion qualification |
 
-Sources: [durable evidence qualification](../evidence/homelab/ssd-evidence-qualification.md),
-[read/admission comparisons](../evidence/homelab/ssd-qualification.md), and their linked
-machine-readable reports. Client latency includes network time; it is not the
+Sources: [selected request and publication results](../evidence/README.md#capacity).
+Client latency includes network time; it is not the
 API-process latency definition used by the production SLO. The conservative
 sample used four API replicas; the retained HPA subsequently returned to its
 three-replica minimum. Reconfirm the operating point after placement, replica,
@@ -43,7 +42,7 @@ end-to-end workload is not sustainable even if admission responses are fast.
 Scale API/OPA replicas only after identifying CPU or per-replica concurrency as
 the constraint. The retained HPA's observed 3→4→3 behavior proves controller
 operation, not linear throughput scaling or the production replica envelope;
-see [lifecycle evidence](../evidence/homelab/ops012-evidence.md). Preserve readiness,
+see [lifecycle evidence](../evidence/README.md#recovery). Preserve readiness,
 disruption budgets and available node headroom during rollout.
 
 Budget database connections across every API replica, exporters, migration jobs

@@ -122,5 +122,5 @@ metadata is synthetic; the actual OPA process runs the repository fixture policy
 These probes do not qualify production worker/cache composition, signed policy
 promotion, or a gateway's durable apply boundary.
 
-See [OPS-011 results](../../evidence/homelab/ops011-evidence.md) for the hardware-specific outcomes and
+See [OPS-011 results](../../evidence/README.md#recovery) for the hardware-specific outcomes and
 remaining qualification gates. Production targets are unchanged.

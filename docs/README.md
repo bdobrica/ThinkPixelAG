@@ -11,7 +11,7 @@ Start with the [quick start](quickstart.md), then choose a [local sandbox or tea
 | Understand why a choice was made | [Architecture decisions](adr/README.md) |
 | Review security and configure trust | [Security guide](security/README.md) |
 | Check the current version and changes | [Changelog](../CHANGELOG.md) |
-| Inspect historical qualification results | [Evidence archive](evidence/README.md) |
+| Inspect RC qualification results | [Qualification evidence](evidence/README.md#artifacts) |
 
 AG is an integration release candidate. It governs Runs; ThinkPixelAR executes
 them through a harness. See the integration guide for the current executable's

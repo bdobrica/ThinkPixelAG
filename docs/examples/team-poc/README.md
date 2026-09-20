@@ -2,7 +2,7 @@
 
 This overlay provides three restricted AG replicas, a separate migration Job,
 a runtime ConfigMap, Service, default-deny networking and a disruption budget.
-It pins the [qualified RC image](../../evidence/rc/final-artifacts.md) and reuses
+It pins the [qualified RC image](../../evidence/README.md#artifacts) and reuses
 the maintained Kubernetes base. It is a template for an internal team PoC;
 external dependencies and trust must be supplied before applying it.
 

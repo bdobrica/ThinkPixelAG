@@ -15,10 +15,8 @@ ownership and integration boundaries.
 
 The integration candidate targets development with ThinkPixelAR and a real
 harness. Its frozen contracts are OpenAPI `0.1.0-rc.1` and policy
-`thinkpixelag.authorization/v1alpha1`. [Verification](docs/evidence/rc/verification.md)
-and [game-day evidence](docs/evidence/rc/game-days.md) cover the implemented AG
-component. See [release status](docs/evidence/rc/status.md) for exact-source artifact
-qualification and publication status.
+`thinkpixelag.authorization/v1alpha1`. The [qualification index](docs/evidence/README.md)
+records tested source/images, runtime checks, recovery scope and publication status.
 
 Production capacity and unavailable AR/gateway/HA scenarios are
 [explicitly deferred](docs/adr/0012-integration-rc-qualification-deferrals.md). The
@@ -83,7 +81,7 @@ ownership. This is a development/integration candidate with best-effort
 maintainer support; it does not carry a production availability SLA. Report
 non-sensitive, reproducible defects through the repository issue tracker.
 Security assumptions and outstanding qualification are recorded in the
-[threat model](docs/security/threat-model.md) and [release risk review](docs/evidence/rc/risk-review.md).
+[threat model](docs/security/threat-model.md) and [release risk review](docs/security/qualification.md).
 
 ## License
 

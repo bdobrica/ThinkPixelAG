@@ -60,6 +60,6 @@ latency or batching changes need durable correctness testing, not disabled fsync
 ## References and evidence
 
 - [Event contract](../contracts/evidence-events.md), [delivery contract](../../api/schemas/evidence-delivery-v1.json)
-- [Data classification](../security/data-classification.md), [SSD recovery](../evidence/homelab/ssd-evidence-qualification.md)
-- [Historical plan](../evidence/rc/history/PLAN.md), section 3.9; DATA-010, SEC-005/006/009 in the [ledger](../evidence/rc/history/TODO.md)
+- [Data classification](../security/data-classification.md), [SSD recovery](../evidence/README.md#capacity)
+- [Historical plan](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/PLAN.md), section 3.9; DATA-010, SEC-005/006/009 in the [ledger](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/rc/history/TODO.md)
 - Commits `3a6bb36`, `647e152`, `3dca78d`, `a7790e6`, `c1d63b0`, `efd47e3`

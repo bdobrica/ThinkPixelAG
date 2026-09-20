@@ -145,11 +145,10 @@ clear a gap and restore bounded serving. Disconnects do not reset age: the
 gateway may serve only within the applicable monotonic freshness window, while
 high-risk writes continue to require live authority.
 
-The Phase 6 single-connected-gateway measurement includes database commit,
-polling, SSE encoding/delivery, and client decoding. Production fanout to the
-capacity target, reconnect storms, and cross-zone behavior remain Phase 8 load
-qualification. Results and the complete consumer sequence are recorded in
-`docs/evidence/implementation/phase-6-evidence.md`.
+Single-consumer reconciliation is covered by the
+[retained recovery evidence](../evidence/README.md#recovery). Production fanout,
+reconnect storms and cross-zone behavior remain subject to the
+[accepted qualification deferrals](../adr/0012-integration-rc-qualification-deferrals.md).
 
 ## Required scenarios
 
