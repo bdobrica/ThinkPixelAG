@@ -45,4 +45,5 @@ require pinned versions, focused tests and an independently built image.
 
 - [Service boundary](0005-service-boundaries-and-contracts.md)
 - [Configuration ownership](0015-managed-governance-configuration.md)
-- [Implementation sequence](../../TODO.md)
+- [Console guide](../../console/README.md)
+- [Candidate qualification](../evidence/README.md#candidate-rc2)
