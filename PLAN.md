@@ -48,7 +48,8 @@ No cloud setup is required. RC-103/104 implement the software-key adapter
 and authenticated approval receipts; production KMS/HSM and external-provider
 qualification remain separate. [ADR-0015](docs/adr/0015-managed-governance-configuration.md)
 selects the OPA decision connection as the first integration setting; RC-106
-finalizes its wire fields and safe reload behavior.
+implements its bounded connection API and validates the active signed artifact
+before committing a reloadable revision.
 
 ## Workstream 1: authoritative limits and administration APIs
 

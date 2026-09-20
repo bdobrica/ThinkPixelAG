@@ -40,3 +40,45 @@ The protected operator provisioning/recovery command is delivered in RC-107.
 There is no unauthenticated bootstrap/reset endpoint or standing recovery role;
 recovery must preserve independent expansion approval. Do not enable API mode
 on a fresh deployment before provisioning its initial state.
+
+## Supported integration catalog
+
+The versioned API exposes `GET/PUT /v1/admin/integrations/opa` and
+`GET /v1/admin/integrations/opa/status`. `integrations.read/manage` require the
+current policy-admin role and active policy authorization.
+
+| Adapter / field | Ownership and reload | Meaning |
+|---|---|---|
+| OPA `connection.endpoint` | `integrations_mode: file/api`; API reload on next request | Exact HTTP(S) origin, no path, query, credentials or fragment; must match deployment `opa_allowed_origins`. |
+| OPA `connection.token_reference` | API revision; trusted resolution on each request | Empty for no token, otherwise an alias in deployment `opa_secret_files`; never a token or caller-supplied file path. |
+| OIDC issuer/audience, database, listeners, signing keys and allowlists | Deployment file; restart | Trust roots are not editable through the API. |
+| TG, LLMGW, AR, MEM and marketplace connection editing | Unsupported | Existing wire contracts do not imply a runtime connection adapter or an editable setting. |
+
+Mode selection defaults to file and is fixed at startup. API mode requires
+signed policy administration and a provisioned configuration revision. Each
+request reads the current tenant configuration; storage failures do not fall
+back to a previous replica snapshot or deployment token. File mode uses the
+existing deployment OPA URL/token, exposes no credential and rejects updates.
+
+PUT uses expected revision and idempotency. Before committing, AG verifies the
+active policy signature, compiles/checks the exact artifact at the candidate OPA,
+and validates a decision envelope under the same policy. A health ping alone
+is insufficient. The whole check is bounded by the configured OPA timeout,
+capped at five seconds. Redirects are rejected. A failed check leaves the prior
+revision active; staged immutable OPA modules do not gain authority. Atomic
+policy-version rechecking prevents a concurrent activation from invalidating the
+candidate check. Restart reloads the database configuration; no local cache is
+needed. Tenant-specific origins may differ only within the deployment allowlist.
+
+The allowlist trusts deployment DNS/routing for those exact origins. Use dedicated
+OPA hosts and TLS on shared networks; this RC does not manage certificates or
+network egress rules. Secret files must be regular, private files (0600 or 0400),
+with tokens no larger than 8 KiB. Aliases and endpoints are operator-visible;
+values, paths, peer bodies and transport errors are absent from status/evidence.
+
+A configuration read means **configured**, not healthy. Status reports `ready`
+only after the signed-artifact check, otherwise `unavailable`. An unavailable
+current authorization OPA can prevent status/edit authorization itself (503).
+Recover that deployment connection using protected deployment configuration;
+there is no unauthenticated fail-open repair API. Unsupported peers remain
+explicitly unsupported in this catalog rather than advertised as ready.

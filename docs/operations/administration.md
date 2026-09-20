@@ -106,3 +106,23 @@ Removed bindings stop working on the next verified request on every replica.
 File-managed mappings remain readable but reject writes. Initial provisioning
 and protected lockout recovery are the next operator-bootstrap deliverable;
 keep the current deployment mode until that command is available.
+
+## OPA connection configuration
+
+Keep `integrations_mode: "file"` for deployment-owned settings. For API ownership,
+provision the initial record and set `integrations_mode: "api"` in runtime JSON,
+with `opa_allowed_origins` containing the exact reviewed origins. Optional
+`opa_secret_files` maps opaque aliases to private mounted token files. Those
+paths and the allowlist are restart-managed and never accepted from API input.
+
+Read `GET /v1/admin/integrations/opa`, then PUT a private JSON file such as:
+
+```json
+{"expected_revision":1,"connection":{"endpoint":"http://127.0.0.1:8181","token_reference":""}}
+```
+
+Use your operator bearer token and a fresh Idempotency-Key. This validates the
+current signed policy at the destination before saving revision 2. Other replicas
+read the new record on their next request; a bad candidate leaves revision 1
+unchanged. `GET /v1/admin/integrations/opa/status` reports the bounded active-policy
+check result. See the [field catalog and recovery limits](../contracts/managed-configuration.md#supported-integration-catalog).

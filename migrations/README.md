@@ -79,3 +79,5 @@ database triggers to reject direct updates or deletes.
   receipts, with tenant-bound foreign keys to governance approval requests.
 
 Migration 021 adds tenant/issuer-scoped immutable external-role mapping revisions.
+
+Migration 022 adds immutable tenant OPA integration configuration revisions.

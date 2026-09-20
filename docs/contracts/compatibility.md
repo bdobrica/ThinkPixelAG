@@ -75,3 +75,7 @@ The next candidate adds tenant role-mapping read/update and bound expansion
 approval requests. Existing token wire formats and closed roles are unchanged;
 API mode remaps existing verified claims live. Schema 21 stores immutable mapping
 revisions. See [managed configuration](managed-configuration.md).
+
+The next candidate adds bounded OPA integration configuration/read/status APIs;
+schema 22 stores immutable revisions and protected token aliases. Defaults remain
+file-managed. Unsupported ThinkPixel peers gain no new execution capability.

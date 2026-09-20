@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add bounded OPA connection management, protected token references, validated
+  live reload and immutable schema 22 revisions.
+
 - Add live tenant-scoped OIDC role mappings, independent approval for administrative
   expansion, file/API ownership and immutable schema 21 revisions.
 

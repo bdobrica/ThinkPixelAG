@@ -77,7 +77,7 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   approval-bound edits. OIDC replica/removal and PostgreSQL approval/conflict/
   isolation checks passed. Protected provisioning/recovery commands follow in RC-107.
 
-- [ ] **RC-106 — Implement bounded integration configuration and status.** Depends
+- [x] **RC-106 — Implement bounded integration configuration and status.** Depends
   on RC-101. Inventory actually supported adapters; publish an explicit field/
   capability catalog and versioned read/update/status contracts. Store API-managed
   revisions and secret references; expose file-managed settings as read-only.
@@ -86,7 +86,10 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   requirements and keep last valid configuration on failed updates. Done:
   configure and check at least one real supported integration; unavailable peer
   contracts remain marked unsupported. Check: invalid endpoints/references,
-  unauthorized edits, revision conflicts, refresh, restart and redacted status.
+  unauthorized edits, revision conflicts, refresh, restart and redacted status. Implemented OPA
+  field catalog and APIs, schema 22, live reload, protected token aliases and
+  active-artifact checks before commit. Transport-boundary and real OPA/database
+  validation/replay/failed-update tests passed; provisioning follows in RC-107.
 
 - [ ] **RC-107 — Provide operator bootstrap and read views.** Depends on RC-103,
   RC-105 and RC-106. Add a documented protected provisioning command for the

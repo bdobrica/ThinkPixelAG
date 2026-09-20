@@ -75,6 +75,7 @@ type Dependencies struct {
 	Readiness              ReadinessProbe
 	NewID                  IDGenerator
 	PolicyAdministration   http.Handler
+	Integrations           http.Handler
 	RoleMappings           http.Handler
 	PolicyEditor           http.Handler
 	AgentApprovals         http.Handler
@@ -162,6 +163,11 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 		}
 		dependencies.Metrics.Handler().ServeHTTP(writer, request)
 	}))
+	if dependencies.Integrations != nil {
+		for _, route := range []string{"GET /v1/admin/integrations/opa", "PUT /v1/admin/integrations/opa", "GET /v1/admin/integrations/opa/status"} {
+			mount(route, dependencies.Integrations)
+		}
+	}
 	if dependencies.RoleMappings != nil {
 		for _, route := range []string{"GET /v1/admin/role-mappings", "PUT /v1/admin/role-mappings", "POST /v1/admin/role-mappings/approvals"} {
 			mount(route, dependencies.RoleMappings)

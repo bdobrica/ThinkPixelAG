@@ -1036,6 +1036,59 @@ paths:
                 "$ref": "#/components/schemas/LocalApprovalView"
         "default":
           "$ref": "#/components/responses/Problem"
+  "/v1/admin/integrations/opa":
+    "get":
+      "tags":
+        - "Policy administration"
+      "operationId": "getOPAIntegration"
+      "summary": "Read supported OPA connection settings"
+      "responses":
+        "200":
+          "description": "Successful administration operation"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/IntegrationSettings"
+        "default":
+          "$ref": "#/components/responses/Problem"
+    "put":
+      "tags":
+        - "Policy administration"
+      "operationId": "updateOPAIntegration"
+      "summary": "Validate signed active artifact before changing OPA connection"
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/IntegrationUpdate"
+      "parameters":
+        -
+          "$ref": "#/components/parameters/IdempotencyKey"
+      "responses":
+        "201":
+          "description": "Successful administration operation"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/IntegrationSettings"
+        "default":
+          "$ref": "#/components/responses/Problem"
+  "/v1/admin/integrations/opa/status":
+    "get":
+      "tags":
+        - "Policy administration"
+      "operationId": "getOPAIntegrationStatus"
+      "summary": "Check current OPA connection with bounded active-artifact evaluation"
+      "responses":
+        "200":
+          "description": "Successful administration operation"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/IntegrationStatus"
+        "default":
+          "$ref": "#/components/responses/Problem"
 components:
   securitySchemes:
     bearerAuth:
@@ -2075,3 +2128,74 @@ components:
           "type": "string"
           "minLength": 1
           "maxLength": 128
+
+    "OPAConnection":
+      "type": "object"
+      "additionalProperties": false
+      "required":
+        - "endpoint"
+        - "token_reference"
+      "properties":
+        "endpoint":
+          "type": "string"
+          "format": "uri"
+          "maxLength": 2048
+        "token_reference":
+          "type": "string"
+          "maxLength": 128
+    "IntegrationSettings":
+      "type": "object"
+      "additionalProperties": false
+      "required":
+        - "id"
+        - "mode"
+        - "revision"
+        - "connection"
+      "properties":
+        "id":
+          "type": "string"
+          "const": "opa"
+        "mode":
+          "type": "string"
+          "enum":
+            - "file"
+            - "api"
+        "revision":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 0
+        "connection":
+          "$ref": "#/components/schemas/OPAConnection"
+    "IntegrationUpdate":
+      "type": "object"
+      "additionalProperties": false
+      "required":
+        - "expected_revision"
+        - "connection"
+      "properties":
+        "expected_revision":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "connection":
+          "$ref": "#/components/schemas/OPAConnection"
+    "IntegrationStatus":
+      "type": "object"
+      "additionalProperties": false
+      "required":
+        - "id"
+        - "revision"
+        - "state"
+      "properties":
+        "id":
+          "type": "string"
+          "const": "opa"
+        "revision":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 0
+        "state":
+          "type": "string"
+          "enum":
+            - "ready"
+            - "unavailable"

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver"
+	"github.com/bdobrica/ThinkPixelAG/internal/adapters/integrationconfig"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/localapprovals"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/localkeys"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/mtls"
@@ -34,21 +35,33 @@ import (
 // runtimeSettings is deployment configuration, never a request-supplied grant.
 // Secrets are supplied separately through Secret or mounted TLS files.
 type runtimeSettings struct {
-	RoleMappingsMode     string         `json:"role_mappings_mode,omitempty"`
-	LocalPolicyKey       string         `json:"local_policy_key,omitempty"`
-	PolicyChannel        string         `json:"policy_channel"`
-	AuthorityConstraints map[string]any `json:"authority_constraints"`
-	TrustedAddress       string         `json:"trusted_address"`
-	TLSCertificate       string         `json:"tls_certificate"`
-	TLSKey               string         `json:"tls_key"`
-	ClientCA             string         `json:"client_ca"`
-	WorkloadBindings     string         `json:"workload_bindings"`
+	IntegrationsMode     string            `json:"integrations_mode,omitempty"`
+	OPAAllowedOrigins    []string          `json:"opa_allowed_origins,omitempty"`
+	OPASecretFiles       map[string]string `json:"opa_secret_files,omitempty"`
+	RoleMappingsMode     string            `json:"role_mappings_mode,omitempty"`
+	LocalPolicyKey       string            `json:"local_policy_key,omitempty"`
+	PolicyChannel        string            `json:"policy_channel"`
+	AuthorityConstraints map[string]any    `json:"authority_constraints"`
+	TrustedAddress       string            `json:"trusted_address"`
+	TLSCertificate       string            `json:"tls_certificate"`
+	TLSKey               string            `json:"tls_key"`
+	ClientCA             string            `json:"client_ca"`
+	WorkloadBindings     string            `json:"workload_bindings"`
 }
 
 func readRuntimeSettings(path string) (runtimeSettings, error) {
 	var c runtimeSettings
 	if err := readRuntimeJSON(path, &c); err != nil {
 		return c, err
+	}
+	if c.IntegrationsMode == "" {
+		c.IntegrationsMode = "file"
+	}
+	if c.IntegrationsMode != "file" && c.IntegrationsMode != "api" {
+		return c, errors.New("invalid integrations mode")
+	}
+	if c.IntegrationsMode == "api" && (c.LocalPolicyKey == "" || len(c.OPAAllowedOrigins) == 0) {
+		return c, errors.New("API integrations require signed administration and destination allowlist")
 	}
 	if c.RoleMappingsMode == "" {
 		c.RoleMappingsMode = "file"
@@ -174,6 +187,7 @@ func (r *runtimeRoutes) mount(d *httpserver.Dependencies, trusted bool) {
 	} else {
 		if r.localKey != nil {
 			d.PolicyAdministration = r.route("policy-admin", false)
+			d.Integrations = r.route("integrations", false)
 			d.RoleMappings = r.route("role-mappings", false)
 			d.PolicyEditor = r.route("policy-editor", false)
 		}
@@ -208,7 +222,7 @@ func (r *runtimeRoutes) route(name string, trusted bool) http.Handler {
 			httpserver.WriteError(w, req, err)
 			return
 		}
-		handler, err := r.handler(name, tenant, repository)
+		handler, err := r.handler(req.Context(), name, tenant, repository)
 		if err != nil {
 			httpserver.WriteError(w, req, err)
 			return
@@ -221,7 +235,7 @@ func (r *runtimeRoutes) route(name string, trusted bool) http.Handler {
 	return httpserver.AuthenticateBearer(r.verifier, next)
 }
 
-func (r *runtimeRoutes) handler(name string, tenant domain.ID, repo *postgres.TenantRepository) (http.Handler, error) {
+func (r *runtimeRoutes) handler(ctx context.Context, name string, tenant domain.ID, repo *postgres.TenantRepository) (http.Handler, error) {
 	idempotency, err := postgres.NewIdempotencyStore(r.repositories)
 	if err != nil {
 		return nil, err
@@ -236,6 +250,16 @@ func (r *runtimeRoutes) handler(name string, tenant domain.ID, repo *postgres.Te
 	}
 	var base policy.Evaluator = client
 	modules := &opa.Modules{Base: r.settings.OPA.URL, Token: r.settings.OPA.BearerToken.Value(), Client: r.client, Timeout: r.settings.OPA.Timeout}
+	if r.runtime.IntegrationsMode == "api" {
+		config, e := repo.OPAIntegration(ctx)
+		if e != nil {
+			return nil, e
+		}
+		modules, e = r.integrationAdapter(tenant, repo).Modules(config.Connection)
+		if e != nil {
+			return nil, e
+		}
+	}
 	if r.localKey != nil {
 		base = &opa.ArtifactEvaluator{Store: repo, Modules: modules, Verifier: r.localKey, Channel: r.runtime.PolicyChannel, MaxTTL: r.settings.OPA.DecisionMaxTTL}
 	}
@@ -252,8 +276,15 @@ func (r *runtimeRoutes) handler(name string, tenant domain.ID, repo *postgres.Te
 		return m.Sum(nil)
 	}
 	switch name {
-	case "policy-admin", "policy-editor", "role-mappings":
+	case "policy-admin", "policy-editor", "role-mappings", "integrations":
 		s := &application.PolicyAdministration{Store: repo, Evaluator: evaluator, Modules: modules, Verifier: r.localKey, Signer: r.localKey, SigningKeyID: r.localKey.ID(), ApprovalProvider: &localapprovals.Provider{Store: repo}, Channel: r.runtime.PolicyChannel, Clock: r.clock}
+		if name == "integrations" {
+			mode := r.runtime.IntegrationsMode
+			if mode == "" {
+				mode = "file"
+			}
+			return httpserver.IntegrationsHandler(r.verifier, &application.IntegrationAdministration{Policy: s, Store: repo, Mode: mode, File: ports.OPAConnection{Endpoint: r.settings.OPA.URL}, Checker: r.integrationAdapter(tenant, repo)}), nil
+		}
 		if name == "role-mappings" {
 			mode := r.runtime.RoleMappingsMode
 			if mode == "" {
@@ -445,4 +476,14 @@ func (m *measuredAdmission) AdmitIdempotent(ctx context.Context, c application.A
 	}
 	m.metrics.ObserveRunAdmission(outcome)
 	return response, err
+}
+
+func (r *runtimeRoutes) integrationAdapter(tenant domain.ID, repo *postgres.TenantRepository) *integrationconfig.OPA {
+	origins := r.runtime.OPAAllowedOrigins
+	token := ""
+	if r.runtime.IntegrationsMode != "api" {
+		origins = []string{r.settings.OPA.URL}
+		token = r.settings.OPA.BearerToken.Value()
+	}
+	return &integrationconfig.OPA{AllowedOrigins: origins, DefaultToken: token, SecretFiles: r.runtime.OPASecretFiles, Client: r.client, Timeout: min(r.settings.OPA.Timeout, 5*time.Second), MaxTTL: r.settings.OPA.DecisionMaxTTL, Store: repo, Verifier: r.localKey, Channel: r.runtime.PolicyChannel, Tenant: tenant}
 }

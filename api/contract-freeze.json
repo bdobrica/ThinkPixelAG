@@ -4,12 +4,12 @@
   "policy_version": "thinkpixelag.authorization/v1alpha1",
   "normalization": "CRLF to LF; no other normalization",
   "files": {
-    "api/openapi/thinkpixelag.yaml": "35a1c7a50d0609b189a4adf8d26871190b4c76972299b0ef9f0f87253387496f",
+    "api/openapi/thinkpixelag.yaml": "03b44267dd36e667350e90534ae12a0e1e7f22c2629fd119a6c7a56873944bb5",
     "api/schemas/break-glass-v1.json": "fe676fca84aac270e671c276f1a3ed8811e767203b5b26eb68dba3b78b0482d0",
     "api/schemas/evidence-delivery-v1.json": "181a1d381aa600a1b25fd92d3cf9c1532bcca54c7bbc01aab3841839b20617f7",
     "api/schemas/evidence-event-v1.json": "f57520941b1caadaab578b487790d8671b4f76554cc2e218bc3272a2126f6fdd",
     "api/schemas/workload-identity-v1.json": "41b3967bd05d5f1ff87aebd81dc75f72422f94c340641624a79df8548df04538",
-    "docs/contracts/policy-decision.md": "c52e653aa3ebe9472e7f41947ee670b2a0e871c33b873a31bd670640b9a269fd",
+    "docs/contracts/policy-decision.md": "1adc6222c7aa17a251a03c9ae77642c7ad810dc39077756036558c50fe1f15ba",
     "internal/policy/contract.go": "d5f2e3e9ede68d90c4d6a0ffd61d46ae9a7e4a6e56320068d868711cc87e33e8"
   }
 }
