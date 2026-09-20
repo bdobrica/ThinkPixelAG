@@ -70,6 +70,9 @@ func (service *RunAdmissionService) AdmitIdempotent(ctx context.Context, command
 }
 
 func (service *RunAdmissionService) prepare(ctx context.Context, command AdmitRun) (domain.RunAdmission, domain.RunVersionResolution, ports.RunAdmissionEvidence, error) {
+	if command.RequestedConstraints == nil {
+		command.RequestedConstraints = map[string]any{}
+	}
 	if command.TenantID.IsZero() || command.PrincipalID.IsZero() || command.AgentID.IsZero() || command.RequestID.IsZero() || command.RequestedConstraints == nil || command.AuthorityConstraints == nil {
 		return domain.RunAdmission{}, domain.RunVersionResolution{}, ports.RunAdmissionEvidence{}, domain.NewError(domain.CodeUnauthenticated, "authenticated run admission identity is required")
 	}

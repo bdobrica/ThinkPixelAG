@@ -2,10 +2,15 @@
 
 ## Unreleased
 
+- Preserve approved agent/deployment limits when Run callers or policy responses
+  omit constraints; reject policy expansion and retain exact OPA/cache numbers.
+- Accept the next-RC harness bootstrap, optional console and managed-configuration
+  decisions; select an explicit local-development signing/approval profile.
+
 - Replace test-only quick-start steps with a persistent local installation and
   authenticated discovery/admission/replay/read/cancel examples; add a complete
   staged Kubernetes evaluation renderer and restore `docs/configuration.md`.
-- Propose AG-provided dynamic harness instructions in ADR-0013; clarify AG as
+- Define AG-provided dynamic harness instructions in ADR-0013; clarify AG as
   the harness entry point and distinguish current API support from missing integration.
 
 - Reorganize documentation into quick start, runnable local evaluation, team

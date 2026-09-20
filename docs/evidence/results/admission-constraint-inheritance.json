@@ -1,0 +1,41 @@
+{
+  "date": "2026-09-20",
+  "scope": "RC-102 root-admission constraint inheritance; unreleased source",
+  "base_revision": "b9edb897d077c96f99e69dc4e57b09eaf4a54cc2",
+  "tested_code_diff_sha256": "67ba6c21a523159ec8e6e5c6e2f0b5cfaef8d8c5c0252958549308c526bd9913",
+  "diff_paths": [
+    "internal",
+    "policies",
+    "api/contract-freeze.json"
+  ],
+  "checks": [
+    {
+      "command": "go test ./internal/policy ./internal/adapters/opa ./internal/application ./internal/adapters/httpserver",
+      "result": "passed"
+    },
+    {
+      "command": "go test -count=1 -tags=integration -run ^TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically$ ./internal/adapters/postgres",
+      "result": "passed",
+      "database": "dedicated database on retained local PostgreSQL"
+    },
+    {
+      "command": "make verify",
+      "result": "passed",
+      "rego_cases": 29,
+      "container_smoke": "passed"
+    }
+  ],
+  "verified_behaviors": [
+    "Omitted and partial caller/policy fields retain authoritative limits",
+    "Approved manifest limits narrow deployment ceilings before policy evaluation",
+    "Explicit policy expansion, missing authority and malformed resource values fail before persistence",
+    "Exact numeric values survive OPA response and cached-decision decoding",
+    "Local and external-cache-interface hits inherit limits; cached expansion falls back to evaluation",
+    "Persisted Run deadlines, constraints, version snapshots and resource balances agree"
+  ],
+  "limits": [
+    "Cache regression uses an in-memory implementation of the external cache interface; no new live Valkey qualification",
+    "Container built locally; no release artifact published or homelab deployment changed",
+    "Local-development signing and approval adapters remain planned under ADR-0016"
+  ]
+}

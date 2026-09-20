@@ -9,7 +9,7 @@
     "api/schemas/evidence-delivery-v1.json": "181a1d381aa600a1b25fd92d3cf9c1532bcca54c7bbc01aab3841839b20617f7",
     "api/schemas/evidence-event-v1.json": "f57520941b1caadaab578b487790d8671b4f76554cc2e218bc3272a2126f6fdd",
     "api/schemas/workload-identity-v1.json": "41b3967bd05d5f1ff87aebd81dc75f72422f94c340641624a79df8548df04538",
-    "docs/contracts/policy-decision.md": "5696d3fbde76c71cda82e8b92d6d076c53a2fe2236fc01a9903eba1fb3a26b1e",
-    "internal/policy/contract.go": "79dac0257bfbc49909c1edb332892d6e006b13c36823b2384db4efdfa92eb473"
+    "docs/contracts/policy-decision.md": "c52e653aa3ebe9472e7f41947ee670b2a0e871c33b873a31bd670640b9a269fd",
+    "internal/policy/contract.go": "d5f2e3e9ede68d90c4d6a0ffd61d46ae9a7e4a6e56320068d868711cc87e33e8"
   }
 }

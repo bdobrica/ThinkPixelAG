@@ -1,7 +1,9 @@
 package application
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"sort"
 	"strings"
@@ -34,6 +36,9 @@ type ResolveAgentVersion struct {
 }
 
 func (resolver *VersionResolver) Resolve(ctx context.Context, command ResolveAgentVersion) (domain.RunVersionResolution, error) {
+	if command.RequestedConstraints == nil {
+		command.RequestedConstraints = map[string]any{}
+	}
 	if command.RunID.IsZero() || command.TenantID.IsZero() || command.AgentID.IsZero() || command.PrincipalID.IsZero() || command.RequestID.IsZero() || command.RequestedConstraints == nil || command.AuthorityConstraints == nil {
 		return domain.RunVersionResolution{}, domain.NewError(domain.CodeInvalidArgument, "version resolution request is invalid")
 	}
@@ -61,14 +66,19 @@ func (resolver *VersionResolver) Resolve(ctx context.Context, command ResolveAge
 			return domain.RunVersionResolution{}, domain.NewError(domain.CodeInternal, "version repository returned an ineligible candidate")
 		}
 		mode := domain.ResolutionAutomatic
+		candidateCommand := command
+		candidateCommand.AuthorityConstraints, err = approvedAuthority(command.AuthorityConstraints, candidate.Version.Manifest.Limits)
+		if err != nil {
+			return domain.RunVersionResolution{}, domain.WrapError(domain.CodeUnavailable, "approved authority is invalid", err).WithRetryable()
+		}
 		var selection policy.Result
 		if command.RequestedVersionDigest != "" {
-			mode, selection, err = resolver.authorizeSelection(ctx, command, candidate, roles, now)
+			mode, selection, err = resolver.authorizeSelection(ctx, candidateCommand, candidate, roles, now)
 			if err != nil {
 				return domain.RunVersionResolution{}, err
 			}
 		}
-		invocation, decisionErr := resolver.decide(ctx, command, candidate, roles, "runs.create", now)
+		invocation, decisionErr := resolver.decide(ctx, candidateCommand, candidate, roles, "runs.create", now)
 		if decisionErr != nil {
 			return domain.RunVersionResolution{}, decisionErr
 		}
@@ -77,6 +87,13 @@ func (resolver *VersionResolver) Resolve(ctx context.Context, command ResolveAge
 				return domain.RunVersionResolution{}, domain.NewError(domain.CodeForbidden, "agent version invocation is not permitted")
 			}
 			continue
+		}
+		if len(candidateCommand.AuthorityConstraints) == 0 {
+			return domain.RunVersionResolution{}, domain.NewError(domain.CodeUnavailable, "admission requires authoritative constraints").WithRetryable()
+		}
+		resolved, constraintErr := policy.ResolveConstraints(candidateCommand.AuthorityConstraints, command.RequestedConstraints, invocation.Decision.ResolvedConstraints)
+		if constraintErr != nil {
+			return domain.RunVersionResolution{}, domain.WrapError(domain.CodeUnavailable, "policy resolved invalid constraints", constraintErr).WithRetryable()
 		}
 		if mode != domain.ResolutionAutomatic && (selection.Metadata.PolicyDigest != invocation.Metadata.PolicyDigest || selection.Metadata.PolicyVersion != invocation.Metadata.PolicyVersion) {
 			return domain.RunVersionResolution{}, domain.NewError(domain.CodeUnavailable, "policy changed during controlled version selection").WithRetryable()
@@ -87,7 +104,7 @@ func (resolver *VersionResolver) Resolve(ctx context.Context, command ResolveAge
 		}
 		resolution := domain.RunVersionResolution{RunID: command.RunID, TenantID: command.TenantID, AgentID: command.AgentID, AgentVersionID: candidate.Version.ID, ApprovalID: candidate.Approval.ID,
 			AgentContentDigest: candidate.Version.ContentDigest, PolicyBundleDigest: invocation.Metadata.PolicyDigest, PolicyActivationVersion: invocation.Metadata.PolicyVersion,
-			Mode: mode, InvocationDecisionID: invocationID, ResolvedConstraints: invocation.Decision.ResolvedConstraints, ResolvedAt: now}
+			Mode: mode, InvocationDecisionID: invocationID, ResolvedConstraints: resolved, ResolvedAt: now}
 		if mode != domain.ResolutionAutomatic {
 			resolution.SelectionDecisionID, parseErr = domain.ParseID(selection.Decision.DecisionID)
 			if parseErr != nil {
@@ -100,6 +117,34 @@ func (resolver *VersionResolver) Resolve(ctx context.Context, command ResolveAge
 		return resolution, nil
 	}
 	return domain.RunVersionResolution{}, domain.NewError(domain.CodeForbidden, "no eligible agent version is permitted")
+}
+
+// Approved manifest limits are authority, not caller requests. Either trusted
+// source can supply a ceiling; overlapping ceilings take the strictest value.
+func approvedAuthority(deployment map[string]any, limits domain.AgentLimits) (map[string]any, error) {
+	if err := limits.Validate(); err != nil {
+		return nil, err
+	}
+	raw, err := json.Marshal(limits)
+	if err != nil {
+		return nil, err
+	}
+	approved := map[string]any{}
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
+	if err := decoder.Decode(&approved); err != nil {
+		return nil, err
+	}
+	combined := make(map[string]any, len(deployment)+len(approved))
+	for key, value := range deployment {
+		combined[key] = value
+	}
+	for key, value := range approved {
+		if _, exists := combined[key]; !exists {
+			combined[key] = value
+		}
+	}
+	return policy.IntersectConstraints(combined, approved)
 }
 
 func (resolver *VersionResolver) authorizeSelection(ctx context.Context, command ResolveAgentVersion, candidate domain.AgentVersionCandidate, roles []string, now time.Time) (domain.VersionResolutionMode, policy.Result, error) {

@@ -20,7 +20,7 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   selected local-development signing and OIDC approvals. Checked doc links
   and architectural/contract consistency; no runtime tests for this decision item.
 
-- [ ] **RC-102 — Fix authoritative constraint inheritance.** Trace HTTP admission,
+- [x] **RC-102 — Fix authoritative constraint inheritance.** Trace HTTP admission,
   version resolution, OPA validation, caches and root issuance. Normalize absent
   caller constraints, resolve all applicable authoritative ceilings, preserve
   independent Go non-expansion checks and define handling of missing authority.
@@ -28,7 +28,11 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   preserve deadlines and resource grants; stricter caller bounds work and larger
   bounds never expand authority. Check: focused Go/Rego tests for omission,
   malformed/partial policy results and cached results, plus persisted admission
-  integration coverage. Review frozen contract fingerprints if affected.
+  integration coverage. Completed: approved/deployment/caller/policy limit
+  intersection, OPA/cache inheritance and exact numbers, persisted root grants,
+  and objective-only source example. Focused tests, 29 Rego cases and
+  `make verify` passed; reviewed contract fingerprints regenerated.
+  [Verification](docs/evidence/results/admission-constraint-inheritance.json).
 
 ## 2. Administration API before UI
 

@@ -29,7 +29,7 @@ func TestRunAdmissionAuthenticatesAuthorizesNarrowsAndPersists(t *testing.T) {
 	resolver, _ := NewVersionResolver(&resolutionRepositoryStub{candidates: []domain.AgentVersionCandidate{candidate}}, &resolutionEvaluatorStub{allow: map[string]bool{"runs.create": true}}, fixedClock{now: testTime()})
 	repository := &admissionRepositoryStub{}
 	service, _ := NewRunAdmissionService(resolver, repository, fixedClock{now: testTime()})
-	command := AdmitRun{TenantID: candidate.Agent.TenantID, PrincipalID: applicationID(t), AgentID: candidate.Agent.ID, RequestID: applicationID(t), Roles: []string{"invoker"}, RequestedConstraints: map[string]any{"max_tokens": float64(20)}, AuthorityConstraints: map[string]any{"max_tokens": float64(100)}, SecurityState: policy.SecurityState{Authoritative: true}}
+	command := AdmitRun{TenantID: candidate.Agent.TenantID, PrincipalID: applicationID(t), AgentID: candidate.Agent.ID, RequestID: applicationID(t), Roles: []string{"invoker"}, RequestedConstraints: map[string]any{"max_tokens": float64(20)}, AuthorityConstraints: map[string]any{"max_tokens": float64(100), "max_execution_time_seconds": float64(300)}, SecurityState: policy.SecurityState{Authoritative: true}}
 	// Add a deadline to the narrowed result to prove that run timing derives
 	// from policy output.
 	resolver.evaluator = policyEvaluatorFunc(func(_ context.Context, input policy.Input) (policy.Result, error) {

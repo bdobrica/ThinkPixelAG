@@ -47,3 +47,18 @@ The documentation cleanup changes only the relative link to this guide in
 `scripts/freeze-contracts.py`; the policy wire version, input/output semantics,
 OpenAPI and JSON Schemas are unchanged. Historical compatibility reports retain
 their original fingerprints and recorded source revision.
+
+## RC-102 constraint inheritance correction
+
+The policy wire identifier and OpenAPI schemas remain unchanged. Root admission
+now preserves authoritative limits when caller or policy fields are omitted,
+including approved manifest bounds and cached decisions. Explicit policy
+expansion and caller dimensions without authority fail closed. Completely
+unbounded admission is rejected. These are corrections to the existing
+resource-accounting/non-expansion contract, not a new permission model. Existing
+policies returning partial objects remain supported through Go inheritance.
+
+OPA/cache JSON decoding retains exact numbers instead of float64 rounding.
+The policy reference and Go contract fingerprints are regenerated intentionally
+for this reviewed correction; existing signed bundles are not rewritten or
+silently reactivated. Release images predating this change still need an upgrade.

@@ -69,6 +69,30 @@ needed to perform the objective and report completion. The harness's platform
 entry point is AG; configuring a direct AR connection is not the missing step.
 See [harness integration and current capabilities](operations/integrations.md).
 
+### Optional caller limits and the next candidate
+
+`constraints` requests stricter caller limits; AG owns the effective policy.
+The published `0.1.0-rc.1` image above predates the RC-102 inheritance fix, so its
+example supplies explicit limits. Do not interpret omitted fields in that image
+as safely inheriting all limits. On a build containing RC-102, the normal request
+needs only the objective:
+
+```sh
+curl --fail-with-body --silent --show-error \
+  -X POST "$AG_URL/v1/agents/$AG_AGENT_ID/runs" \
+  -H "Authorization: Bearer $AG_TOKEN" \
+  -H "Idempotency-Key: admit-$(openssl rand -hex 16)" \
+  -H 'Content-Type: application/json' \
+  --data '{"objective":"Summarize incident INC-42"}' \
+  | tee /tmp/ag-run.json | jq .
+export AG_RUN_ID="$(jq -r '.id' /tmp/ag-run.json)"
+```
+
+AG inherits the approved agent and deployment ceilings, narrowed by the active
+policy. Optional caller constraints can only reduce these limits. This source
+fix does not replace the pinned release image; the next release packaging task
+will update the installation examples to that qualified image.
+
 ## 4. Inspect and cancel it
 
 ```sh

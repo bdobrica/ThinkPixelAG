@@ -52,7 +52,7 @@ AG is the platform entry point for an existing harness; AR remains behind that
 integration boundary and owns runtime/session responsibilities. See the
 [implemented AG surface](../operations/integrations.md) for the current gap
 between admission/lifecycle APIs and a complete harness integration.
-[ADR-0013](../adr/0013-dynamic-harness-instructions.md) proposes future dynamic
+[ADR-0013](../adr/0013-dynamic-harness-instructions.md) defines future dynamic
 capability/instruction discovery through AG; it adds no endpoint today.
 
 ### Integration rules

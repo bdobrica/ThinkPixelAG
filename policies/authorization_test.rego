@@ -170,3 +170,16 @@ test_api_resource_constraints_narrowed if {
     d.allow
     d.resolved_constraints == {"max_llm_tokens": 100, "max_tool_calls": 3}
 }
+
+test_omitted_caller_constraints_inherit_authority if {
+    limits := {"max_llm_tokens": 100, "max_execution_time_seconds": 300, "max_active_children": 0}
+    d := authorization.decision with input as object.union(base, {"action": "runs.create", "authority_constraints": limits})
+    d.allow
+    d.resolved_constraints == limits
+}
+
+test_partial_caller_constraints_preserve_other_authority if {
+    d := authorization.decision with input as object.union(base, {"action": "runs.create", "authority_constraints": {"max_llm_tokens": 100, "max_tool_calls": 10, "max_execution_time_seconds": 300}, "requested_constraints": {"max_tool_calls": 3}})
+    d.allow
+    d.resolved_constraints == {"max_llm_tokens": 100, "max_tool_calls": 3, "max_execution_time_seconds": 300}
+}

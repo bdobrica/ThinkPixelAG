@@ -12,7 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bdobrica/ThinkPixelAG/internal/application"
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
+	"github.com/bdobrica/ThinkPixelAG/internal/policy"
 	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -88,6 +90,48 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 	}
 	t.Cleanup(func() {
 		_, _ = pool.Exec(context.Background(), `DELETE FROM outbox_messages WHERE tenant_id=$1`, tenant.String())
+	})
+	t.Run("inherited application limits persist as authority", func(t *testing.T) {
+		resolver, err := application.NewVersionResolver(repository, inheritedAdmissionPolicy{}, domain.SystemClock{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		service, err := application.NewRunAdmissionService(resolver, repository, domain.SystemClock{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, tc := range []struct {
+			request map[string]any
+			tokens  int64
+		}{
+			{nil, 100},
+			{map[string]any{"max_llm_tokens": 20}, 20},
+			{map[string]any{"max_llm_tokens": 200}, 100},
+		} {
+			got, err := service.Admit(ctx, application.AdmitRun{TenantID: tenant, PrincipalID: principal, AgentID: agentID, RequestID: mustNewRepositoryID(t), RequestedConstraints: tc.request, AuthorityConstraints: map[string]any{"max_execution_time_seconds": 60, "max_llm_tokens": 100, "max_tool_calls": 10}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var seconds, tokens, tools int64
+			var deadline time.Time
+			if err := pool.QueryRow(ctx, `SELECT (constraints->>'max_execution_time_seconds')::bigint,(constraints->>'max_llm_tokens')::bigint,(constraints->>'max_tool_calls')::bigint,deadline_at FROM runs WHERE tenant_id=$1 AND id=$2`, tenant.String(), got.RunID.String()).Scan(&seconds, &tokens, &tools, &deadline); err != nil {
+				t.Fatal(err)
+			}
+			if seconds != 60 || tokens != tc.tokens || tools != 3 || got.DeadlineAt == nil || deadline.Sub(*got.DeadlineAt).Abs() >= time.Microsecond {
+				t.Fatalf("persisted seconds=%d tokens=%d tools=%d deadline=%v", seconds, tokens, tools, deadline)
+			}
+			var granted, available int64
+			if err := pool.QueryRow(ctx, `SELECT g.granted_value,b.available_value FROM resource_envelope_grants g JOIN resource_balances b USING(tenant_id,envelope_id,dimension_id) WHERE g.tenant_id=$1 AND g.envelope_id=$2 AND g.dimension_id=$3`, tenant.String(), got.EnvelopeID.String(), llmDimension.String()).Scan(&granted, &available); err != nil {
+				t.Fatal(err)
+			}
+			if granted != tc.tokens || available != tc.tokens {
+				t.Fatalf("granted=%d available=%d want=%d", granted, available, tc.tokens)
+			}
+			snapshot, err := repository.DescribeRunVersionResolution(ctx, got.RunID)
+			if err != nil || fmt.Sprint(snapshot.ResolvedConstraints["max_llm_tokens"]) != fmt.Sprint(tc.tokens) {
+				t.Fatalf("snapshot=%+v error=%v", snapshot, err)
+			}
+		}
 	})
 	makeAdmission := func() (domain.RunAdmission, domain.RunVersionResolution, ports.RunAdmissionEvidence) {
 		runID, envelopeID, decisionID := mustNewRepositoryID(t), mustNewRepositoryID(t), mustNewRepositoryID(t)
@@ -1223,4 +1267,11 @@ func TestRunAdmissionCommitsCompleteAggregateAndRollsBackAtomically(t *testing.T
 		}
 	})
 
+}
+
+// Deliberately partial tenant policy output exercises the Go admission resolver.
+type inheritedAdmissionPolicy struct{}
+
+func (inheritedAdmissionPolicy) Decide(_ context.Context, in policy.Input) (policy.Result, error) {
+	return policy.Result{Decision: policy.Decision{DecisionID: in.DecisionID, Allow: true, ResolvedConstraints: map[string]any{"max_tool_calls": 3}}, Metadata: policy.Metadata{PolicyDigest: "sha256:" + strings.Repeat("f", 64), PolicyVersion: 3}}, nil
 }

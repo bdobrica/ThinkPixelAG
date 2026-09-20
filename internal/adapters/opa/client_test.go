@@ -76,3 +76,23 @@ func TestClientRejectsAdversarialOutput(t *testing.T) {
 		})
 	}
 }
+
+func TestClientInheritsPartialAdmissionLimitsWithExactIntegers(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"result":{"contract_version":"thinkpixelag.authorization/v1alpha1","decision_id":"d","allow":true,"reason_codes":["agent.invoke.allowed"],"resolved_constraints":{"max_llm_tokens":9007199254740993},"obligations":[],"decision_ttl_seconds":1}}`))
+	}))
+	defer srv.Close()
+	c, _ := New(srv.URL, "/decision", time.Second, time.Second, "", nil, func() (string, int64, bool) { return "sha256:x", 1, true })
+	in := input()
+	in.Action = "runs.create"
+	in.AuthorityConstraints = map[string]any{"max_llm_tokens": json.Number("9007199254740993"), "max_execution_time_seconds": 300}
+	in.RequestedConstraints = map[string]any{"max_execution_time_seconds": 60}
+	result, err := c.Decide(context.Background(), in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Decision.ResolvedConstraints["max_llm_tokens"] != json.Number("9007199254740993") || result.Decision.ResolvedConstraints["max_execution_time_seconds"] != 60 {
+		t.Fatalf("lost constraints or precision: %v", result.Decision.ResolvedConstraints)
+	}
+}

@@ -46,7 +46,7 @@ func TestVersionResolverFallsBackToNextPolicyAllowedApprovedCandidate(t *testing
 	older.Approval.TenantID, older.Approval.AgentID, older.Approval.AgentVersionID = newest.Agent.TenantID, newest.Agent.ID, older.Version.ID
 	evaluator := &resolutionEvaluatorStub{allow: map[string]bool{"runs.create": true}, denyDigest: newest.Version.ContentDigest}
 	resolver, _ := NewVersionResolver(&resolutionRepositoryStub{candidates: []domain.AgentVersionCandidate{newest, older}}, evaluator, fixedClock{now: testTime()})
-	resolution, err := resolver.Resolve(context.Background(), ResolveAgentVersion{RunID: applicationID(t), TenantID: newest.Agent.TenantID, AgentID: newest.Agent.ID, PrincipalID: applicationID(t), RequestID: applicationID(t), RequestedConstraints: map[string]any{}, AuthorityConstraints: map[string]any{}, SecurityState: policy.SecurityState{Authoritative: true}})
+	resolution, err := resolver.Resolve(context.Background(), ResolveAgentVersion{RunID: applicationID(t), TenantID: newest.Agent.TenantID, AgentID: newest.Agent.ID, PrincipalID: applicationID(t), RequestID: applicationID(t), RequestedConstraints: map[string]any{}, AuthorityConstraints: map[string]any{"max_tokens": float64(100)}, SecurityState: policy.SecurityState{Authoritative: true}})
 	if err != nil || resolution.AgentVersionID != older.Version.ID || len(evaluator.actions) != 2 {
 		t.Fatalf("fallback=%+v actions=%v err=%v", resolution, evaluator.actions, err)
 	}

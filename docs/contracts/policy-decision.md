@@ -139,6 +139,23 @@ Adding/removing/changing semantics of a code requires contract review. Clients m
 
 For numeric maxima and deadlines, resolved output must be no greater/later than authoritative ceiling. For allowlists it must be a subset. For delegation depth it must be no greater than parent remaining depth and approved version ceiling. Omitted policy output cannot widen a value; the Go resolver takes the intersection/minimum and rejects incompatible units or unknown dimensions.
 
+For `runs.create`, omitted caller constraints mean an empty restriction map,
+not absence of governance limits. The service intersects deployment ceilings
+with the selected approved manifest limits before evaluation. The active tenant
+policy may narrow them. A policy response may omit dimensions; Go restores those
+from the effective authority/caller intersection before returning or persisting
+an allowed decision, including on a cache hit. Explicit policy expansion is an
+error, even though a caller request above a ceiling is clamped to that ceiling.
+Unknown caller/output dimensions without an authoritative ceiling are rejected.
+Admission with no authoritative constraints is unavailable, not unbounded.
+Numeric decoding preserves exact JSON numbers through OPA and cache reads.
+
+This is root admission. Parent reservation availability and structural limits
+continue to be checked transactionally by child allocation; this change neither
+adds a child-admission endpoint nor grants authority to absent resource dimensions.
+Other action inputs can contain non-ceiling operation arguments and retain their
+existing action-specific validation.
+
 ## Failure matrix
 
 | Condition | Result |

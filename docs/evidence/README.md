@@ -45,6 +45,13 @@ not authenticate a trusted remote builder.
 - [Fuzz results](results/fuzz.json): bounded RC verification rehearsals;
   original clean-checkout source `79d2ac9`, not final-image capacity evidence.
 
+## Unreleased correctness checks
+
+[RC-102 constraint inheritance](results/admission-constraint-inheritance.json)
+records focused admission/policy tests, persisted PostgreSQL grants and the
+aggregate gate for the source fix. This does not qualify a replacement for the
+pinned release image above or change the production-capacity deferrals.
+
 ## Capacity
 
 Keep the exact samples behind the [capacity guide](../operations/capacity.md),

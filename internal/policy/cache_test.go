@@ -2,7 +2,9 @@ package policy
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 )
@@ -295,5 +297,46 @@ func TestCacheKeyBindsEveryAuthorizationDimension(t *testing.T) {
 				t.Fatal("cache key did not change")
 			}
 		})
+	}
+}
+
+func TestCachedAdmissionRestoresPartialLimitsAndRejectsExpansion(t *testing.T) {
+	now := time.Now().UTC()
+	cache := &memoryCache{values: map[string][]byte{}}
+	next := &fakeEvaluator{decision: allowDecision()}
+	active := func() (string, int64, bool) { return "sha256:policy", 7, true }
+	e, _ := NewCachedEvaluator(next, cache, active, 30*time.Second, func() time.Time { return now })
+	in := cacheInput("first")
+	in.AuthorityConstraints = map[string]any{"max_llm_tokens": json.Number("9007199254740993"), "max_execution_time_seconds": 300}
+	in.RequestedConstraints = map[string]any{"max_execution_time_seconds": 60}
+	// Seed a legacy partial entry through the cache's downstream test evaluator.
+	if _, err := e.Decide(context.Background(), in); err != nil {
+		t.Fatal(err)
+	}
+	for _, local := range []bool{true, false} {
+		if !local {
+			e, _ = NewCachedEvaluator(next, cache, active, 30*time.Second, func() time.Time { return now })
+		}
+		hit, err := e.Decide(context.Background(), in)
+		if err != nil || hit.Metadata.CacheStatus != "hit" || fmt.Sprint(hit.Decision.ResolvedConstraints["max_llm_tokens"]) != "9007199254740993" || fmt.Sprint(hit.Decision.ResolvedConstraints["max_execution_time_seconds"]) != "60" {
+			t.Fatalf("local=%v hit=%+v err=%v", local, hit, err)
+		}
+	}
+	// A cached explicit expansion must be discarded and evaluated again.
+	for key, raw := range cache.values {
+		var entry cacheEntry
+		if err := json.Unmarshal(raw, &entry); err != nil {
+			t.Fatal(err)
+		}
+		entry.Decision.ResolvedConstraints = map[string]any{"max_execution_time_seconds": 301}
+		cache.values[key], _ = json.Marshal(entry)
+	}
+	e, _ = NewCachedEvaluator(next, cache, active, 30*time.Second, func() time.Time { return now })
+	if result, err := e.Decide(context.Background(), in); err != nil || result.Metadata.CacheStatus != "miss" || next.calls != 2 {
+		t.Fatalf("invalid cached expansion reused: %+v %v calls=%d", result, err, next.calls)
+	}
+	in.AuthorityConstraints["max_llm_tokens"] = 20
+	if _, err := e.Decide(context.Background(), in); err != nil || next.calls != 3 {
+		t.Fatalf("authority change reused entry: %v calls=%d", err, next.calls)
 	}
 }

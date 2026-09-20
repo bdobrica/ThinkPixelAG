@@ -173,6 +173,7 @@ func (e *CachedEvaluator) decode(raw []byte, in Input, digest string, version in
 		return Result{}, false
 	}
 	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.UseNumber()
 	dec.DisallowUnknownFields()
 	var entry cacheEntry
 	if dec.Decode(&entry) != nil || entry.PolicyDigest != digest || entry.PolicyVersion != version || entry.InputDigest != inputDigest || !e.now().Before(entry.ExpiresAt) {
@@ -185,6 +186,13 @@ func (e *CachedEvaluator) decode(raw []byte, in Input, digest string, version in
 	entry.Decision.DecisionID = in.DecisionID
 	if ValidateDecision(entry.Decision, in, e.maxTTL) != nil {
 		return Result{}, false
+	}
+	if entry.Decision.Allow && in.Action == "runs.create" {
+		resolved, err := ResolveConstraints(in.AuthorityConstraints, in.RequestedConstraints, entry.Decision.ResolvedConstraints)
+		if err != nil {
+			return Result{}, false
+		}
+		entry.Decision.ResolvedConstraints = resolved
 	}
 	return Result{Decision: entry.Decision, Metadata: Metadata{PolicyDigest: digest, PolicyVersion: version, InputDigest: inputDigest, CacheStatus: "hit"}}, true
 }

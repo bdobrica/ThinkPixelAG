@@ -19,7 +19,7 @@ The distinction matters when deciding what can be used today.
 | Trusted usage, settlement and revocation distribution | Implemented through the separate mTLS listener and versioned contracts |
 | Register/provision arbitrary tenants, agents and policies through an operator-facing installer/API | Incomplete runtime composition; examples provision controlled sample data |
 | Attach an existing harness and drive execution/completion through a complete AG-facing adapter | Not yet implemented as a complete integration; internal lease services are not a published worker API |
-| Obtain dynamic platform capabilities/instructions for a harness | Future proposal: [ADR-0013](../adr/0013-dynamic-harness-instructions.md) |
+| Obtain dynamic platform capabilities/instructions for a harness | Accepted design, implementation pending: [ADR-0013](../adr/0013-dynamic-harness-instructions.md) |
 
 An `ADMITTED` Run is not proof that a harness was launched, constrained, metered
 or completed its objective. The examples intentionally show the working
@@ -46,7 +46,7 @@ streams. The [OpenAPI](../../api/openapi/thinkpixelag.yaml) defines the wire API
 ## Harness instructions and enforcement
 
 A static AGENTS.md may explain conventions, but it cannot reflect all changing
-platform capabilities and cannot enforce governance. The proposed direction is
+platform capabilities and cannot enforce governance. The accepted design is
 for an authenticated adapter to retrieve context-specific guidance from AG and
 render it through the harness's instruction mechanism. That endpoint and adapter
 lifecycle are not implemented here; no static AGENTS.md is supplied as a substitute.

@@ -1,6 +1,7 @@
 # Next integration release candidate
 
-Status: planned; this document does not claim the features are implemented.
+Status: implementation in progress; RC-101 decisions and RC-102 constraint
+inheritance are implemented. The administration and harness features remain pending.
 Execution checklist: [TODO.md](TODO.md). Scope: dynamic harness guidance and
 usable administration through APIs and an optional UI.
 
@@ -19,8 +20,9 @@ The current executable evaluates policy, admits and manages Runs, and exposes
 some administrative operations. Policy upload/activation are defined in OpenAPI
 but lack HTTP/runtime composition. Roles currently come from deployment-owned
 OIDC mappings. Dynamic instructions are accepted but unimplemented in
-[ADR-0013](docs/adr/0013-dynamic-harness-instructions.md). Omitted caller limits
-also expose an admission constraint-resolution defect that this work must fix.
+[ADR-0013](docs/adr/0013-dynamic-harness-instructions.md). RC-102 corrects omitted
+caller/policy limits and applies approved manifest ceilings in root admission;
+the pinned `0.1.0-rc.1` image still predates that source fix.
 
 ## Planning defaults and decisions
 
@@ -50,7 +52,7 @@ finalizes its wire fields and safe reload behavior.
 
 ## Workstream 1: authoritative limits and administration APIs
 
-First make absent caller constraints inherit applicable authoritative ceilings.
+RC-102 makes absent caller constraints inherit applicable authoritative ceilings.
 The effective limits are the strictest applicable agent approval, tenant policy,
 deployment, parent and optional caller bounds. Go must independently preserve
 those bounds even if policy output omits a dimension. Cover deadlines, resource
@@ -81,7 +83,7 @@ from accidental administrator lockout; no unauthenticated bootstrap endpoint.
 
 ## Workstream 2: dynamic harness guidance
 
-Promote/refine ADR-0013 with the static bootstrap plus trusted helper workflow.
+Implement accepted ADR-0013 with the static bootstrap plus trusted helper workflow.
 Specify an authenticated versioned response with capability revision, expiry,
 caller/tenant scope, optional Run scope, supported operations and Markdown
 instructions. Endpoint paths and schemas are finalized in the contract task.

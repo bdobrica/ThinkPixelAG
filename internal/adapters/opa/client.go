@@ -77,6 +77,7 @@ func (c *Client) Decide(ctx context.Context, in policy.Input) (policy.Result, er
 	}
 	limited := io.LimitReader(resp.Body, (64<<10)+1)
 	dec := json.NewDecoder(limited)
+	dec.UseNumber()
 	dec.DisallowUnknownFields()
 	var envelope struct {
 		Result policy.Decision `json:"result"`
@@ -90,6 +91,13 @@ func (c *Client) Decide(ctx context.Context, in policy.Input) (policy.Result, er
 	}
 	if err := policy.ValidateDecision(envelope.Result, in, c.maxTTL); err != nil {
 		return policy.Result{}, fmt.Errorf("%w: invalid decision", ErrUnavailable)
+	}
+	if envelope.Result.Allow && in.Action == "runs.create" {
+		resolved, err := policy.ResolveConstraints(in.AuthorityConstraints, in.RequestedConstraints, envelope.Result.ResolvedConstraints)
+		if err != nil {
+			return policy.Result{}, fmt.Errorf("%w: invalid constraints", ErrUnavailable)
+		}
+		envelope.Result.ResolvedConstraints = resolved
 	}
 	return policy.Result{Decision: envelope.Result, Metadata: policy.Metadata{PolicyDigest: digest, PolicyVersion: version, InputDigest: inputDigest, Duration: duration, CacheStatus: "miss"}}, nil
 }

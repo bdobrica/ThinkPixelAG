@@ -162,7 +162,11 @@ func ValidateDecision(d Decision, in Input, maxTTL time.Duration) error {
 	if !constraintsNarrow(d.ResolvedConstraints, in.AuthorityConstraints) {
 		return errors.New("policy decision expands authority constraints")
 	}
-	if !constraintsNarrow(d.ResolvedConstraints, in.RequestedConstraints) {
+	if d.Allow && in.Action == "runs.create" {
+		if _, err := ResolveConstraints(in.AuthorityConstraints, in.RequestedConstraints, d.ResolvedConstraints); err != nil {
+			return err
+		}
+	} else if !constraintsNarrow(d.ResolvedConstraints, in.RequestedConstraints) {
 		return errors.New("policy decision expands requested constraints")
 	}
 	return boundedJSON(d, 64<<10)
