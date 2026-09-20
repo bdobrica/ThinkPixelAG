@@ -6,15 +6,21 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/bdobrica/ThinkPixelAG/internal/adapters/localkeys"
+	opaadapter "github.com/bdobrica/ThinkPixelAG/internal/adapters/opa"
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/postgres"
+	"github.com/bdobrica/ThinkPixelAG/internal/application"
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
+	"github.com/bdobrica/ThinkPixelAG/internal/policy"
 	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestBootstrapCommandReplayRestartAndNoReplacement(t *testing.T) {
@@ -85,6 +91,38 @@ func TestBootstrapCommandReplayRestartAndNoReplacement(t *testing.T) {
 	state, e := repo.AgentVersionEligibility(ctx, b.AgentID, result.VersionDigest)
 	if e != nil || state != domain.AgentVersionApproved {
 		t.Fatal(state, e)
+	}
+	var dimensions int
+	if e = pool.QueryRow(ctx, `SELECT count(*) FROM resource_dimensions WHERE tenant_id=$1`, b.TenantID.String()).Scan(&dimensions); e != nil || dimensions != 7 {
+		t.Fatal("bootstrap accounting catalog", dimensions, e)
+	}
+	// Simulate an installation bootstrapped before resource definitions existed.
+	if _, e = pool.Exec(ctx, `DELETE FROM resource_dimensions WHERE tenant_id=$1`, b.TenantID.String()); e != nil {
+		t.Fatal(e)
+	}
+	var repaired bytes.Buffer
+	if e = run(ctx, append(args, "--repair-resource-catalog"), &repaired); e != nil || repaired.String() != first.String() {
+		t.Fatal("explicit catalog repair", e)
+	}
+	if e = pool.QueryRow(ctx, `SELECT count(*) FROM resource_dimensions WHERE tenant_id=$1`, b.TenantID.String()).Scan(&dimensions); e != nil || dimensions != 7 {
+		t.Fatal("repaired catalog", dimensions, e)
+	}
+	key, e := localkeys.Open(filepath.Join(dir, "key"))
+	if e != nil {
+		t.Fatal(e)
+	}
+	evaluator := &opaadapter.ArtifactEvaluator{Store: repo, Modules: &opaadapter.Modules{Base: opa, Client: http.DefaultClient, Timeout: time.Second}, Verifier: key, Channel: "stable", MaxTTL: time.Minute}
+	resolver, e := application.NewVersionResolver(repo, evaluator, domain.SystemClock{})
+	if e != nil {
+		t.Fatal(e)
+	}
+	admission, e := application.NewRunAdmissionService(resolver, repo, domain.SystemClock{})
+	if e != nil {
+		t.Fatal(e)
+	}
+	admitted, e := admission.Admit(ctx, application.AdmitRun{TenantID: b.TenantID, PrincipalID: b.Principals[0], AgentID: b.AgentID, RequestID: id(), Roles: []string{"agent-invoker"}, RequestedConstraints: map[string]any{}, AuthorityConstraints: map[string]any{"max_execution_time_seconds": int64(300), "max_llm_tokens": int64(1000)}, SecurityState: policy.SecurityState{Authoritative: true}})
+	if e != nil || admitted.DeadlineAt == nil {
+		t.Fatal("provisioned tenant cannot admit a bounded Run", e)
 	}
 	b.AgentName = "replacement"
 	raw, _ = json.Marshal(b)

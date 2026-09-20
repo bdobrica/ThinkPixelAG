@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Initialize the root resource catalog during operator bootstrap so approved
+  agents can actually admit bounded Runs; provide an audited missing-catalog repair.
+
 - Add authenticated caller/Run-scoped harness capabilities and trusted Markdown,
   with revision/expiry, conditional reauthorization and explicit execution limits.
 

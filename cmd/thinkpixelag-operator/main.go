@@ -75,6 +75,7 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	}
 	fs := flag.NewFlagSet("bootstrap", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
+	repair := fs.Bool("repair-resource-catalog", false, "explicitly initialize missing root resource definitions on an identical bootstrap receipt")
 	specPath := fs.String("spec", "", "private reviewed initial snapshot")
 	policyPath := fs.String("policy", "", "reviewed Rego source")
 	keyPath := fs.String("key", "", "private persistent local signing key")
@@ -91,6 +92,7 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	if e = decode(raw, &spec); e != nil {
 		return e
 	}
+	spec.RepairResourceCatalog = *repair
 	source, e := os.ReadFile(*policyPath)
 	if e != nil || len(source) > 1<<20 {
 		return errors.New("reviewed policy source unavailable or exceeds bounds")

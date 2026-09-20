@@ -8,16 +8,17 @@ import (
 
 // BootstrapSpec is a deployment-reviewed initial snapshot, never an HTTP body.
 type BootstrapSpec struct {
-	TenantID   domain.ID            `json:"tenant_id"`
-	Slug       string               `json:"slug"`
-	Issuer     string               `json:"issuer"`
-	Principals []domain.ID          `json:"principals"`
-	Mappings   map[string]string    `json:"role_mappings"`
-	OPA        OPAConnection        `json:"opa"`
-	Channel    string               `json:"channel"`
-	AgentID    domain.ID            `json:"agent_id"`
-	AgentName  string               `json:"agent_name"`
-	Manifest   domain.AgentManifest `json:"manifest"`
+	RepairResourceCatalog bool                 `json:"-"`
+	TenantID              domain.ID            `json:"tenant_id"`
+	Slug                  string               `json:"slug"`
+	Issuer                string               `json:"issuer"`
+	Principals            []domain.ID          `json:"principals"`
+	Mappings              map[string]string    `json:"role_mappings"`
+	OPA                   OPAConnection        `json:"opa"`
+	Channel               string               `json:"channel"`
+	AgentID               domain.ID            `json:"agent_id"`
+	AgentName             string               `json:"agent_name"`
+	Manifest              domain.AgentManifest `json:"manifest"`
 }
 type BootstrapResult struct {
 	TenantID      domain.ID `json:"tenant_id"`

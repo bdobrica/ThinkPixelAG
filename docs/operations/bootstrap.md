@@ -89,12 +89,18 @@ and add `--opa-token-file /private/path/to/token`. The command accepts only the
 explicitly supplied origin and private token file. Keep the signing key (0600)
 in its private directory (0700); it is generated once and reopened on reruns.
 
-Provisioning atomically creates the tenant/principals, initial mapping and OPA
+Provisioning atomically creates the seven closed root resource-dimension definitions
+(scale zero, nonnegative coefficients up to 2^53; SUM consumables and MAX
+structural dimensions), tenant/principals, initial mapping and OPA
 revisions, signed policy/activation, and an approved sample agent. The ordinary
 agent registry and policy approval services validate the agent/version. Output
 contains IDs and digests only. Identical reruns return the recorded result;
 changed snapshots or preexisting tenants without a matching receipt are rejected.
-There is no force/rebootstrap flag. A failed database transaction creates no
+There is no force/rebootstrap flag. Older source installations missing the
+resource catalog can rerun the identical command with `--repair-resource-catalog`.
+This explicit repair inserts only missing definitions, rejects conflicting
+existing definitions and emits `operator.bootstrap.resources` evidence. It
+changes no policy, mapping, agent, grant or original bootstrap receipt. A failed database transaction creates no
 partial tenant authority; an OPA compilation or new local key may remain for reuse.
 
 Set these runtime fields in addition to your existing ceilings:
