@@ -121,7 +121,7 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   Implemented v1 JSON/Markdown routes, live caller/Run checks, revision/expiry
   and conditional reauthorization; focused HTTP/application/contract checks passed.
 
-- [ ] **RC-109 — Ship the bootstrap snippet and fetch helper.** Depends on RC-108.
+- [x] **RC-109 — Ship the bootstrap snippet and fetch helper.** Depends on RC-108.
   Provide an appendable AGENTS.md section and helper installation/configuration
   commands. Keep tokens in trusted host storage; return only safe instructions
   to the harness. Pin the AG origin, reject unsafe redirects, refresh at session
@@ -130,6 +130,10 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   supported admission/read/cancel operations; configuration change triggers a
   refresh. Check helper behavior plus one recorded manual harness walkthrough,
   including expiry and a denied operation. Do not label this AR execution.
+  Implemented private host helper, appendable snippet and installation guide.
+  `make verify`, seven focused helper tests and the real Codex admission/read/cancel, configuration
+  revision, expiry and existing-token role-removal walkthrough passed.
+  [Verification](docs/evidence/results/harness-guidance.json).
 
 - [ ] **RC-110 — Specify the remaining execution handoff.** Depends on RC-109.
   Record the minimum AG-facing runtime integration needs: task delivery, Run/

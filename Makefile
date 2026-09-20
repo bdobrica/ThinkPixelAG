@@ -20,7 +20,7 @@ REVISION ?= $(shell git rev-parse --verify HEAD 2>/dev/null || printf unknown)
 CREATED ?= $(shell git show -s --format=%cI HEAD 2>/dev/null || printf unknown)
 IMAGE ?= thinkpixelag:dev
 GO_FILES := $(shell git ls-files '*.go')
-.PHONY: operator contract-check help tools generate generate-check fmt fmt-check lint test test-race \
+.PHONY: test-harness operator contract-check help tools generate generate-check fmt fmt-check lint test test-race \
 	test-policy test-integration test-e2e dependency-check vulnerability-check \
 	license-check security build image container-smoke verify clean compose-check dev-up \
 	dev-up-valkey dev-status dev-smoke dev-down dev-reset test-security \
@@ -71,6 +71,9 @@ test: ## Run unit and repository contract tests with coverage.
 test-race: ## Run all Go tests with the race detector.
 	$(GO) test -race ./...
 	cd tools && $(GO) test -race ./...
+
+test-harness: ## Test the dependency-free trusted harness helper.
+	python3 -m unittest discover -s integrations/harness -p 'helper_test.py'
 
 test-policy: ## Run OPA/Rego tests when policy sources are present.
 	@rego_files="$$(git ls-files 'policies/*.rego' 'policies/**/*.rego')"; \
@@ -199,7 +202,7 @@ test-lifecycle: ## Check lifecycle drill rollback and uncertain-mutation safety.
 test-retained-lifecycle: ## Run retained-cluster lifecycle qualification with explicit LIFECYCLE_ARGS.
 	python3 test/operations/lifecycle.py $(LIFECYCLE_ARGS)
 
-verify: generate-check contract-check lint test test-race test-policy test-integration test-e2e test-security compose-check kubernetes-check security build container-smoke ## Run the complete clean-checkout gate.
+verify: generate-check contract-check lint test test-race test-harness test-policy test-integration test-e2e test-security compose-check kubernetes-check security build container-smoke ## Run the complete clean-checkout gate.
 
 clean: ## Remove repository-local build outputs.
 	rm -rf .cache/bin

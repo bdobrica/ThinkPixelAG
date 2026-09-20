@@ -17,9 +17,9 @@ The distinction matters when deciding what can be used today.
 | Admit a Run, return identity/version/resource envelope | Implemented: `POST /v1/agents/{agent_id}/runs` |
 | Read, signal, cancel and stream Run events | Implemented under `/v1/runs/{run_id}` |
 | Trusted usage, settlement and revocation distribution | Implemented through the separate mTLS listener and versioned contracts |
-| Register/provision arbitrary tenants, agents and policies through an operator-facing installer/API | Incomplete runtime composition; examples provision controlled sample data |
+| Register/provision arbitrary tenants, agents and policies through an operator-facing installer/API | Implemented in the source local profile: [protected bootstrap](bootstrap.md) and authenticated registry/policy APIs |
 | Attach an existing harness and drive execution/completion through a complete AG-facing adapter | Not yet implemented as a complete integration; internal lease services are not a published worker API |
-| Obtain dynamic platform capabilities/instructions for a harness | Accepted design, implementation pending: [ADR-0013](../adr/0013-dynamic-harness-instructions.md) |
+| Obtain dynamic platform capabilities/instructions for a harness | Implemented in source: [v1 discovery](../contracts/harness-guidance.md) and [installed helper](../../integrations/harness/README.md) |
 
 An `ADMITTED` Run is not proof that a harness was launched, constrained, metered
 or completed its objective. The examples intentionally show the working
@@ -45,11 +45,12 @@ streams. The [OpenAPI](../../api/openapi/thinkpixelag.yaml) defines the wire API
 
 ## Harness instructions and enforcement
 
-A static AGENTS.md may explain conventions, but it cannot reflect all changing
-platform capabilities and cannot enforce governance. The accepted design is
-for an authenticated adapter to retrieve context-specific guidance from AG and
-render it through the harness's instruction mechanism. That endpoint and adapter
-lifecycle are not implemented here; no static AGENTS.md is supplied as a substitute.
+Install the [trusted helper and appendable AGENTS.md snippet](../../integrations/harness/README.md).
+It retrieves caller/Run-scoped guidance from AG, keeps bearer credentials in host
+storage, revalidates online before each operation and refreshes after admission
+or context changes. Existing project instructions remain intact. The source
+candidate supports a real discovery/admission/read/cancel workflow; the published
+`0.1.0-rc.1` image predates this helper/API.
 
 Capability descriptions do not grant authority. A trusted integration must
 handle authentication, refresh, Run context and service/gateway enforcement.

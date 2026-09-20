@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Ship the optional trusted harness helper and appendable instruction bootstrap,
+  with HTTPS origin pinning, online refresh and governance operation commands.
+
 - Initialize the root resource catalog during operator bootstrap so approved
   agents can actually admit bounded Runs; provide an audited missing-catalog repair.
 

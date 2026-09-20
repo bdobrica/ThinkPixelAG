@@ -4,7 +4,7 @@
 - Date: 2026-09-20
 - Owners: project maintainers
 - Supersedes: none
-- Implementation: RC-108 discovery/instruction endpoints implemented; RC-109 helper pending
+- Implementation: RC-108 discovery/instruction endpoints and RC-109 helper implemented
 
 ## Context
 

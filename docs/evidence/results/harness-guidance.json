@@ -1,0 +1,34 @@
+{
+  "date": "2026-09-20",
+  "scope": "RC-108 and RC-109 dynamic guidance and existing governance operations",
+  "environment": {
+    "harness": "actual Codex session invoking the installed helper through its shell tool",
+    "service": "source-built AG, retained local PostgreSQL and OPA, dedicated walkthrough database",
+    "identity": "local RSA-signed OIDC test issuer and verified HTTPS reverse proxy",
+    "signing": "ADR-0016 local-development profile"
+  },
+  "checks": {
+    "focused_go_guidance_and_contract_tests": "passed",
+    "python_helper_tests": "7 passed",
+    "append_existing_project_instructions_and_fetch": "passed",
+    "approved_agent_discovery": "passed",
+    "objective_only_admission_and_run_refresh": "passed",
+    "run_read": "passed",
+    "cancel_and_terminal_capability_removal": "passed",
+    "configuration_revision_refresh": "passed: OPA connection revision 1 to 2 changed capability revision",
+    "expiry_refresh": "passed: prior expiry 12:11:00Z, new issue 12:11:30Z",
+    "role_removal_with_existing_token_and_cache": "passed: guidance and direct admission both returned 403",
+    "role_restoration": "passed: original mappings restored and guidance succeeded",
+    "aggregate_verification": "make verify passed, including container smoke"
+  },
+  "finding": "The fresh operator bootstrap lacked resource definitions. Commit ddd611c adds catalog initialization and an audited repair. Repairing the retained installation allowed the original idempotent admission to succeed; focused real PostgreSQL/OPA bootstrap admission coverage passed.",
+  "limits": [
+    "No AR worker execution, completion or live gateway accounting was claimed.",
+    "Local test identity and software signing do not qualify external IdP, KMS/HSM or production credential custody.",
+    "The same-user manual shell is not a sandbox isolation qualification.",
+    "Production throughput, p99 and HA deferrals remain unchanged.",
+    "Private runtime inputs, identifiers, credentials and local topology are retained outside committed evidence."
+  ],
+  "verification_base_revision": "ddd611c55e71e2694c58139f0e21589038f5c5ad",
+  "verified_code_diff_sha256": "590298cad6054fe5e1411f37f26f3ea92c389e206b90fa0744ad81ff9d70f396"
+}

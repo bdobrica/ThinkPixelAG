@@ -130,3 +130,6 @@ configuration, storage and troubleshooting; the [Kubernetes team PoC](examples/t
 for a shared installation; and [configuration.md](configuration.md) for every
 runtime setting. This local setup uses sample identity/policy provisioning and
 is not a production identity or administrative bootstrap service.
+
+For the current source candidate, [install the harness helper](../integrations/harness/README.md)
+and append the bootstrap snippet to connect an existing harness to dynamic guidance.
