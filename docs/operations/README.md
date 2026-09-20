@@ -32,3 +32,6 @@ identify the production and cross-component evidence still needed.
 
 [Policy administration](administration.md) covers draft editing, promotion,
 activation and independent local rollback approval through the API.
+
+[Operator bootstrap and recovery](bootstrap.md) provisions the source-built local
+administration candidate without fixture seeding or SQL edits.

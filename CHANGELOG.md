@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add protected local operator bootstrap/recovery, immutable schema 23 receipts,
+  registry creation/version APIs and authorized Run listing.
+
 - Add bounded OPA connection management, protected token references, validated
   live reload and immutable schema 22 revisions.
 

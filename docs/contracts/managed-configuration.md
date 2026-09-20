@@ -36,7 +36,8 @@ Administration transactions recheck the mapping revision under the tenant lock;
 an intervening edit requires fresh authentication. No database connectivity means
 no API-managed authority, even while the token itself remains valid.
 
-The protected operator provisioning/recovery command is delivered in RC-107.
+The protected [operator provisioning/recovery command](../operations/bootstrap.md)
+is implemented in the source candidate.
 There is no unauthenticated bootstrap/reset endpoint or standing recovery role;
 recovery must preserve independent expansion approval. Do not enable API mode
 on a fresh deployment before provisioning its initial state.

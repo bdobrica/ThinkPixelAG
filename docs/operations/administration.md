@@ -1,5 +1,7 @@
 # Administer policy through the API
 
+For a clean source-built installation, start with [operator bootstrap](bootstrap.md).
+
 These operations require an installation using the explicit local-development
 profile and a `policy-admin` caller token. They exercise the same APIs intended
 for the optional console; no console is needed. Production KMS/HSM and independent
@@ -9,7 +11,7 @@ and [API contract](../contracts/policy-administration.md).
 
 Keep `AG_TOKEN` in your trusted shell/host, not harness instructions. The commands
 below assume `AG_URL` and an authenticated administrator token are already set.
-Initial installation/bootstrap is the RC-107 workflow.
+Initial installation is covered by the protected bootstrap command.
 
 ## Edit, validate and promote
 
@@ -17,7 +19,9 @@ Create a private working directory and capture the draft's identity/revision:
 
 ```sh
 AG_WORK_DIR=$(mktemp -d)
-jq -n --rawfile source policies/authorization.rego \
+cp policies/authorization.rego "$AG_WORK_DIR/authorization.rego"
+printf '\n# Local operator review revision 2\n' >> "$AG_WORK_DIR/authorization.rego"
+jq -n --rawfile source "$AG_WORK_DIR/authorization.rego" \
   '{source:$source,expected_revision:0}' > "$AG_WORK_DIR/draft-request.json"
 curl --fail-with-body --silent --show-error \
   -H "Authorization: Bearer $AG_TOKEN" -H 'Content-Type: application/json' \
@@ -32,6 +36,10 @@ curl --fail-with-body --silent --show-error \
   -H "Idempotency-Key: validate-$(openssl rand -hex 16)" --data '{"revision":1}' \
   "$AG_URL/v1/admin/policy-drafts/$AG_DRAFT_ID/validation"
 ```
+
+The example adds a review comment to create new signed bytes while retaining
+the baseline decisions. For a real policy change, edit and review that private
+source before uploading it.
 
 To revise, `PUT` new source with the current `expected_revision` to the draft
 URL. A stale revision returns a conflict. Save the returned revision/digest;
@@ -103,9 +111,8 @@ approve its ID through `/v1/admin/approvals/{id}/decisions`, then PUT the unchan
 mapping/revision with that approval ID. Concurrent changes require a new review.
 Removed bindings stop working on the next verified request on every replica.
 
-File-managed mappings remain readable but reject writes. Initial provisioning
-and protected lockout recovery are the next operator-bootstrap deliverable;
-keep the current deployment mode until that command is available.
+File-managed mappings remain readable but reject writes. Use the [protected bootstrap/recovery command](bootstrap.md) to initialize a
+clean tenant or recover mappings without an unauthenticated reset endpoint.
 
 ## OPA connection configuration
 

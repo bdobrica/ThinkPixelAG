@@ -79,3 +79,11 @@ revisions. See [managed configuration](managed-configuration.md).
 The next candidate adds bounded OPA integration configuration/read/status APIs;
 schema 22 stores immutable revisions and protected token aliases. Defaults remain
 file-managed. Unsupported ThinkPixel peers gain no new execution capability.
+
+
+The source candidate now composes the already published agent creation and
+immutable version registration contracts. It adds `GET /v1/runs` with bounded,
+caller-bound pagination and the existing per-Run `runs.read` authorization;
+there is no new role granting blanket visibility. Schema 23 records immutable
+operator bootstrap receipts. The protected local operator binary is not an HTTP
+API and does not change the managed-signing or workload-identity boundary.

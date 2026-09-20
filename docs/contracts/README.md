@@ -36,3 +36,6 @@ marketplace metadata and harness output cannot grant Run authority. See
 activation, replay and exact-artifact OPA selection in the local development profile.
 
 [Managed configuration](managed-configuration.md) specifies role-mapping ownership, live refresh and approval-bound changes.
+
+The [operator guide](../operations/bootstrap.md) explains initial tenant/policy/agent
+provisioning, existing registry contracts and authorized agent/Run read views.

@@ -20,7 +20,7 @@ REVISION ?= $(shell git rev-parse --verify HEAD 2>/dev/null || printf unknown)
 CREATED ?= $(shell git show -s --format=%cI HEAD 2>/dev/null || printf unknown)
 IMAGE ?= thinkpixelag:dev
 GO_FILES := $(shell git ls-files '*.go')
-.PHONY: contract-check help tools generate generate-check fmt fmt-check lint test test-race \
+.PHONY: operator contract-check help tools generate generate-check fmt fmt-check lint test test-race \
 	test-policy test-integration test-e2e dependency-check vulnerability-check \
 	license-check security build image container-smoke verify clean compose-check dev-up \
 	dev-up-valkey dev-status dev-smoke dev-down dev-reset test-security \
@@ -136,6 +136,10 @@ build: ## Build the static governance-plane binary with version metadata.
 	CGO_ENABLED=0 $(GO) build -trimpath -buildvcs=false \
 		-ldflags '-s -w -X main.version=$(VERSION) -X main.revision=$(REVISION)' \
 		-o $(BUILD_DIR)/thinkpixelag ./cmd/thinkpixelag
+
+operator: ## Build the protected local-development provisioning/recovery command.
+	mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=0 $(GO) build -trimpath -buildvcs=false -o $(BUILD_DIR)/thinkpixelag-operator ./cmd/thinkpixelag-operator
 
 image: ## Build the pinned, minimal, non-root OCI image.
 	$(DOCKER) build --build-arg VERSION=$(VERSION) --build-arg REVISION=$(REVISION) --build-arg CREATED=$(CREATED) -t $(IMAGE) .

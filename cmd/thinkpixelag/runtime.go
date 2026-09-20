@@ -187,6 +187,8 @@ func (r *runtimeRoutes) mount(d *httpserver.Dependencies, trusted bool) {
 	} else {
 		if r.localKey != nil {
 			d.PolicyAdministration = r.route("policy-admin", false)
+			d.RegistryAdministration = r.route("registry-admin", false)
+			d.RunList = r.route("run-list", false)
 			d.Integrations = r.route("integrations", false)
 			d.RoleMappings = r.route("role-mappings", false)
 			d.PolicyEditor = r.route("policy-editor", false)
@@ -276,8 +278,22 @@ func (r *runtimeRoutes) handler(ctx context.Context, name string, tenant domain.
 		return m.Sum(nil)
 	}
 	switch name {
-	case "policy-admin", "policy-editor", "role-mappings", "integrations":
+	case "policy-admin", "policy-editor", "role-mappings", "integrations", "registry-admin", "run-list":
 		s := &application.PolicyAdministration{Store: repo, Evaluator: evaluator, Modules: modules, Verifier: r.localKey, Signer: r.localKey, SigningKeyID: r.localKey.ID(), ApprovalProvider: &localapprovals.Provider{Store: repo}, Channel: r.runtime.PolicyChannel, Clock: r.clock}
+		if name == "registry-admin" {
+			return httpserver.RegistryAdministrationHandler(r.verifier, &application.RegistryAdministration{Policy: s, Store: repo}), nil
+		}
+		if name == "run-list" {
+			q, e := application.NewRunQuery(repo, evaluator, r.clock)
+			if e != nil {
+				return nil, e
+			}
+			codec, e := domain.NewCursorCodec(key("run-pages"))
+			if e != nil {
+				return nil, e
+			}
+			return httpserver.RunListHandler(r.verifier, s, repo, q, codec), nil
+		}
 		if name == "integrations" {
 			mode := r.runtime.IntegrationsMode
 			if mode == "" {

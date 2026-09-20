@@ -81,3 +81,5 @@ database triggers to reject direct updates or deletes.
 Migration 021 adds tenant/issuer-scoped immutable external-role mapping revisions.
 
 Migration 022 adds immutable tenant OPA integration configuration revisions.
+
+Migration 023 adds immutable protected operator bootstrap receipts.

@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"io/fs"
 	"os"
@@ -18,9 +19,11 @@ var version = "dev"
 var revision = "unknown"
 
 func main() {
+	directory := flag.String("directory", "/migrations", "immutable migration directory")
+	flag.Parse()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	if err := run(ctx, os.Getenv("THINKPIXELAG_DATABASE_URL"), os.DirFS("/migrations")); err != nil {
+	if err := run(ctx, os.Getenv("THINKPIXELAG_DATABASE_URL"), os.DirFS(*directory)); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "thinkpixelag-migrate: %v\n", err)
 		os.Exit(1)
 	}

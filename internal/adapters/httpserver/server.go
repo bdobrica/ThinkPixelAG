@@ -75,6 +75,8 @@ type Dependencies struct {
 	Readiness              ReadinessProbe
 	NewID                  IDGenerator
 	PolicyAdministration   http.Handler
+	RegistryAdministration http.Handler
+	RunList                http.Handler
 	Integrations           http.Handler
 	RoleMappings           http.Handler
 	PolicyEditor           http.Handler
@@ -163,6 +165,13 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 		}
 		dependencies.Metrics.Handler().ServeHTTP(writer, request)
 	}))
+	if dependencies.RegistryAdministration != nil {
+		mount("POST /v1/admin/agents", dependencies.RegistryAdministration)
+		mount("POST /v1/admin/agents/{agent_id}/versions", dependencies.RegistryAdministration)
+	}
+	if dependencies.RunList != nil {
+		mount("GET /v1/runs", dependencies.RunList)
+	}
 	if dependencies.Integrations != nil {
 		for _, route := range []string{"GET /v1/admin/integrations/opa", "PUT /v1/admin/integrations/opa", "GET /v1/admin/integrations/opa/status"} {
 			mount(route, dependencies.Integrations)

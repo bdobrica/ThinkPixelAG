@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-09-20
-- Implementation: planned in RC-105–107; current OIDC mappings remain static
+- Implementation: RC-105–107 local administration profile and protected operator commands implemented
 - Supersedes: ADR-0003 only for the source/refresh of external-role mappings;
   verified issuer, audience, tenant and principal requirements remain unchanged
 - Supplements: ADR-0010; closed roles and privileged approval rules remain intact

@@ -38,7 +38,7 @@ func (s *OPA) Modules(c ports.OPAConnection) (*opa.Modules, error) {
 	for _, o := range s.AllowedOrigins {
 		allowed = allowed || o == c.Endpoint
 	}
-	if !origin(c.Endpoint) || !allowed {
+	if len(c.Endpoint) > 2048 || len(c.TokenReference) > 128 || !origin(c.Endpoint) || !allowed {
 		return nil, domain.NewError(domain.CodeInvalidArgument, "OPA destination is not deployment-allowlisted")
 	}
 	token := s.DefaultToken

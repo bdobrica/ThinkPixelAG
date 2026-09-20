@@ -7,6 +7,7 @@ import (
 	"github.com/bdobrica/ThinkPixelAG/internal/domain"
 	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 	"github.com/jackc/pgx/v5"
+	"strings"
 	"time"
 )
 
@@ -108,8 +109,14 @@ func (r *TenantRepository) administrationEvidence(ctx context.Context, op ports.
 	if err != nil {
 		return err
 	}
-	metadata, _ := json.Marshal(map[string]any{"resource_reference": op.Resource, "policy_digest": op.PolicyDigest, "policy_epoch": op.PolicyVersion})
-	_, err = r.db.Exec(ctx, `INSERT INTO audit_events(id,tenant_id,principal_id,action,resource_type,resource_id,outcome,reason_codes,policy_decision_id,request_id,metadata,event_hash,occurred_at) VALUES($1,$2,$3,$4,'governance_configuration',$5,'SUCCEEDED','["governance.operation.allowed"]',$6,$7,$8,$9,$10)`, audit.String(), r.tenantID.String(), op.ActorID.String(), op.Action, op.Resource, op.DecisionID.String(), op.RequestID.String(), metadata, op.RequestHash, op.At)
+	authorizationSource := "active-policy"
+	var decision any = op.DecisionID.String()
+	if strings.HasPrefix(op.Action, "operator.") {
+		authorizationSource = "deployment-operator"
+		decision = nil
+	}
+	metadata, _ := json.Marshal(map[string]any{"resource_reference": op.Resource, "policy_digest": op.PolicyDigest, "policy_epoch": op.PolicyVersion, "authorization_source": authorizationSource})
+	_, err = r.db.Exec(ctx, `INSERT INTO audit_events(id,tenant_id,principal_id,action,resource_type,resource_id,outcome,reason_codes,policy_decision_id,request_id,metadata,event_hash,occurred_at) VALUES($1,$2,$3,$4,'governance_configuration',$5,'SUCCEEDED','["governance.operation.allowed"]',$6,$7,$8,$9,$10)`, audit.String(), r.tenantID.String(), op.ActorID.String(), op.Action, op.Resource, decision, op.RequestID.String(), metadata, op.RequestHash, op.At)
 	if err != nil {
 		return err
 	}

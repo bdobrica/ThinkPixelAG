@@ -91,7 +91,7 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   active-artifact checks before commit. Transport-boundary and real OPA/database
   validation/replay/failed-update tests passed; provisioning follows in RC-107.
 
-- [ ] **RC-107 — Provide operator bootstrap and read views.** Depends on RC-103,
+- [x] **RC-107 — Provide operator bootstrap and read views.** Depends on RC-103,
   RC-105 and RC-106. Add a documented protected provisioning command for the
   first tenant/admin/policy and sample approved agent using application services.
   Reuse agent/version contracts where possible; compose missing minimum registry
@@ -99,7 +99,13 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   needed for console agents/Runs, policy and integration status. Done: a clean
   installation is usable through commands without the UI or fixture seeding.
   Check: provisioning replay, unauthorized rebootstrap, tenant isolation,
-  persistence after restart and no credentials in output/evidence.
+  persistence after restart and no credentials in output/evidence. Implemented
+  protected local bootstrap/recovery command, schema 23 receipts, published
+  registry write composition and per-object-authorized Run listing. Real
+  PostgreSQL/OPA command replay/reopen, recovery approval/evidence, HTTP registry
+  isolation/replay and Run-list filtering/cursor checks passed. Section-wide
+  `make verify` passed; final operator-audit clarification passed focused checks.
+  [Verification](docs/evidence/results/administration-api.json).
 
 ## 3. Dynamic harness guidance
 

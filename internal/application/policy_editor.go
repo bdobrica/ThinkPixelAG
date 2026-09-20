@@ -174,6 +174,13 @@ func (s *PolicyAdministration) DecideApproval(ctx context.Context, c AdminCaller
 	action := "policies.activate"
 	if a.Action == domain.ApprovalEmergencyExpansion {
 		action = "role_mappings.manage"
+		allowed := false
+		for _, role := range c.Roles {
+			allowed = allowed || role == "policy-admin"
+		}
+		if !allowed {
+			return ports.ApprovalView{}, domain.NewError(domain.CodeForbidden, "policy-administrator required")
+		}
 	} else if a.Action != domain.ApprovalPolicyRollback {
 		return ports.ApprovalView{}, domain.NewError(domain.CodeForbidden, "unsupported local approval action")
 	}

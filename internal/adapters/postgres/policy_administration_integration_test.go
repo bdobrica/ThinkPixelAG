@@ -139,7 +139,7 @@ func administrationHTTPWithApprover(t *testing.T, f *administrationFixture, appr
 	logger, _ := logging.New(io.Discard, "info")
 	metric, _ := metrics.New(false, metrics.BuildInfo{})
 	trace, _ := tracing.New(context.Background(), tracing.Config{Mode: "noop"})
-	server, err := httpserver.New(config.Defaults().HTTP, httpserver.Dependencies{Logger: logger, Metrics: metric, Tracing: trace, NewID: func() (string, error) { id, err := domain.NewID(); return id.String(), err }, PolicyAdministration: httpserver.PolicyAdministrationHandler(administrationVerifier{f.tenant, f.actor, approver}, f.service), PolicyEditor: httpserver.PolicyEditorHandler(administrationVerifier{f.tenant, f.actor, approver}, f.service, codec)})
+	server, err := httpserver.New(config.Defaults().HTTP, httpserver.Dependencies{Logger: logger, Metrics: metric, Tracing: trace, NewID: func() (string, error) { id, err := domain.NewID(); return id.String(), err }, RegistryAdministration: httpserver.RegistryAdministrationHandler(administrationVerifier{f.tenant, f.actor, approver}, &application.RegistryAdministration{Policy: f.service, Store: f.repo}), PolicyAdministration: httpserver.PolicyAdministrationHandler(administrationVerifier{f.tenant, f.actor, approver}, f.service), PolicyEditor: httpserver.PolicyEditorHandler(administrationVerifier{f.tenant, f.actor, approver}, f.service, codec)})
 	if err != nil {
 		t.Fatal(err)
 	}

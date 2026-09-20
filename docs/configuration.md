@@ -150,7 +150,7 @@ seconds are rejected. The existing OIDC issuer/audience/role mappings and OPA
 settings apply. Authenticated identity selects the tenant repository; every
 policy decision checks live authoritative revocation state. This initial
 composition does not enable the optional decision cache or a Run worker.
-Registration/policy-management composition is not included.
+The local signing profile below adds registration and policy administration.
 
 When `THINKPIXELAG_VALKEY_URL` and `THINKPIXELAG_VALKEY_CACHE_HMAC_KEY`
 are configured, trusted usage handling uses the existing optional throughput
@@ -193,8 +193,19 @@ back up the key separately from ordinary source/configuration files.
 Enabling it switches the runtime to verified per-artifact OPA evaluation and
 mounts the [policy administration API](contracts/policy-administration.md).
 Existing policy records must be signed by that development key; old fixture
-signatures are not silently trusted. Operator provisioning is covered by RC-107.
+signatures are not silently trusted. Use the protected [operator bootstrap command](operations/bootstrap.md).
 OPA must expose its management API privately to AG, and the HTTP body limit must
 allow the chosen base64-encoded artifact size. Other listeners/clients should
 not have OPA write access. Key replacement is an operator maintenance operation;
 this RC does not supply automatic online key rotation.
+
+
+The same local profile mounts registry creation/version registration, editor,
+role mappings, OPA configuration, and authorized Run listing. Runtime fields
+`role_mappings_mode` and `integrations_mode` each select `file` (default) or `api`;
+API mode requires provisioned database revisions and has no file fallback.
+`opa_allowed_origins` is a deployment-owned list of exact HTTP(S) origins.
+`opa_secret_files` maps protected reference aliases to private token files.
+Both are fixed at startup; API edits select only allowed origins/references.
+See the [managed field catalog](contracts/managed-configuration.md) and
+[operator guide](operations/bootstrap.md) before changing ownership modes.

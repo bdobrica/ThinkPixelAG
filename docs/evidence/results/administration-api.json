@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-20",
+  "scope": "TODO section 2, RC-103 through RC-107; unreleased local administration profile",
+  "base_revision": "7209780b03bc09f157388b265401e1269cbfb893",
+  "diff_paths": [
+    "internal",
+    "cmd",
+    "api",
+    "policies",
+    "migrations"
+  ],
+  "full_gate_code_diff_sha256": "fee7568093b0019d35cd06b9ed1a793f94f55f369c73a1bcdef4985f20485521",
+  "final_code_diff_sha256": "5fbaaac4bc8c17d511abb84eadb6af07c3cb573cc969a408c61d0a8d8d4f295b",
+  "checks": [
+    {
+      "command": "make verify",
+      "result": "passed",
+      "rego_cases": 29,
+      "container_smoke": "passed",
+      "note": "Before final operator-audit metadata clarification; that final change received the focused checks below."
+    },
+    {
+      "command": "go test -count=1 -tags=integration ./internal/adapters/postgres ./cmd/thinkpixelag-operator",
+      "result": "passed",
+      "services": "Retained local PostgreSQL and OPA; fresh tenant provisioning without fixture SQL"
+    },
+    {
+      "command": "go test -count=1 -tags=integration -run TestOperatorRecovery|TestBootstrapCommand|TestAdministrationHTTPPolicy|TestPolicyEditor ./internal/adapters/postgres ./cmd/thinkpixelag-operator",
+      "result": "passed",
+      "note": "Final operator-audit clarification: local deployment authority is explicit and policy_decision_id is not fabricated."
+    }
+  ],
+  "verified_behaviors": [
+    "Signed upload, exact immutable artifact selection, editor promotion and independently approved rollback",
+    "Live verified-tenant OIDC remapping across verifier instances; removal, stale writes, file mode and service-role rejection",
+    "Digest-bound independent mapping expansion approval and tenant isolation",
+    "Allowlisted OPA origins, private token aliases, redirect rejection, active-artifact validation, replay and failed-update retention",
+    "Protected command provisions an initial tenant, mappings, policy and approved sample agent atomically; identical rerun with reopened key/database handles replays and changed rebootstrap fails",
+    "Protected mapping recovery retains requester/approver separation, exact approval consumption and transactional evidence",
+    "Published registry creation/version endpoints preserve replay and isolation; Run listing filters each object and binds cursors to caller/tenant"
+  ],
+  "limits": [
+    "Local software signing and immutable authenticated approval receipts only; no production KMS/HSM or independent approval-provider qualification",
+    "OIDC verification tests use a test issuer; policy HTTP integration uses a test verifier. No claim of a live external IdP/operator login walkthrough.",
+    "No new release image published, homelab deployment changed, or UI/harness discovery implemented",
+    "Container checks ran before the final audit metadata clarification; final Go integration checks include that clarification."
+  ]
+}

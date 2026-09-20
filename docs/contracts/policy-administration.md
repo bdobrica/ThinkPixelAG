@@ -53,8 +53,9 @@ The existing wire schemas and policy decision version remain unchanged.
 The new optional `local_policy_key` runtime setting selects the explicit local
 profile in `local`/`test` environments only; production startup rejects it.
 Deployments without that setting retain their existing static policy composition.
-The optional console is not required. Initial operator provisioning and editor
-workflows are tracked separately in [TODO.md](../../TODO.md).
+The optional console is not required. Use the implemented
+[operator bootstrap](../operations/bootstrap.md) and
+[editor walkthrough](../operations/administration.md).
 
 ## Editor and local approvals
 

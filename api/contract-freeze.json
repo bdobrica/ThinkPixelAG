@@ -4,7 +4,7 @@
   "policy_version": "thinkpixelag.authorization/v1alpha1",
   "normalization": "CRLF to LF; no other normalization",
   "files": {
-    "api/openapi/thinkpixelag.yaml": "03b44267dd36e667350e90534ae12a0e1e7f22c2629fd119a6c7a56873944bb5",
+    "api/openapi/thinkpixelag.yaml": "2fa437609034eecff8a2ebaf2f1a72a22fb54c5682a292f3de851333b4dc42ef",
     "api/schemas/break-glass-v1.json": "fe676fca84aac270e671c276f1a3ed8811e767203b5b26eb68dba3b78b0482d0",
     "api/schemas/evidence-delivery-v1.json": "181a1d381aa600a1b25fd92d3cf9c1532bcca54c7bbc01aab3841839b20617f7",
     "api/schemas/evidence-event-v1.json": "f57520941b1caadaab578b487790d8671b4f76554cc2e218bc3272a2126f6fdd",

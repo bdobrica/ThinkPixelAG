@@ -1,7 +1,9 @@
 # Next integration release candidate
 
 Status: implementation in progress; RC-101 decisions and RC-102 constraint
-inheritance are implemented. Signed policy administration and editor/rollback APIs are implemented; managed configuration, bootstrap and harness features remain pending.
+inheritance are implemented. Section 2 administration APIs, managed configuration
+and protected operator bootstrap are implemented in the local profile. Harness
+guidance and UI remain pending.
 Execution checklist: [TODO.md](TODO.md). Scope: dynamic harness guidance and
 usable administration through APIs and an optional UI.
 
@@ -19,7 +21,7 @@ does not own governance data or become necessary for AG startup or operation.
 The current executable evaluates policy, admits and manages Runs, and exposes
 some administrative operations. Policy upload/activation are composed in the opt-in local-development profile
 (RC-103); production managed-key adapters remain a separate prerequisite. Roles support deployment-owned or live tenant-scoped API-managed
-OIDC mappings (RC-105); first-install provisioning follows in RC-107. Dynamic instructions are accepted but unimplemented in
+OIDC mappings (RC-105); protected first-install provisioning and recovery are implemented in RC-107. Dynamic instructions are accepted but unimplemented in
 [ADR-0013](docs/adr/0013-dynamic-harness-instructions.md). RC-102 corrects omitted
 caller/policy limits and applies approved manifest ceilings in root admission;
 the pinned `0.1.0-rc.1` image still predates that source fix.

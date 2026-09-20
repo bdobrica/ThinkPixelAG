@@ -10,6 +10,7 @@ import (
 	"github.com/bdobrica/ThinkPixelAG/internal/policy"
 	"github.com/bdobrica/ThinkPixelAG/internal/ports"
 	"regexp"
+	"strings"
 )
 
 var adminKey = regexp.MustCompile(`^[A-Za-z0-9._:-]{16,128}$`)
@@ -60,7 +61,18 @@ func (s *PolicyAdministration) Authorize(ctx context.Context, c AdminCaller, act
 	if err != nil {
 		return ports.AdministrationOperation{}, err
 	}
-	in := policy.Input{ContractVersion: policy.ContractVersion, DecisionID: id.String(), RequestTime: s.Clock.Now(), Subject: policy.Subject{PrincipalID: c.PrincipalID.String(), TenantID: c.TenantID.String(), PrincipalType: "human", Roles: c.Roles}, Action: action, Resource: policy.Resource{Type: "policy", ID: resource, TenantID: c.TenantID.String(), Attributes: map[string]any{"mapping_revision": c.MappingRevision}}, RequestedConstraints: map[string]any{}, AuthorityConstraints: map[string]any{}, SecurityState: policy.SecurityState{Authoritative: true}, Context: policy.RequestContext{RequestID: c.RequestID.String()}}
+	resourceType := "policy"
+	switch {
+	case strings.HasPrefix(action, "role_mappings."):
+		resourceType = "role_mappings"
+	case strings.HasPrefix(action, "integrations."):
+		resourceType = "integration"
+	case action == "agents.manage":
+		resourceType = "agent"
+	case action == "runs.read":
+		resourceType = "run"
+	}
+	in := policy.Input{ContractVersion: policy.ContractVersion, DecisionID: id.String(), RequestTime: s.Clock.Now(), Subject: policy.Subject{PrincipalID: c.PrincipalID.String(), TenantID: c.TenantID.String(), PrincipalType: "human", Roles: c.Roles}, Action: action, Resource: policy.Resource{Type: resourceType, ID: resource, TenantID: c.TenantID.String(), Attributes: map[string]any{"mapping_revision": c.MappingRevision}}, RequestedConstraints: map[string]any{}, AuthorityConstraints: map[string]any{}, SecurityState: policy.SecurityState{Authoritative: true}, Context: policy.RequestContext{RequestID: c.RequestID.String()}}
 	result, err := s.Evaluator.Decide(ctx, in)
 	if err != nil {
 		return ports.AdministrationOperation{}, domain.NewError(domain.CodeUnavailable, "administration policy unavailable").WithRetryable()
