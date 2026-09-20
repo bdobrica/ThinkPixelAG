@@ -91,3 +91,13 @@ API and does not change the managed-signing or workload-identity boundary.
 The additive `thinkpixelag.harness-guidance/v1` routes provide expiring JSON and
 Markdown projections with representation-specific ETags. Existing identity,
 policy and Run contracts are unchanged; no migration or worker API is added.
+
+## Next candidate packaging review
+
+Comparison with the rc.1 artifact source `a64d323d5c3bfa667e063b5f9dcd69f3cb89258f`
+finds all existing OpenAPI operations and component definitions unchanged; the
+path count grows from 22 to 40. Existing JSON Schemas and migrations 001–018 are
+byte-identical. Migrations 019–023 add the protections and managed state above;
+apply them explicitly before starting the candidate. This packaging change adds
+no further API or database migration. Console/runtime updates are independent
+of AG authority; rolling back its image only loses transient UI sessions.

@@ -25,13 +25,17 @@ func TestReleaseArtifactsBindImmutableImageAndCleanSource(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	write(".gitignore", "out/\nbin/\n", 0600)
+	write(".gitignore", "out/\nout-console/\nbin/\nprivate/\n", 0600)
+	write("private/credential", "not-source", 0600)
+	write("go.mod", "module releasefixture\n\ngo 1.26.0\ntoolchain go1.26.6\n", 0600)
 	write("api/openapi/thinkpixelag.yaml", "openapi: 3.1.0\n", 0600)
 	write("api/schemas/example.json", "{}\n", 0600)
 	write("deploy/kubernetes/example.yaml", "kind: Deployment\n", 0600)
+	// Assembly uses a fake compiler; real cross-platform compilation is a release gate.
+	write("bin/go", "#!/bin/sh\nwhile [ $# -gt 0 ]; do\n if [ \"$1\" = -o ]; then shift; printf 'binary fixture\\n' > \"$1\"; exit; fi\n shift\ndone\nexit 1\n", 0700)
 	// The scanner stub records threshold arguments, writes fixtures and can fail.
 	// This tests artifact assembly, not real vulnerability detection.
-	write("bin/trivy", "#!/bin/sh\n[ -z \"${FAIL_SCAN:-}\" ] || exit 23\nprintf '%s\\n' \"$*\" >> out/scans.txt\nwhile [ $# -gt 0 ]; do\n if [ \"$1\" = --output ]; then shift; printf '{}\\n' > \"$1\"; fi\n shift\ndone\n", 0700)
+	write("bin/trivy", "#!/bin/sh\n[ -z \"${FAIL_SCAN:-}\" ] || exit 23\nprintf '%s\\n' \"$*\" >> \"$OUTPUT_DIR/scans.txt\"\nwhile [ $# -gt 0 ]; do\n if [ \"$1\" = --output ]; then shift; printf '{}\\n' > \"$1\"; fi\n shift\ndone\n", 0700)
 	git := func(args ...string) string {
 		t.Helper()
 		cmd := exec.Command("git", args...)
@@ -69,6 +73,24 @@ func TestReleaseArtifactsBindImmutableImageAndCleanSource(t *testing.T) {
 	}
 	if out, err := run(image, revision, created); err != nil {
 		t.Fatalf("release: %v: %s", err, out)
+	}
+	for _, name := range []string{"thinkpixelag", "thinkpixelag-migrate", "thinkpixelag-operator"} {
+		if _, err := os.Stat(filepath.Join(root, "out/binaries/linux-amd64", name)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	archive := exec.Command("tar", "-tzf", filepath.Join(root, "out/thinkpixelag-source-0.1.0-rc.1.tar.gz"))
+	if data, err := archive.Output(); err != nil || strings.Contains(string(data), "credential") || !strings.Contains(string(data), "deploy/kubernetes/example.yaml") {
+		t.Fatalf("source archive must contain committed source only: %v", err)
+	}
+	if out, err := run(image, revision, created, "COMPONENT=console", "ARCHITECTURE=arm64", "OUTPUT_DIR=out-console"); err != nil {
+		t.Fatalf("console release: %v: %s", err, out)
+	}
+	if _, err := os.Stat(filepath.Join(root, "out-console/binaries")); !os.IsNotExist(err) {
+		t.Fatal("console artifact must not require compiling AG")
+	}
+	if _, err := os.Stat(filepath.Join(root, "out-console/thinkpixelag-console-0.1.0-rc.1.sbom.cdx.json")); err != nil {
+		t.Fatal(err)
 	}
 	data, err := os.ReadFile(filepath.Join(root, "out/provenance.json"))
 	if err != nil {

@@ -14,7 +14,7 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -26,17 +26,27 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build reproducible multi-architecture image
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          check-latest: false
+      - name: Build independent multi-architecture images
         env:
-          IMAGE: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          IMAGE_REPOSITORY: ghcr.io/${{ github.repository }}
         run: |
           CREATED="$(git show -s --format=%cI HEAD)"
-          docker buildx build --platform linux/amd64,linux/arm64 --provenance=mode=max --sbom=true --push \
-            --build-arg VERSION="${GITHUB_REF_NAME}" --build-arg REVISION="${GITHUB_SHA}" --build-arg CREATED="$CREATED" \
-            --label org.opencontainers.image.created="$CREATED" --tag "${IMAGE,,}" --metadata-file image-metadata.json .
-          docker buildx imagetools inspect "${IMAGE,,}" --raw > image-manifest.json
-          digest="$(python3 -c 'import json; print(json.load(open("image-metadata.json"))["containerimage.digest"])')"
-          echo "RELEASE_IMAGE=${IMAGE,,}@${digest}" >> "$GITHUB_ENV"
+          mkdir -p .cache/release-metadata
+          for component in ag console; do
+            context=.; repository="${IMAGE_REPOSITORY,,}"
+            if [[ "$component" == console ]]; then context=console; repository+=-console; fi
+            image="$repository:${GITHUB_REF_NAME}"
+            docker buildx build --platform linux/amd64,linux/arm64 --provenance=mode=max --sbom=true --push \
+              --build-arg VERSION="${GITHUB_REF_NAME}" --build-arg REVISION="${GITHUB_SHA}" --build-arg CREATED="$CREATED" \
+              --tag "$image" --metadata-file ".cache/release-metadata/$component-metadata.json" "$context"
+            digest="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["containerimage.digest"])' ".cache/release-metadata/$component-metadata.json")"
+            docker buildx imagetools inspect "$repository@$digest" --raw > ".cache/release-metadata/$component-manifest.json"
+            printf '%s\n' "$repository@$digest" > ".cache/release-metadata/$component-image.txt"
+          done
           echo "SOURCE_DATE_EPOCH=$(git show -s --format=%ct HEAD)" >> "$GITHUB_ENV"
       - name: Install pinned Trivy
         run: |
@@ -47,15 +57,18 @@ jobs:
         env:
           VERSION: ${{ github.ref_name }}
           REVISION: ${{ github.sha }}
-          IMAGE: ${{ env.RELEASE_IMAGE }}
         run: |
-          mkdir -p .cache/release-metadata
-          mv image-manifest.json image-metadata.json .cache/release-metadata/
-          for architecture in amd64 arm64; do
-            digest="$(python3 -c 'import json,sys; m=json.load(open(".cache/release-metadata/image-manifest.json")); d=[x["digest"] for x in m["manifests"] if x["platform"].get("os")=="linux" and x["platform"].get("architecture")==sys.argv[1]]; assert len(d)==1; print(d[0])' "$architecture")"
-            IMAGE="${RELEASE_IMAGE%@*}@$digest" OUTPUT_DIR="dist/$architecture" bash scripts/release-artifacts.sh
-            tar --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner \
-              -czf "dist/thinkpixelag-$VERSION-$architecture.tar.gz" -C "dist/$architecture" .
+          for component in ag console; do
+            image="$(cat ".cache/release-metadata/$component-image.txt")"
+            artifact=thinkpixelag
+            if [[ "$component" == console ]]; then artifact+=-console; fi
+            for architecture in amd64 arm64; do
+              digest="$(python3 -c 'import json,sys; m=json.load(open(sys.argv[1])); d=[x["digest"] for x in m["manifests"] if x["platform"].get("os")=="linux" and x["platform"].get("architecture")==sys.argv[2]]; assert len(d)==1; print(d[0])' ".cache/release-metadata/$component-manifest.json" "$architecture")"
+              IMAGE="${image%@*}@$digest" COMPONENT="$component" ARCHITECTURE="$architecture" \
+                OUTPUT_DIR="dist/$component-$architecture" bash scripts/release-artifacts.sh
+              tar --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner \
+                -czf "dist/$artifact-$VERSION-$architecture.tar.gz" -C "dist/$component-$architecture" .
+            done
           done
           (cd dist && sha256sum -- *.tar.gz > SHA256SUMS)
       - name: Attest artifact archives with GitHub OIDC
@@ -65,4 +78,4 @@ jobs:
       - name: Draft immutable release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/*.tar.gz dist/SHA256SUMS .cache/release-metadata/image-manifest.json .cache/release-metadata/image-metadata.json --draft --generate-notes --verify-tag
+        run: gh release create "$GITHUB_REF_NAME" dist/*.tar.gz dist/SHA256SUMS .cache/release-metadata/*-manifest.json .cache/release-metadata/*-metadata.json --draft --generate-notes --verify-tag

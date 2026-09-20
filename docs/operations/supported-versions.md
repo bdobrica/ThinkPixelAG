@@ -13,6 +13,7 @@ and [operational scope](../evidence/README.md#recovery) for evidence and limitat
 | Kubernetes | Kind v1.34.0 on AMD64 (historical install/lifecycle); K3s v1.36.4+k3s1 on ARM64 (retained runtime/recovery) | kubectl rendering tool pinned to v1.35.0; live K3s client matches server | These exact observed environments only; no claim that untested intermediate minors/distributions are qualified |
 | OpenAPI | 3.1.x document | schema validation tool pinned | breaking API changes require a new API version; additive changes remain compatible |
 | OCI runtime/platforms | distroless `static-debian13:nonroot`; `linux/amd64` local hardened container smoke; `linux/arm64` retained Kubernetes runtime smoke | runtime image index `sha256:f7f8f729987ad0fdf6b05eeeae94b26e6a0f613bdf46feea7fc40f7bd72953e6`; numeric UID/GID 65532 | qualification scope is platform-specific; runtime remains shell-free and non-root |
+| Optional console | Python 3.13.15 on Alpine 3.24.2; FastAPI 0.141.1, Jinja2 3.1.6 | `console/Dockerfile` pins the image index; `console/requirements.txt` pins dependency hashes | separate component; one replica and transient sessions; update after console and per-platform image gates |
 | Prometheus Go client | 1.24.1 | `go.mod` and `go.sum` | update after metric compatibility, race, and exposition tests pass |
 | OpenTelemetry Go | 1.45.0 | `go.mod` and `go.sum` | API, SDK, and OTLP exporter remain on one tested release; update after export/propagation tests pass |
 
@@ -56,3 +57,10 @@ The complete Phase 1 matrix and engineering foundation were reverified from a
 clean clone of `147cbf4` on `linux/amd64`; see
 [`phase-1-evidence.md`](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/implementation/phase-1-evidence.md) for the environment, commands,
 artifact identity, and declared later-phase qualifications.
+
+The next console candidate replaces Python 3.13.12/Debian 12 with pinned
+Python 3.13.15/Alpine 3.24. Runtime packaging tools are removed after dependency
+assembly; application metadata remains for scanning. The old base failed the
+HIGH/CRITICAL threshold; the updated AMD64 image passed preflight. Final
+platform scan results belong in the candidate inventory. This affects no AG
+database migration or governance wire format; console restart requires login.

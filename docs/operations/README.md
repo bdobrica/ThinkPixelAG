@@ -38,3 +38,5 @@ administration candidate without fixture seeding or SQL edits.
 
 The [optional administration console](../../console/README.md) provides browser
 policy, role-mapping and supported integration workflows through the same AG APIs.
+
+For maintainers: [package and verify a candidate](releasing.md).
