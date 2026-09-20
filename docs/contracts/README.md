@@ -42,3 +42,6 @@ provisioning, existing registry contracts and authorized agent/Run read views.
 
 [Harness guidance](harness-guidance.md) defines scoped capability discovery, trusted
 Markdown, conditional authorization and expiry; it does not grant execution authority.
+
+The [execution-handoff proposal](execution-handoff-proposal.md) maps the remaining
+AG/AR/gateway integration work. It is not a published or implemented wire API.

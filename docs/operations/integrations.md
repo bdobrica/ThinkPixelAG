@@ -71,3 +71,7 @@ evidence receivers implement [delivery and receipt semantics](../contracts/evide
 Peer components use versioned contracts and stable IDs; they never access AG's
 database or private Go types. Production and unavailable cross-component
 qualification remains in [ADR-0012](../adr/0012-integration-rc-qualification-deferrals.md).
+
+The [execution-handoff proposal](../contracts/execution-handoff-proposal.md)
+identifies the missing task, lifecycle and gateway contracts and their owners,
+plus the acceptance scenario required before claiming real execution.

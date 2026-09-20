@@ -3,8 +3,8 @@
 Status: implementation in progress; RC-101 decisions and RC-102 constraint
 inheritance are implemented. Section 2 administration APIs, managed configuration
 and protected operator bootstrap are implemented in the local profile. Harness
-discovery and the helper walkthrough are implemented; the execution-handoff
-proposal and UI remain pending.
+discovery and the helper walkthrough are implemented. The execution-handoff
+proposal is recorded; its implementation and the optional UI remain pending.
 Execution checklist: [TODO.md](TODO.md). Scope: dynamic harness guidance and
 usable administration through APIs and an optional UI.
 
@@ -111,6 +111,11 @@ A real Codex walkthrough must demonstrate discovery, refresh and permitted AG
 operations. It must also show that a denied operation remains denied regardless
 of instruction text. This establishes harness guidance interoperability, not
 end-to-end execution, accounting or recovery of an undeployed AR worker.
+
+The [execution-handoff proposal](docs/contracts/execution-handoff-proposal.md)
+maps the remaining joint AG/AR/gateway work and first real execution acceptance
+scenario. It is a proposal, not an implemented worker wire contract. Section 3
+is complete; continue with the optional console (RC-111).
 
 ## Workstream 3: optional administration console
 

@@ -135,7 +135,7 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   revision, expiry and existing-token role-removal walkthrough passed.
   [Verification](docs/evidence/results/harness-guidance.json).
 
-- [ ] **RC-110 — Specify the remaining execution handoff.** Depends on RC-109.
+- [x] **RC-110 — Specify the remaining execution handoff.** Depends on RC-109.
   Record the minimum AG-facing runtime integration needs: task delivery, Run/
   Session identity, authority, completion, cancellation and trusted usage. Map
   these to existing contracts and enumerate genuinely missing AR/gateway wire
@@ -143,6 +143,10 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   the owning component for each gap and the first real execution acceptance
   scenario. Do not invent an internal worker API or block guidance delivery on
   building ThinkPixelAR. Full execution remains separately labeled pending.
+  Recorded the [joint integration proposal](docs/contracts/execution-handoff-proposal.md),
+  owner-by-owner gaps, bounded implementation sequence and real execution
+  acceptance scenario. Reviewed against existing ownership/wire contracts and
+  checked local links; no runtime change or execution qualification claimed.
 
 ## 4. Optional console
 
