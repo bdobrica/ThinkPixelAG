@@ -1,5 +1,5 @@
 {
-  "scope": "RC-111 and RC-112",
+  "scope": "TODO section 4, RC-111 through RC-113",
   "date": "2026-09-20",
   "checks": {
     "authentication_and_boundary_tests": "8 passed",
@@ -7,14 +7,26 @@
     "console_shutdown_AG_stays_usable": "passed",
     "browser_login_agents_logout": "passed",
     "nonroot_readonly_image": "passed",
-    "focused_console_tests": "13 passed",
+    "focused_console_tests": "18 passed",
     "browser_policy_edit_validate_promote_activate": "passed",
     "browser_two_operator_rollback": "passed; original policy restored",
-    "browser_invalid_rego_stale_edit_unauthorized_read": "passed"
+    "browser_invalid_rego_stale_edit_unauthorized_read": "passed",
+    "browser_opa_update_and_guidance_revision": "passed",
+    "browser_invalid_alias_preserves_configuration": "passed",
+    "browser_mapping_expansion_denial_approval_apply": "passed; original mappings restored",
+    "file_mode_revision_conflict_closed_roles_reference_redaction": "passed in focused tests",
+    "final_console_gate": "make verify-console passed: 18 tests, independent image build, non-root read-only factory smoke",
+    "final_AG_gate": "make verify passed, including contract/generation, Go/Rego/integration/security and AG container smoke",
+    "python_runtime_dependency_audit": "pip-audit --disable-pip --no-deps -r console/requirements.txt: no known vulnerabilities"
   },
   "limits": [
     "Local OIDC acceptance issuer; no external IdP qualification",
     "Browser accepts the development certificate; BFF and AG validate the configured CA",
-    "One transient session replica; no production key custody or HA claim"
-  ]
+    "One transient session replica; no production key custody or HA claim",
+    "AG API semantics are unchanged; all console writes use caller tokens and existing public contracts.",
+    "Local resources retained; private runtime payloads, screenshots and credentials are outside committed evidence.",
+    "Section 5 example packaging and candidate release qualification remain pending."
+  ],
+  "verification_base_revision": "0086bcc",
+  "verified_code_diff_sha256": "532972fd6b38f7284b26edfd86490e6d3db4d0f3ba637ca04d3ea81127fea4df"
 }

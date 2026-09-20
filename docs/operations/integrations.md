@@ -75,3 +75,7 @@ qualification remains in [ADR-0012](../adr/0012-integration-rc-qualification-def
 The [execution-handoff proposal](../contracts/execution-handoff-proposal.md)
 identifies the missing task, lifecycle and gateway contracts and their owners,
 plus the acceptance scenario required before claiming real execution.
+
+Use the [optional console](../../console/README.md#role-mappings-and-integrations)
+to review supported OPA settings and external role mappings. Its connection
+checks run through AG; the console has no direct peer access.

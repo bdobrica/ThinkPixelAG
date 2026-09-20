@@ -5,7 +5,8 @@ inheritance are implemented. Section 2 administration APIs, managed configuratio
 and protected operator bootstrap are implemented in the local profile. Harness
 discovery and the helper walkthrough are implemented. The execution-handoff
 proposal is recorded; its implementation remains pending. The optional console
-shell and policy workflows are implemented; configuration screens are next.
+shell, policy and configuration workflows are implemented. Packaging and final
+candidate qualification (section 5) remain pending.
 Execution checklist: [TODO.md](TODO.md). Scope: dynamic harness guidance and
 usable administration through APIs and an optional UI.
 
@@ -116,7 +117,8 @@ end-to-end execution, accounting or recovery of an undeployed AR worker.
 The [execution-handoff proposal](docs/contracts/execution-handoff-proposal.md)
 maps the remaining joint AG/AR/gateway work and first real execution acceptance
 scenario. It is a proposal, not an implemented worker wire contract. Section 3
-is complete; continue with the optional console (RC-111).
+is complete. Section 4 now supplies the optional console; continue with packaging
+and scoped candidate qualification (RC-114–115).
 
 ## Workstream 3: optional administration console
 

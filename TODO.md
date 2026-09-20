@@ -174,12 +174,17 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   promotion/activation and independent approval screens. Thirteen focused tests
   and real Chromium edit-to-rollback, invalid/stale/denied checks passed.
 
-- [ ] **RC-113 — Add mappings and integration screens.** Depends on RC-105,
+- [x] **RC-113 — Add mappings and integration screens.** Depends on RC-105,
   RC-106 and RC-111. Provide bounded forms, current revision, change review,
   read-only file-managed state, secret-reference fields and connection status.
   Done: configure supported settings through UI and observe the corresponding
   API/discovery change; configured does not imply healthy or authorized. Check
   revision conflict, forbidden edit, reference redaction and unavailable peer.
+  Implemented revisioned mapping/OPA forms, diffs, independent expansion approval
+  and file-managed read-only views. Eighteen focused tests and real Chromium
+  mapping approval, OPA update, failed-reference and guidance-refresh checks passed.
+  Final `make verify`, `make verify-console`, dependency audit and documentation
+  link checks passed; see [evidence](docs/evidence/results/optional-console.json).
 
 ## 5. Package and close the scoped candidate
 

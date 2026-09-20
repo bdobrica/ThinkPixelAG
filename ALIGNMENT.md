@@ -92,5 +92,7 @@ The source candidate implements the local administration profile, including
 role mappings, bounded OPA settings, registry writes and protected bootstrap/
 recovery. The CLI uses deployment credentials; no recovery endpoint or standing
 role is exposed. Dynamic harness discovery is implemented through the versioned
-[guidance contract](docs/contracts/harness-guidance.md); the optional console and
-full runtime execution handoff remain pending.
+[guidance contract](docs/contracts/harness-guidance.md). The optional console now
+implements caller-authenticated read, policy and configuration workflows through
+AG APIs, with no database/signing/peer-administration access. Full runtime execution
+handoff remains pending.

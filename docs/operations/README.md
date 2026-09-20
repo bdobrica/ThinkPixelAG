@@ -35,3 +35,6 @@ activation and independent local rollback approval through the API.
 
 [Operator bootstrap and recovery](bootstrap.md) provisions the source-built local
 administration candidate without fixture seeding or SQL edits.
+
+The [optional administration console](../../console/README.md) provides browser
+policy, role-mapping and supported integration workflows through the same AG APIs.

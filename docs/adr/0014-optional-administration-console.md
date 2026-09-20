@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-09-20
-- Implementation: RC-111–112 shell and policy workflows implemented; configuration and packaging follow in RC-113–114
+- Implementation: RC-111–113 shell, policy and configuration workflows implemented; example packaging follows in RC-114
 - Supersedes: none; complements ADR-0005
 
 ## Context and decision

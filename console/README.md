@@ -143,3 +143,29 @@ a new form cannot safely resolve an earlier uncertain mutation. Inspect AG state
 and use its original idempotency key/body through the API if replay is needed.
 Source, results and review bodies stay in transient session memory and escaped
 HTML, never console logs or a second governance database.
+
+## Role mappings and integrations
+
+**Role mappings** displays the verified issuer, ownership mode and revision.
+In API mode, edit the complete JSON mapping using only the listed internal roles
+and review the diff. Administrative expansion requires **Review approval request**
+first, followed by a different operator's decision in **Approvals**. Share the
+exact proposed mapping and its request digest through your review process. Once
+approved, submit the same mapping and expected revision with the returned approval
+ID. A non-expanding change uses `not-required`; AG still enforces last-admin and
+current-policy checks. The UI does not create IdP users or custom/service roles.
+
+**Integrations** exposes only the implemented OPA connection. Enter an origin
+from AG's deployment allowlist and, if needed, a preconfigured protected alias.
+Do not paste a token or file path. Review the old/new connection before submitting.
+AG checks the active signed policy at the candidate destination before committing;
+a rejected candidate leaves the prior revision intact. Reloading shows the new
+revision/readiness, and subsequent harness discovery reflects the configuration
+revision. A configured endpoint is not proof of readiness.
+
+File-managed mappings and connections show a read-only view and reject crafted
+console writes as well as normal form submissions. Issuer/audience, database,
+listeners, signing roots and destination allowlists remain deployment-managed.
+AR/TG/LLMGW/MEM/marketplace connection editing is explicitly unsupported. If the
+current OPA is unavailable, it may also prevent authorization to read or repair
+settings; use the protected deployment recovery procedure, never a UI bypass.

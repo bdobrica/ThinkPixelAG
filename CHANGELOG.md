@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add console role-mapping and OPA configuration review, file-managed read-only
+  views, independent expansion approvals and explicit readiness/unsupported status.
+
 - Add console policy editing, source diffs, exact-revision promotion and
   approval-aware activation/rollback through reviewed API requests.
 

@@ -57,6 +57,9 @@ def install(app, c):
         if len(session.intents) >= 10 or sum(len(s.intents) for s in c.sessions.active.values()) >= 100:
             raise Failure(429, "Too many pending reviews. Wait for old reviews to expire.")
         intent = await c.actions[action](session, values)
+        # Preparing may await AG; concurrent requests can fill the remaining slots.
+        if len(session.intents) >= 10 or sum(len(s.intents) for s in c.sessions.active.values()) >= 100:
+            raise Failure(429, "Too many pending reviews. Try later.")
         intent.update(action=action, key="console-" + secrets.token_hex(24), expires=time.time()+600, busy=False, result=None)
         identifier = secrets.token_urlsafe(24)
         session.intents[identifier] = intent

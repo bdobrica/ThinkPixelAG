@@ -216,4 +216,8 @@ test-console: ## Run optional console authentication, form and boundary tests.
 console-image: ## Build the independent administration console image.
 	$(DOCKER) build -t thinkpixelag-console:dev console
 
-verify-console: test-console console-image ## Verify the optional component independently of AG.
+verify-console: test-console test-console-image ## Verify the optional component independently of AG.
+
+.PHONY: test-console-image
+test-console-image: console-image ## Smoke-test the independent non-root console image.
+	$(CONSOLE_PYTHON) console/tests/image_smoke.py
