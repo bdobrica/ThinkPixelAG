@@ -188,14 +188,20 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
 
 ## 5. Package and close the scoped candidate
 
-- [ ] **RC-114 — Update runnable installations and operator guides.** Depends on
+- [x] **RC-114 — Update runnable installations and operator guides.** Depends on
   RC-107, RC-109, RC-112 and RC-113. Add optional console deployment to local and
   team-PoC examples, real bootstrap commands and a policy/role/integration
   walkthrough. Document identity setup, secret references, persistence, recovery
   and remaining execution limitations. Done: a reader can install AG alone or
   with UI and connect the harness without reading tests/Makefiles. Check the
   documented commands on a retained installation; do not repeatedly tear down
-  resources or commit homelab/private configuration.
+  resources or commit homelab/private configuration. Implemented retained real-bootstrap
+  local installation and staged Kubernetes manifests with an optional isolated
+  console. Real browser policy/approval/mapping/OPA workflows, harness admission/
+  read/cancel, restart persistence and UI-disabled API operation passed. The
+  Kubernetes example passed ARM64 K3s server-side dry-run validation; external
+  company SSO/dependencies remain deployment-specific.
+  [Installation checks](docs/evidence/results/candidate-installation.json).
 
 - [ ] **RC-115 — Verify and publish the next integration candidate.** Depends on
   RC-102 through RC-114. Review API compatibility and migrations, regenerate

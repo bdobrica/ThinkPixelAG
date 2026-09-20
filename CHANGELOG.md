@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Package a retained real-bootstrap local installer and staged Kubernetes PoC,
+  each with an optional console; document actual operator/harness use and recovery.
+
 - Add console role-mapping and OPA configuration review, file-managed read-only
   views, independent expansion approvals and explicit readiness/unsupported status.
 

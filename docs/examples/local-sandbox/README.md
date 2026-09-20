@@ -1,76 +1,113 @@
-# Local installation
+# Local administration and harness evaluation
 
-The [quick start](../../quickstart.md) installs AG and walks through authenticated
-agent discovery, Run admission, replay, read and cancellation. This page explains
-what is running and how to operate or adapt it.
+This installs the current source candidate using **real operator bootstrap**,
+PostgreSQL, OPA and an optional console. It retains state across restarts. The
+included development issuer supplies two separate operators and a caller; it
+has no passwords and binds only to loopback. It is not company SSO.
 
-## Components and configuration
-
-| Component | Purpose | Configuration / storage |
-|---|---|---|
-| `api` | Published AG image, governed HTTP routes on loopback port 18080 | [Runtime JSON](../../../deploy/demo/runtime.json), generated environment, read-only CA volume |
-| `postgres` | Authoritative governance state | Persistent `thinkpixelag-demo_database` volume; no host port |
-| `opa` | Executes the approved example policy | Copy of the initially provisioned policy in the persistent trust volume |
-| `identity` | Sample OIDC discovery/JWKS and durable evidence receiver | Private `thinkpixelag-demo_identity` volume; no host port |
-| `provision` | Explicit migration and one-time sample setup | Completed container retained; subsequent launches preserve existing identities and activation |
-
-[compose.yaml](../../../deploy/demo/compose.yaml) is the actual installation.
-The [helper](../../../deploy/demo/ag) creates private configuration, invokes
-Compose and waits for real AG readiness. AG cannot access the issuer's private
-key volume. The separate example support image reuses the repository's existing
-fixture provisioner; it is not included in the AG release image.
-
-The sample issuer authenticates actual HTTP requests with signed JWTs. It does
-not provide login screens or your company's SSO. The provisioner creates one
-approved illustrative agent version and synthetic users. It does not execute
-that agent or provide a supported production administration API.
-
-## Change settings
-
-Edit `AG_PORT` in the file reported by `./deploy/demo/ag config-path` to change the loopback port, then
-run `./deploy/demo/ag up`. Keep your `AG_URL` consistent. Do not change the
-initialized database password only in the environment file: PostgreSQL does not rotate its
-stored password when a container environment changes.
-
-Edit [runtime.json](../../../deploy/demo/runtime.json) to change admission
-ceilings. These are deployment maxima, not grants to callers. Restart AG after
-changing the file:
+Requirements: Linux (including WSL), Docker, Python 3.13 and the repository's Go
+toolchain. Work from the repository root. Use a private Linux home directory for
+state, not a shared Windows filesystem. The published rc.1 fixture example under
+`deploy/demo` is retained for older installations; do not point this installer
+at that database or remove its volumes.
 
 ```sh
-docker compose --project-name thinkpixelag-demo --env-file "$(./deploy/demo/ag config-path)" -f deploy/demo/compose.yaml restart api
+python3 -m venv .cache/evaluation-venv
+.cache/evaluation-venv/bin/pip install --require-hashes -r console/requirements.txt
+.cache/evaluation-venv/bin/python deploy/evaluation/local.py up --console
 ```
 
-All settings, including OIDC, evidence, database pools and optional Valkey, are
-in the restored [configuration reference](../../configuration.md). Replacing
-the sample issuer also requires matching verified tenant/principal identities
-and approved data in AG. Merely pointing the issuer URL at a company IdP does
-not create those records; see [installation boundaries](../../operations/installation.md).
+Omit `--console` for AG alone. Python belongs to the optional console and this
+example's development issuer, never AG's build/runtime. The command builds the
+three Go commands; alternatively pass `--bin-dir /path/to/release/binaries/linux-amd64`
+(or `linux-arm64`) to use packaged release binaries. It creates a dedicated
+persistent Docker database volume, a retained OPA container, private trust/key
+files and an approved sample agent using `thinkpixelag-operator bootstrap`.
+There is no SQL fixture seeding or reset operation.
 
-## Persistence and credentials
+Default state: `~/.local/state/thinkpixelag-evaluation`. Set `--state` explicitly
+for a second installation, and choose a free five-port range with `--port` on its
+first `up`. Saved ports/credentials win on later calls. Defaults:
 
-Keep the private environment file and all three named volumes together. The database holds Run and
-policy authority; identity storage holds sample keys and durable receipt history;
-trust storage holds the CA and the exact provisioned policy. The helper does
-not regenerate keys or reset a database on restart.
-
-`./deploy/demo/ag token` issues a fresh 15-minute caller token without changing
-its principal or signing key. Certificate lifetime is 14 days; this installation
-is for short evaluations. For a longer evaluation, plan certificate renewal
-without resetting authoritative state, or use managed identity infrastructure.
-Do not use deletion/re-provisioning as credential rotation.
-
-## Troubleshoot
-
-| Symptom | Check |
+| Endpoint | Address |
 |---|---|
-| Port already in use | Set a free `AG_PORT` and use the same port in `AG_URL` |
-| Provisioning exits unsuccessfully | `./deploy/demo/ag logs`; check PostgreSQL health and the explicit migration/setup result |
-| Readiness remains unavailable | Check issuer/OPA health, policy activation and certificate validity; do not bypass readiness |
-| API returns 401 | Refresh the caller token; verify URL, issuer/audience and clock |
-| Agent list is empty | Confirm the provisioner succeeded and the request uses the sample caller's identity |
-| API returns 409 | Inspect the current Run/state version and the original idempotent request |
-| A Run remains ADMITTED | Expected without the still-missing harness-execution integration; AG has not launched the objective |
+| AG HTTPS and development issuer | `https://127.0.0.1:19455` |
+| Optional console | `https://127.0.0.1:19456` |
+| Private API, PostgreSQL and OPA | loopback ports 19457, 19458 and 19459 |
 
-Use [Run API examples](../../api/run-lifecycle.md) for signals and event streams.
-Use [backup/recovery](../../operations/backup-recovery.md) before keeping valuable
-state. There is intentionally no automatic reset command in the helper.
+Open the console URL. Trust the generated `tls.crt` **only for this local
+evaluation**, or use your browser's explicit development-certificate exception.
+BFF, AG and the harness helper verify the generated CA normally. Choose
+**Operator one** to inspect agents, policies and settings; use **Operator two**
+in a separate browser profile for independent approvals. The caller has no
+administrative roles. Signing, issuer and TLS keys are separate files.
+
+## Connect the harness and use AG
+
+```sh
+install -d -m 700 "$HOME/.local/bin"
+install -m 755 integrations/harness/thinkpixelag-harness "$HOME/.local/bin/thinkpixelag-harness"
+export PATH="$HOME/.local/bin:$PATH"
+export AG_EVAL_STATE="$HOME/.local/state/thinkpixelag-evaluation"
+thinkpixelag-harness --config "$AG_EVAL_STATE/harness.json" guidance
+thinkpixelag-harness --config "$AG_EVAL_STATE/harness.json" agents
+printf '%s\n' 'Summarize incident INC-42' > /tmp/ag-objective.txt
+# Replace AGENT_UUID with an ID returned above.
+thinkpixelag-harness --config "$AG_EVAL_STATE/harness.json" admit \
+  --agent-id AGENT_UUID --objective-file /tmp/ag-objective.txt --idempotency-key incident-42-admit-0001
+# Replace RUN_UUID with the admitted Run ID.
+thinkpixelag-harness --config "$AG_EVAL_STATE/harness.json" run --run-id RUN_UUID
+thinkpixelag-harness --config "$AG_EVAL_STATE/harness.json" cancel \
+  --run-id RUN_UUID --idempotency-key incident-42-cancel-0001
+```
+
+AG supplies policy/approval/deployment ceilings when caller limits are omitted.
+Reuse the same key/body for an uncertain request; new intentions need new keys.
+An admitted Run does not launch AR or execute the objective. The sample agent's
+image is an explicit metadata placeholder. Follow the
+[helper installation guide](../../../integrations/harness/README.md) to expose a
+fixed configured wrapper to your harness and append its AGENTS.md snippet once.
+Keep tokens outside model state. Refresh the private caller file after 15 minutes:
+
+```sh
+.cache/evaluation-venv/bin/python deploy/evaluation/local.py token
+```
+
+For trusted operator CLI use, `token --identity operator-one` or `operator-two`
+writes a separate private file and prints only its path. Never give these files
+to the harness. Use the [API walkthrough](../../operations/administration.md), or
+the [console workflow](../../../console/README.md#policy-editing-and-approvals),
+for edit → validate → promote → activate → independently approved rollback.
+Role expansion uses the same two identities; OPA settings use protected aliases,
+not credentials in forms. This minimal installer starts private, tokenless OPA.
+
+## Restart, persistence and recovery
+
+```sh
+.cache/evaluation-venv/bin/python deploy/evaluation/local.py status
+.cache/evaluation-venv/bin/python deploy/evaluation/local.py restart --console
+.cache/evaluation-venv/bin/python deploy/evaluation/local.py console-stop
+.cache/evaluation-venv/bin/python deploy/evaluation/local.py backup
+```
+
+Restart reopens the same database, keys, bootstrap receipt and managed records.
+Console sessions are deliberately lost. Stopping the console leaves AG usable.
+Repeat `up --console` to start it again. Keep the state directory and Docker
+volume together; back up the database dump plus private signing/issuer keys,
+certificates, bootstrap snapshot and installation configuration. Protect backups
+as secrets. Certificates last 14 days; renew transport/issuer trust deliberately,
+without resetting governance state. For restore, use a separate database and the
+[restore procedure](../../operations/backup-recovery.md), retaining the same trust
+material; never overwrite a live database merely to retry setup.
+
+Logs are private `api.log`, `identity.log`, `console.log` and `last-command.log`
+in the state directory. A failed command retains partial resources for inspection.
+A bootstrap mismatch is a review/recovery issue, not permission to force-reset.
+Use [protected mapping recovery](../../operations/bootstrap.md#recover-administrator-mappings)
+for lockout. No service or volume is automatically removed.
+
+This lightweight example retains transaction-bound audit/outbox data in
+PostgreSQL but does not configure an independent evidence receiver. Monitor
+outbox growth and configure the [evidence sink](../../configuration.md) for a
+longer evaluation. Production signing custody, external IdP qualification,
+throughput/p99/HA and AR/gateway execution remain outside this local qualification.

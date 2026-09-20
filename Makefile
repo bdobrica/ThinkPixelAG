@@ -202,7 +202,7 @@ test-lifecycle: ## Check lifecycle drill rollback and uncertain-mutation safety.
 test-retained-lifecycle: ## Run retained-cluster lifecycle qualification with explicit LIFECYCLE_ARGS.
 	python3 test/operations/lifecycle.py $(LIFECYCLE_ARGS)
 
-verify: generate-check contract-check lint test test-race test-harness test-policy test-integration test-e2e test-security compose-check kubernetes-check security build container-smoke ## Run the complete clean-checkout gate.
+verify: test-evaluation generate-check contract-check lint test test-race test-harness test-policy test-integration test-e2e test-security compose-check kubernetes-check security build container-smoke ## Run the complete clean-checkout gate.
 
 clean: ## Remove repository-local build outputs.
 	rm -rf .cache/bin
@@ -221,3 +221,7 @@ verify-console: test-console test-console-image ## Verify the optional component
 .PHONY: test-console-image
 test-console-image: console-image ## Smoke-test the independent non-root console image.
 	$(CONSOLE_PYTHON) console/tests/image_smoke.py
+
+.PHONY: test-evaluation
+test-evaluation: ## Check staged evaluation rendering and console isolation.
+	python3 -m unittest discover -s deploy/evaluation -p 'test_*.py'

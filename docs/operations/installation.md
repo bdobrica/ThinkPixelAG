@@ -16,12 +16,11 @@ secret manager. Use authenticated encrypted transport and configure trusted CA
 roots. Production signing requires the managed KMS/HSM boundary; qualification
 of a selected provider is separate from the RC's component tests.
 
-Prepare a validated, signed, approved policy activation and approved agent
-version through controlled provisioning. **The current executable does not
-compose registration or policy-management routes.** The examples provide
-one-time sample provisioning for an evaluation; there is no supported production
-bootstrap CLI to substitute here. Do not use direct cross-component SQL as an
-integration API.
+Provision the first tenant, signed policy and approved agent using the
+[protected operator bootstrap](bootstrap.md). The source candidate composes
+registry and policy administration in the explicit local-development profile.
+Production KMS/HSM custody and external-provider qualification remain separate.
+No console is required, and no peer accesses AG's database directly.
 
 ## Configure and migrate
 
@@ -34,7 +33,7 @@ additional mTLS listener, certificates and workload bindings.
 Render the Kubernetes overlay and review its immutable image digest, secret
 references, dependency egress, ingress, resources and topology. Run the migration
 Job with the migration role **before** starting API traffic. Migration is never
-an API-pod startup action. Schema 18 is the current RC baseline; older databases
+an API-pod startup action. Schema 23 is the current source-candidate baseline; older databases
 need the forward migration/restore rehearsal in the [runbooks](runbooks.md).
 
 ## Accept the deployment

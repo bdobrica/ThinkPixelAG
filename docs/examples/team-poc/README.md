@@ -1,106 +1,121 @@
 # Team Kubernetes PoC
 
-This installs a usable AG evaluation in a dedicated namespace: PostgreSQL,
-explicit schema migration and sample provisioning, OPA, a sample OIDC/evidence
-receiver, and the published AG service. Colleagues can access it through their
-Kubernetes credentials and a local port-forward, then use the same HTTP calls
-as the [quick start](../../quickstart.md).
+Deploy the source candidate against deployment-owned PostgreSQL, OPA and OIDC,
+with an optional separate console. The generated bootstrap Job runs the real
+migration/operator commands and stores a persistent local-development signing
+key. This is the [ADR-0016](../../adr/0016-local-development-policy-promotion.md)
+software-key profile on a private company network, not production key custody.
+For an all-in-one laptop evaluation, use the [local example](../local-sandbox/README.md).
 
-You need kubectl access to a cluster with NetworkPolicy enforcement and a default
-dynamic StorageClass, plus Python 3 and Docker Buildx on the build machine.
-Reserve three 1 GiB persistent volumes and capacity for four small services.
-With node-local storage, shared identity/trust volumes constrain placement;
-this example is a single-instance PoC, not HA or a production topology.
+## Prepare dependencies and identity
 
-## 1. Publish the example support image
+Provide a dedicated PostgreSQL database, an OPA management endpoint reachable
+only by trusted operators/AG, a private HTTPS ingress controller, a StorageClass,
+and trusted CA certificates. Reserve a 1 GiB signing-key PVC and one AG replica;
+node-local SSD storage is suitable for this PoC but does not establish HA.
+Use separate database/migration roles in a production deployment.
 
-AG uses its existing published immutable image. The small provisioning/identity
-support image is built from this checkout and must be reachable by your cluster.
-Choose a repository your account can push to; do not use the example value
-literally:
+Configure two OIDC operators and an ordinary caller with UUIDv7 tenant/subject
+claims and external `operators`, `registrars`, `users` roles as described in
+[bootstrap](../../operations/bootstrap.md). Configure the console's public OIDC
+client with PKCE S256, the exact HTTPS `/callback` URI and an AG-audience access
+token; see [console identity setup](../../../console/README.md). No sample issuer
+or passwordless operator-selection page is deployed to the team namespace.
 
-```sh
-export DEMO_IMAGE=quay.io/YOUR_ACCOUNT/thinkpixelag-demo-support
-# Authenticate with your registry's normal credential helper first.
-docker buildx build --platform linux/amd64,linux/arm64 \
-  -f deploy/demo/Dockerfile -t "$DEMO_IMAGE:eval" --push .
-docker buildx imagetools inspect "$DEMO_IMAGE:eval"
+Publish or select immutable AMD64/ARM64 AG and console images from the candidate
+artifact inventory. The AG image includes `/thinkpixelag-migrate` and the protected
+`/thinkpixelag-operator`; the console image contains neither command nor AG state.
+The old rc.1 image does not support this bootstrap/profile.
+
+## Render private configuration
+
+Create an operator-owned `0700` directory outside the repository. Write a `0600`
+`settings.json` using this shape, replacing all placeholders. Generate the cursor
+key with your secret tooling. The bootstrap object is the complete reviewed
+snapshot from the [bootstrap guide](../../operations/bootstrap.md); its issuer
+must match the configured IdP. Include the two operators and caller in principals.
+
+```json
+{
+  "namespace": "thinkpixelag-poc",
+  "ag_image": "quay.io/YOUR_ACCOUNT/thinkpixelag@sha256:REPLACE",
+  "console_image": "quay.io/YOUR_ACCOUNT/thinkpixelag-console@sha256:REPLACE",
+  "ag_origin": "https://ag.poc.example",
+  "console_origin": "https://console.poc.example",
+  "issuer": "https://identity.example/realms/poc",
+  "audience": "thinkpixelag",
+  "client_id": "thinkpixelag-console",
+  "database_url": "postgresql://USER:PASSWORD@db.private:5432/thinkpixelag?sslmode=verify-full&sslrootcert=/trust/ca.crt",
+  "cursor_key": "REPLACE_WITH_AT_LEAST_32_SECRET_BYTES",
+  "ca_file": "/private/poc/combined-ca.pem",
+  "storage_class": "YOUR_DURABLE_STORAGE_CLASS",
+  "ingress_class": "traefik",
+  "ingress_namespace": "kube-system",
+  "tls_secret": "poc-tls",
+  "authority_constraints": {"max_execution_time_seconds": 300, "max_llm_tokens": 1000, "max_tool_calls": 10},
+  "ag_egress": [{"cidr": "10.20.0.0/24", "ports": [5432, 8181, 443]}],
+  "console_egress": [{"cidr": "10.20.0.0/24", "ports": [443]}],
+  "bootstrap": {"REPLACE": "complete reviewed bootstrap object"}
+}
 ```
 
-Copy the reported index digest into `DEMO_DIGEST`. All subsequent configuration
-uses the immutable digest, not the `eval` tag:
+Supply CA roots needed for AG/OIDC/ingress. PostgreSQL TLS may additionally need
+its driver-specific CA configuration. The minimal template uses private tokenless
+OPA; for authenticated OPA, mount a protected token reference in AG and the
+bootstrap job as described in the configuration guide. No token goes to the BFF.
+Optionally configure `evidence_endpoint`, `evidence_sink_id` and `evidence_token`
+to drain AG's durable outbox to an independent receiver. Without them, monitor
+outbox growth and do not claim independent sink qualification.
 
 ```sh
-export DEMO_DIGEST=sha256:REPLACE_WITH_THE_REPORTED_INDEX_DIGEST
-python3 deploy/demo/kubernetes.py \
-  --support-image "$DEMO_IMAGE@$DEMO_DIGEST" \
-  --output "$HOME/.local/state/thinkpixelag-poc"
+python3 deploy/evaluation/team.py --settings /private/poc/settings.json \
+  --output /private/poc/manifests --console
 ```
 
-The renderer generates private credentials and four installation stages in
-`~/.local/state/thinkpixelag-poc`, mode 0600. Re-running it with the same output directory
-retains the credentials. Do not commit or print those generated manifests.
-Use a registry-readable image or configure the namespace's image-pull secret
-before starting pods if the repository is private.
+Omit `--console` to deploy AG alone. Inspect the private rendered manifests before
+applying: immutable images, dedicated database, exact bootstrap IDs, storage,
+TLS/ingress and egress rules. Set CIDRs/ports to actual dependency destinations;
+account for your CNI's service/NAT handling. BFF egress needs AG and IdP HTTPS,
+not database/OPA access. Never commit generated Secret manifests.
 
-## 2. Install in dependency order
+## Install in dependency order
 
 ```sh
-kubectl apply -f "$HOME/.local/state/thinkpixelag-poc/foundation.json"
-kubectl -n thinkpixelag-poc rollout status deployment/postgres --timeout=180s
-
-kubectl apply -f "$HOME/.local/state/thinkpixelag-poc/provision.json"
+kubectl apply -f /private/poc/manifests/foundation.json
+# Create the deployment-owned ingress certificate in this namespace.
+kubectl -n thinkpixelag-poc create secret tls poc-tls \
+  --cert=/private/poc/ingress.crt --key=/private/poc/ingress.key
+kubectl apply -f /private/poc/manifests/bootstrap.json
 kubectl -n thinkpixelag-poc wait --for=condition=complete \
-  -f "$HOME/.local/state/thinkpixelag-poc/provision.json" --timeout=180s
-
-kubectl apply -f "$HOME/.local/state/thinkpixelag-poc/dependencies.json"
-kubectl -n thinkpixelag-poc rollout status deployment/identity --timeout=180s
-kubectl -n thinkpixelag-poc rollout status deployment/opa --timeout=180s
-
-kubectl apply -f "$HOME/.local/state/thinkpixelag-poc/application.json"
-kubectl -n thinkpixelag-poc rollout status deployment/api --timeout=180s
+  -f /private/poc/manifests/bootstrap.json --timeout=300s
+kubectl apply -f /private/poc/manifests/application.json
+kubectl -n thinkpixelag-poc rollout status deployment/api --timeout=300s
+kubectl -n thinkpixelag-poc rollout status deployment/console --timeout=300s
 ```
 
-The provision Job migrates first, creates the sample identities/approved policy
-once, and preserves them on subsequent runs. API startup never migrates.
-Namespace policy restricts traffic to this evaluation and cluster DNS. Pods
-run without service-account tokens or privilege escalation. The API uses the
-sample CA and cannot mount the issuer private-key volume.
+Skip the last command when console is omitted. The bootstrap Job migrates before
+provisioning; API startup never migrates. Its name includes the immutable image
+digest, and bootstrap replay cannot replace existing authority. Pods run as UID
+65532 without privilege escalation or service-account tokens. Only bootstrap/API
+mount the signing-key PVC; the console mounts public CA material alone.
+Provision/readiness failures remain failures; inspect Job events and private logs
+without printing credentials. Existing completed Jobs/PVCs can be retained.
 
-## 3. Use AG
+## Use and operate
 
-Keep this running in one terminal:
+Open the console HTTPS origin and log in through your IdP. Follow the
+[policy/approval and configuration walkthrough](../../../console/README.md).
+Install the [harness helper](../../../integrations/harness/README.md) with the AG
+origin and a protected caller token, then retrieve guidance and admit/read/cancel
+a Run. AG remains the harness entry point; no AR execution is implied.
 
-```sh
-kubectl -n thinkpixelag-poc port-forward service/api 18080:8080
-```
-
-In another terminal, obtain a sample caller token through the operator-controlled
-issuer container:
-
-```sh
-export AG_URL=http://127.0.0.1:18080
-export AG_TOKEN="$(kubectl -n thinkpixelag-poc exec deployment/identity -- /bootstrap token /state)"
-curl --fail-with-body -H "Authorization: Bearer $AG_TOKEN" "$AG_URL/v1/agents"
-```
-
-Continue at step 3 of the [quick start](../../quickstart.md), setting
-`AG_AGENT_ID` from the discovered agent. Admission, replay, read and cancellation
-use exactly the same API. Stopping port-forward does not stop AG or remove data.
-Do not delete the namespace or PVCs when pausing your evaluation.
-
-## 4. Adapt for a company deployment
-
-The sample issuer/provisioner and local-mode internal transports are deliberate
-PoC choices. Before exposing AG as a company service, use private TLS ingress,
-managed database/identity/secret infrastructure, an independently administered
-evidence receiver, and the [configuration reference](../../configuration.md).
-A real IdP needs the documented audience, UUID principal/tenant claims and role
-mappings; it does not automatically provision the corresponding governance data.
-
-Production registry/policy administration and the complete AG-facing harness
-integration remain implementation gaps. The [integration guide](../../operations/integrations.md)
-spells them out. Do not turn sample fixture signing or provisioning into an
-unreviewed production bootstrap. Follow [monitoring](../../operations/monitoring.md)
-and [backup/recovery](../../operations/backup-recovery.md) when evaluating durable
-state; promotion requires the production qualification recorded in the ADRs.
+Use one console worker/replica. `kubectl scale deployment/console --replicas=0`
+(in the PoC namespace) leaves AG usable; restoring it requires fresh console
+login. Before upgrading, back up PostgreSQL and the local signing-key PVC, retain
+bootstrap/trust configuration, apply forward migrations through a reviewed Job,
+and restart API/console with the new immutable images. Do not down-migrate or
+restart an old database writer to roll back. Use
+[monitoring](../../operations/monitoring.md), [recovery](../../operations/backup-recovery.md)
+and [operator mapping recovery](../../operations/bootstrap.md#recover-administrator-mappings).
+The old fixture-based `deploy/demo/kubernetes.py` remains available for existing
+rc.1 evaluations; do not reuse that database as a fresh bootstrap target.

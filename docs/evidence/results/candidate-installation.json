@@ -1,0 +1,36 @@
+{
+  "date": "2026-09-20",
+  "scope": "RC-114 source installation, local-development signing and approvals",
+  "versions": {
+    "postgres": "18.4",
+    "opa": "1.19.0",
+    "kubernetes_server": "v1.36.4+k3s1",
+    "database_schema": 23
+  },
+  "local_installation": {
+    "seeding": "thinkpixelag-operator bootstrap; no SQL fixtures",
+    "browser": "Chromium through Playwright 1.63.0; local development OIDC issuer; normal BFF/API CA verification",
+    "passed": [
+      "edit, validate, promote, activate, independently approve rollback; original policy restored",
+      "invalid Rego, stale edit and unauthorized caller denied",
+      "independent mapping expansion approval; original mappings restored",
+      "OPA revision update changes guidance; missing alias rejected without changing active revision",
+      "trusted harness discovery, objective-only admission, Run read and cancellation",
+      "restart preserves current policy, activation history, role mappings and OPA configuration",
+      "console stopped while harness/API remained usable",
+      "logical pg_dump backup created; retained installation restarted"
+    ]
+  },
+  "kubernetes_example": {
+    "result": "kubectl apply --dry-run=server accepted foundation, bootstrap and application manifests",
+    "platform": "linux/arm64",
+    "actual_application_deployment": false
+  },
+  "limits": [
+    "Local issuer has selectable development identities; no enterprise SSO or independent provider qualification",
+    "Software signing and same-host identities do not establish production key custody",
+    "Local example retains transactional outbox without an independent receiver",
+    "No AR/gateway execution, production capacity, p99 or HA qualification",
+    "Existing homelab workloads and all evaluation state retained"
+  ]
+}

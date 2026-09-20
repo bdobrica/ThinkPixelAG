@@ -20,6 +20,10 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build \
     -ldflags "-s -w -X main.version=${VERSION} -X main.revision=${REVISION}" \
     -o /out/thinkpixelag-migrate ./cmd/thinkpixelag-migrate
 
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build \
+    -trimpath -buildvcs=false -ldflags "-s -w" \
+    -o /out/thinkpixelag-operator ./cmd/thinkpixelag-operator
+
 FROM gcr.io/distroless/static-debian13:nonroot@sha256:f7f8f729987ad0fdf6b05eeeae94b26e6a0f613bdf46feea7fc40f7bd72953e6
 
 ARG VERSION=dev
@@ -36,6 +40,7 @@ LABEL org.opencontainers.image.title="ThinkPixelAG" \
 
 COPY --from=build --chown=65532:65532 /out/thinkpixelag /thinkpixelag
 COPY --from=build --chown=65532:65532 /out/thinkpixelag-migrate /thinkpixelag-migrate
+COPY --from=build --chown=65532:65532 /out/thinkpixelag-operator /thinkpixelag-operator
 COPY --from=build --chown=65532:65532 /src/migrations /migrations
 
 USER 65532:65532

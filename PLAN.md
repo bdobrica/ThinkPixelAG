@@ -118,7 +118,8 @@ The [execution-handoff proposal](docs/contracts/execution-handoff-proposal.md)
 maps the remaining joint AG/AR/gateway work and first real execution acceptance
 scenario. It is a proposal, not an implemented worker wire contract. Section 3
 is complete. Section 4 now supplies the optional console; continue with packaging
-and scoped candidate qualification (RC-114–115).
+and scoped candidate qualification (RC-115). Runnable local and staged team-PoC
+installations now include the optional console; RC-114 is complete.
 
 ## Workstream 3: optional administration console
 
