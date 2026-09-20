@@ -1,0 +1,3 @@
+-r requirements.in
+# Browser acceptance only; never installed in the console image.
+playwright==1.63.0

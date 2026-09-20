@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add an optional console image with OIDC/PKCE login, protected transient
+  operator sessions and authorized governance read views through AG APIs.
+
 - Ship the optional trusted harness helper and appendable instruction bootstrap,
   with HTTPS origin pinning, online refresh and governance operation commands.
 

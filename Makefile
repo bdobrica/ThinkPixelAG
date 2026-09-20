@@ -206,3 +206,14 @@ verify: generate-check contract-check lint test test-race test-harness test-poli
 
 clean: ## Remove repository-local build outputs.
 	rm -rf .cache/bin
+
+# The optional console has its own Python environment and image.
+CONSOLE_PYTHON ?= .cache/console/venv/bin/python
+.PHONY: test-console console-image verify-console
+test-console: ## Run optional console authentication, form and boundary tests.
+	PYTHONPATH=console $(CONSOLE_PYTHON) -m unittest discover -s console/tests -p 'test_*.py'
+
+console-image: ## Build the independent administration console image.
+	$(DOCKER) build -t thinkpixelag-console:dev console
+
+verify-console: test-console console-image ## Verify the optional component independently of AG.

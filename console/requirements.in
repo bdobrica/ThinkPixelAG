@@ -1,0 +1,6 @@
+# Optional BFF only: ASGI/views, verified JWT signatures, bounded HTTPS client.
+fastapi==0.141.1
+Jinja2==3.1.6
+httpx==0.28.1
+PyJWT[crypto]==2.14.0
+uvicorn==0.53.0

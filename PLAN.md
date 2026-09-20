@@ -4,7 +4,8 @@ Status: implementation in progress; RC-101 decisions and RC-102 constraint
 inheritance are implemented. Section 2 administration APIs, managed configuration
 and protected operator bootstrap are implemented in the local profile. Harness
 discovery and the helper walkthrough are implemented. The execution-handoff
-proposal is recorded; its implementation and the optional UI remain pending.
+proposal is recorded; its implementation remains pending. The optional console
+shell is implemented; policy/configuration screens are next.
 Execution checklist: [TODO.md](TODO.md). Scope: dynamic harness guidance and
 usable administration through APIs and an optional UI.
 

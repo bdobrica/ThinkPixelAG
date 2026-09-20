@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-09-20
-- Implementation: planned in RC-111–114; no console is implemented by this record
+- Implementation: RC-111 console shell implemented; write screens and packaging follow in RC-112–114
 - Supersedes: none; complements ADR-0005
 
 ## Context and decision

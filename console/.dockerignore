@@ -1,0 +1,5 @@
+*
+!requirements.txt
+!ag_console/
+!ag_console/**
+**/__pycache__

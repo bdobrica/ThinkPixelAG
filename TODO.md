@@ -150,7 +150,7 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
 
 ## 4. Optional console
 
-- [ ] **RC-111 — Build the isolated console/BFF shell.** Depends on RC-101 and
+- [x] **RC-111 — Build the isolated console/BFF shell.** Depends on RC-101 and
   RC-107. Add `console/` with pinned FastAPI/Jinja2 dependencies, separate image,
   OIDC code/PKCE login, protected transient sessions, logout and an AG HTTP client.
   Forward the verified caller token, never an admin service identity. Add CSRF,
@@ -158,6 +158,10 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   errors. Done: authenticate and show authorized read views; AG builds/runs with
   no console dependencies. Check login/state/nonce/session failure cases, denied
   API requests, CSRF and console shutdown while AG remains usable.
+  Implemented the independent FastAPI/Jinja2 shell with verified OIDC/PKCE,
+  transient caller sessions, bounded transport and authorized read views.
+  Eight focused tests, real Chromium login/list/logout, independent image and
+  console-stop/AG-available checks passed. [Evidence](docs/evidence/results/optional-console.json).
 
 - [ ] **RC-112 — Add policy editing and promotion screens.** Depends on RC-104
   and RC-111. Implement source editor, validation feedback, draft diff/history,
