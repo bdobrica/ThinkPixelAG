@@ -1,10 +1,10 @@
 # ADR-0013: AG-provided dynamic harness instructions
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-20
 - Owners: project maintainers
 - Supersedes: none
-- Implementation: future work; no discovery/instruction endpoint is added by this record
+- Implementation: planned in RC-108/109; no discovery/instruction endpoint exists yet
 
 ## Context
 
@@ -17,17 +17,21 @@ versioned integration boundaries.
 A static AGENTS.md cannot accurately describe an evolving deployment. Available
 components, integrations, qualified tools and workflow affordances vary by
 deployment and may also depend on the authenticated caller or admitted Run.
-The owner requested a future design for dynamic guidance rather than a static
-file distributed with each harness.
+The owner requested dynamic guidance and a small static bootstrap appended to
+the harness's existing AGENTS.md. The bootstrap locates current guidance; it
+does not embed a deployment capability snapshot.
 
-## Proposed decision
+## Decision
 
 AG will expose an authenticated, versioned capability/instruction contract for
 harness integrations. A small harness adapter obtains guidance from AG and
-presents it through the harness's supported instruction mechanism. AGENTS.md,
-a skill, an MCP-facing description or another format is a rendering choice;
-none is the canonical platform contract. No particular transport or endpoint
-path is selected by this ADR.
+presents it through the harness's supported instruction mechanism. A
+distributed static AGENTS.md snippet tells the harness to invoke a trusted
+fetch helper at session setup. The helper retrieves the versioned structured
+capability response and its Markdown instruction rendering through AG over
+authenticated HTTPS. It never overwrites existing harness instructions. Other
+harness formats remain adapters; none replaces the canonical structured
+contract. RC-108 selects the endpoint paths and schemas before implementation.
 
 Capability descriptions originate from deployment-owned configuration and
 verified component contracts. AG composes only the capabilities available in
@@ -42,9 +46,14 @@ being present from the caller being authorized to invoke it. The ordinary AG
 identity, policy, resource and freshness checks still decide every operation.
 
 The adapter refreshes at session setup, after Run admission/context changes,
-and when the server indicates its capability revision is stale. The future
-contract must define expiry, invalidation, conditional refresh and failure
-behavior. Stale guidance cannot permit stale authority or silently route around
+and when the server indicates its capability revision is stale. The response
+carries an explicit expiry and revision/ETag. Refresh on expiry
+and stale-revision responses; conditional requests still recheck current caller
+and Run authorization. If refresh fails, stop dependent platform operations
+once guidance expires and report the failure. The helper pins the configured
+AG origin and rejects redirects to other origins; authentication and token
+refresh stay in protected host configuration, outside model-visible output.
+Stale guidance cannot permit stale authority or silently route around
 an unavailable platform service. A capability removal must be enforced by the
 service even if a harness still holds older instructions.
 
@@ -56,8 +65,9 @@ turn model output, Skills or capability metadata into new Run authority.
 
 ## Alternatives considered
 
-- A checked-in AGENTS.md is easy to distribute but drifts from the actual
-  deployment and cannot represent changing context safely.
+- A complete checked-in capability snapshot drifts. A static retrieval
+  bootstrap is retained because it gives an existing harness a stable entry
+  point without embedding changing platform state.
 - Harness-specific code for every component duplicates discovery and exposes
   internal topology; AG remains the entry point in the intended composition.
 - Instructions alone cannot enforce governance. A compliant adapter and the
@@ -73,7 +83,7 @@ inventing an AR worker API or relying on unpublished component types.
 Tests must cover tenant/context isolation, stale or removed capabilities,
 unsupported contract versions, secret exclusion and injected descriptions.
 Add compatibility tests and operator documentation with the actual endpoint.
-This proposal adds no current RC capability and does not close the AR/gateway
+This decision adds no current executable capability and does not close the AR/gateway
 [qualification deferrals](0012-integration-rc-qualification-deferrals.md).
 
 ## References

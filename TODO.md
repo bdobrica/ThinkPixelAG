@@ -1,13 +1,13 @@
 # Next RC implementation checklist
 
-Scope and design defaults: [PLAN.md](PLAN.md). All items below are pending.
+Scope and design defaults: [PLAN.md](PLAN.md). Checked items are complete; unchecked items remain pending.
 Each numbered item is a coherent commit boundary; split only when review size
 requires it. Implement contracts with handlers and tests, not as unsupported
 API promises. Keep accepted ADRs and existing security contracts authoritative.
 
 ## 1. Decisions and prerequisite correctness
 
-- [ ] **RC-101 — Record the implementation decisions.** Refine proposed ADR-0013
+- [x] **RC-101 — Record the implementation decisions.** Refine proposed ADR-0013
   for static bootstrap plus dynamic retrieval. Add a decision for the optional
   console/BFF and an ADR for dynamic role mappings/configuration ownership,
   explicitly superseding affected parts of ADR-0003/0010 if necessary. Specify
@@ -16,7 +16,9 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   identify any credentials or external setup needed before promotion work.
   Update ALIGNMENT.md only for changed boundaries. Done: decisions distinguish
   accepted behavior, proposed changes and external dependencies without claiming
-  that new endpoints exist. Check: architectural/contract review and doc links.
+  that new endpoints exist. Completed: ADR-0013–0016 and ALIGNMENT.md; owner
+  selected local-development signing and OIDC approvals. Checked doc links
+  and architectural/contract consistency; no runtime tests for this decision item.
 
 - [ ] **RC-102 — Fix authoritative constraint inheritance.** Trace HTTP admission,
   version resolution, OPA validation, caches and root issuance. Normalize absent
@@ -155,7 +157,7 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   RC-102 through RC-114. Review API compatibility and migrations, regenerate
   affected artifacts through documented generators, and run focused failures
   plus the final `make verify` and console gate. Perform one end-to-end operator/
-  harness-guidance walkthrough with a real signing/approval path, restart and
+  harness-guidance walkthrough with the ADR-0016 local signing/approval path, restart and
   UI-disabled API operation. Record exact versions, results and external gaps;
   never count mocks as live-provider qualification. Update CHANGELOG.md and
   concise release evidence, then prepare versioned artifacts under the existing

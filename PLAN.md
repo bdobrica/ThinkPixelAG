@@ -18,15 +18,15 @@ does not own governance data or become necessary for AG startup or operation.
 The current executable evaluates policy, admits and manages Runs, and exposes
 some administrative operations. Policy upload/activation are defined in OpenAPI
 but lack HTTP/runtime composition. Roles currently come from deployment-owned
-OIDC mappings. Dynamic instructions remain proposed in
+OIDC mappings. Dynamic instructions are accepted but unimplemented in
 [ADR-0013](docs/adr/0013-dynamic-harness-instructions.md). Omitted caller limits
 also expose an admission constraint-resolution defect that this work must fix.
 
 ## Planning defaults and decisions
 
-These defaults allow planning now. They are implementation intent, not new
-accepted architectural authority. Review the relevant ADRs before implementing
-changed boundaries; supersede accepted decisions where their meaning changes.
+RC-101 records these choices in accepted ADR-0013 through ADR-0016. The
+features remain unimplemented until their checklist items close. Those records
+partially supersede the older static-mapping/local-signing decisions explicitly.
 
 | Topic | RC choice |
 |---|---|
@@ -40,12 +40,13 @@ changed boundaries; supersede accepted decisions where their meaning changes.
 | First real harness | Codex is the first manual interoperability target; keep the core discovery contract harness-neutral. |
 | Execution scope | Ship working discovery and existing governance operations. Full AR-backed execution is a separately tracked integration dependency, not silently implied by fetching instructions. |
 
-Two choices need resolving before their implementation steps: the provider for a
-real signed policy promotion/approval walkthrough, and the exact supported
-integration fields/contracts. Choose one compatible provider and the smallest
-working integration catalog; do not build a provider matrix. Existing managed
-signing and four-eyes requirements remain intact. A local-only signing path,
-if desired, needs an explicit reviewed decision rather than a disguised bypass.
+The owner selected the explicit local-development signing profile and two
+OIDC-authenticated operators in [ADR-0016](docs/adr/0016-local-development-policy-promotion.md).
+No cloud setup is required. RC-103/104 must implement the software-key adapter
+and authenticated approval receipts; production KMS/HSM and external-provider
+qualification remain separate. [ADR-0015](docs/adr/0015-managed-governance-configuration.md)
+selects the OPA decision connection as the first integration setting; RC-106
+finalizes its wire fields and safe reload behavior.
 
 ## Workstream 1: authoritative limits and administration APIs
 
@@ -136,8 +137,9 @@ The candidate is ready for these two features when:
 - Objective-only admission inherits limits, and caller requests cannot widen them.
 - An operator can provision a clean installation and manage policy, mappings and
   supported settings through documented commands and the optional console.
-- A real policy promotion/activation/rollback walkthrough uses the required
-  signing and approval boundaries; fixture-only tests are labeled as such.
+- A real local-development policy promotion/activation/rollback walkthrough
+  uses the ADR-0016 signing and approval boundaries; its custody limitations
+  and separate production-provider qualification are explicit.
 - A real harness obtains and refreshes scoped guidance through AG, while
   forbidden/stale operations remain denied by authoritative services.
 - Restart preserves AG configuration and policy history; console absence or

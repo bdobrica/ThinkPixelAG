@@ -31,4 +31,8 @@ The [supported-version matrix](../operations/supported-versions.md) is a maintai
 operator reference. Deployment/release policy is recorded in ADR-0011; the
 matrix records tested versions without rewriting accepted decisions.
 
-- [ADR-0013: AG-provided dynamic harness instructions (proposed)](0013-dynamic-harness-instructions.md) — future capability discovery and harness guidance; not implemented.
+- [ADR-0013: AG-provided dynamic harness instructions](0013-dynamic-harness-instructions.md) — accepted design; implementation pending.
+
+- [ADR-0014: Optional administration console and backend bridge](0014-optional-administration-console.md)
+- [ADR-0015: Tenant-scoped managed governance configuration](0015-managed-governance-configuration.md) — partially supersedes ADR-0003.
+- [ADR-0016: Local-development policy promotion profile](0016-local-development-policy-promotion.md) — partially supersedes ADR-0010 for local signing only.

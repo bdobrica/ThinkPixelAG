@@ -40,3 +40,10 @@ identity and narrow key grants; credentials are not part of this contract.
 Local and test deployments may leave signing disabled. Test-only in-memory
 keys do not satisfy the managed-key guard and therefore cannot be promoted into
 the production path accidentally.
+
+## Planned local-development profile
+
+[ADR-0016](../adr/0016-local-development-policy-promotion.md) authorizes a separate,
+explicit local-development adapter for the next RC. It reports SOFTWARE keys
+truthfully and does not pass through or weaken the production managed-key guard.
+That adapter is not implemented yet. Production invariants above remain unchanged.

@@ -76,3 +76,16 @@ All ThinkPixel integrations must remain optional/configurable where standalone o
 ## Definition of an aligned change
 
 A change is aligned when it preserves this repository's ownership boundary, follows accepted ADRs/contracts, keeps integrations replaceable, updates durable documentation with behavior, and passes the repository's documented verification gates. Changes to the cross-repository boundary should include contract/conformance coverage rather than relying only on prose.
+
+## Accepted next-RC boundaries (implementation pending)
+
+[ADR-0013](docs/adr/0013-dynamic-harness-instructions.md) keeps dynamic harness
+guidance at AG, with static bootstrap instructions and a trusted fetch helper.
+[ADR-0014](docs/adr/0014-optional-administration-console.md) places the optional
+console/BFF outside the governance service; it uses public APIs and owns no
+governance database. [ADR-0015](docs/adr/0015-managed-governance-configuration.md)
+assigns external-role mappings and supported connection settings to AG while
+leaving account/group membership with the IdP.
+[ADR-0016](docs/adr/0016-local-development-policy-promotion.md) selects an explicit
+local-development signing/approval path without relaxing production key custody.
+These decisions do not claim the planned APIs or adapters exist.
