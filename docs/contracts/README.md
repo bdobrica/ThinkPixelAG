@@ -39,3 +39,6 @@ activation, replay and exact-artifact OPA selection in the local development pro
 
 The [operator guide](../operations/bootstrap.md) explains initial tenant/policy/agent
 provisioning, existing registry contracts and authorized agent/Run read views.
+
+[Harness guidance](harness-guidance.md) defines scoped capability discovery, trusted
+Markdown, conditional authorization and expiry; it does not grant execution authority.

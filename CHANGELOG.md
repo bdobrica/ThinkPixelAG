@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add authenticated caller/Run-scoped harness capabilities and trusted Markdown,
+  with revision/expiry, conditional reauthorization and explicit execution limits.
+
 - Add protected local operator bootstrap/recovery, immutable schema 23 receipts,
   registry creation/version APIs and authorized Run listing.
 

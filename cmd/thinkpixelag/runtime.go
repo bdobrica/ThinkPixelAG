@@ -193,6 +193,7 @@ func (r *runtimeRoutes) mount(d *httpserver.Dependencies, trusted bool) {
 			d.RoleMappings = r.route("role-mappings", false)
 			d.PolicyEditor = r.route("policy-editor", false)
 		}
+		d.HarnessGuidance = r.route("harness-guidance", false)
 		d.AgentDiscovery = r.route("discovery", false)
 		d.AgentApprovals = r.route("approval", false)
 		d.RunAdmission = r.route("admission", false)
@@ -278,6 +279,12 @@ func (r *runtimeRoutes) handler(ctx context.Context, name string, tenant domain.
 		return m.Sum(nil)
 	}
 	switch name {
+	case "harness-guidance":
+		q, e := application.NewRunQuery(repo, evaluator, r.clock)
+		if e != nil {
+			return nil, e
+		}
+		return httpserver.HarnessGuidanceHandler(r.verifier, &application.HarnessGuidance{State: &harnessState{r, repo}, Evaluator: evaluator, Runs: q, Clock: r.clock, RevisionKey: key("harness-guidance")}), nil
 	case "policy-admin", "policy-editor", "role-mappings", "integrations", "registry-admin", "run-list":
 		s := &application.PolicyAdministration{Store: repo, Evaluator: evaluator, Modules: modules, Verifier: r.localKey, Signer: r.localKey, SigningKeyID: r.localKey.ID(), ApprovalProvider: &localapprovals.Provider{Store: repo}, Channel: r.runtime.PolicyChannel, Clock: r.clock}
 		if name == "registry-admin" {

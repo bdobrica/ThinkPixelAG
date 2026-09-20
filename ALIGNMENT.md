@@ -91,4 +91,6 @@ local-development signing/approval path without relaxing production key custody.
 The source candidate implements the local administration profile, including
 role mappings, bounded OPA settings, registry writes and protected bootstrap/
 recovery. The CLI uses deployment credentials; no recovery endpoint or standing
-role is exposed. Dynamic harness guidance and the optional console remain pending.
+role is exposed. Dynamic harness discovery is implemented through the versioned
+[guidance contract](docs/contracts/harness-guidance.md); the optional console and
+full runtime execution handoff remain pending.

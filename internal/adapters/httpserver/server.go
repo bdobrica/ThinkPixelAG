@@ -75,6 +75,7 @@ type Dependencies struct {
 	Readiness              ReadinessProbe
 	NewID                  IDGenerator
 	PolicyAdministration   http.Handler
+	HarnessGuidance        http.Handler
 	RegistryAdministration http.Handler
 	RunList                http.Handler
 	Integrations           http.Handler
@@ -165,6 +166,10 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 		}
 		dependencies.Metrics.Handler().ServeHTTP(writer, request)
 	}))
+	if dependencies.HarnessGuidance != nil {
+		mount("GET /v1/harness/capabilities", dependencies.HarnessGuidance)
+		mount("GET /v1/harness/instructions", dependencies.HarnessGuidance)
+	}
 	if dependencies.RegistryAdministration != nil {
 		mount("POST /v1/admin/agents", dependencies.RegistryAdministration)
 		mount("POST /v1/admin/agents/{agent_id}/versions", dependencies.RegistryAdministration)

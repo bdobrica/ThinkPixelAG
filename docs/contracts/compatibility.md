@@ -87,3 +87,7 @@ caller-bound pagination and the existing per-Run `runs.read` authorization;
 there is no new role granting blanket visibility. Schema 23 records immutable
 operator bootstrap receipts. The protected local operator binary is not an HTTP
 API and does not change the managed-signing or workload-identity boundary.
+
+The additive `thinkpixelag.harness-guidance/v1` routes provide expiring JSON and
+Markdown projections with representation-specific ETags. Existing identity,
+policy and Run contracts are unchanged; no migration or worker API is added.

@@ -109,7 +109,7 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
 
 ## 3. Dynamic harness guidance
 
-- [ ] **RC-108 — Implement scoped capability/instruction discovery.** Depends on
+- [x] **RC-108 — Implement scoped capability/instruction discovery.** Depends on
   RC-101, RC-102 and RC-106. Define OpenAPI/schema and compatibility behavior for
   authenticated structured capabilities plus Markdown, revision/ETag, expiry
   and optional Run scope. Compose trusted templates from effective configuration
@@ -118,6 +118,8 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   real supported state without revealing another tenant's context or secrets.
   Check: context isolation, unsupported versions, removal/expiry, conditional
   refresh, injected descriptions and bounded responses. Update contract guide.
+  Implemented v1 JSON/Markdown routes, live caller/Run checks, revision/expiry
+  and conditional reauthorization; focused HTTP/application/contract checks passed.
 
 - [ ] **RC-109 — Ship the bootstrap snippet and fetch helper.** Depends on RC-108.
   Provide an appendable AGENTS.md section and helper installation/configuration

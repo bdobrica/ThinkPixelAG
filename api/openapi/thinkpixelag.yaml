@@ -1119,6 +1119,137 @@ paths:
                 "$ref": "#/components/schemas/RunList"
         "default":
           "$ref": "#/components/responses/Problem"
+  "/v1/harness/capabilities":
+    "get":
+      "tags":
+        - "Harness guidance"
+      "operationId": "getHarnessCapabilities"
+      "summary": "Read currently authorized, expiring harness guidance"
+      "parameters":
+        -
+          "name": "contract_version"
+          "in": "query"
+          "schema":
+            "type": "string"
+            "enum":
+              - "thinkpixelag.harness-guidance/v1"
+            "default": "thinkpixelag.harness-guidance/v1"
+        -
+          "name": "run_id"
+          "in": "query"
+          "schema":
+            "$ref": "#/components/schemas/Identifier"
+        -
+          "name": "If-None-Match"
+          "in": "header"
+          "schema":
+            "type": "string"
+            "maxLength": 128
+      "responses":
+        "200":
+          "description": "Successful administration operation"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/HarnessGuidance"
+          "headers":
+            "ETag":
+              "schema":
+                "type": "string"
+            "X-AG-Capability-Revision":
+              "schema":
+                "$ref": "#/components/schemas/Digest"
+            "X-AG-Guidance-Expires":
+              "schema":
+                "$ref": "#/components/schemas/Timestamp"
+            "Cache-Control":
+              "schema":
+                "type": "string"
+                "const": "private, no-cache"
+        "default":
+          "$ref": "#/components/responses/Problem"
+        "304":
+          "description": "Unchanged unexpired representation after current authorization checks"
+          "headers":
+            "ETag":
+              "schema":
+                "type": "string"
+            "X-AG-Capability-Revision":
+              "schema":
+                "$ref": "#/components/schemas/Digest"
+            "X-AG-Guidance-Expires":
+              "schema":
+                "$ref": "#/components/schemas/Timestamp"
+            "Cache-Control":
+              "schema":
+                "type": "string"
+                "const": "private, no-cache"
+  "/v1/harness/instructions":
+    "get":
+      "tags":
+        - "Harness guidance"
+      "operationId": "getHarnessInstructions"
+      "summary": "Read currently authorized, expiring harness guidance"
+      "parameters":
+        -
+          "name": "contract_version"
+          "in": "query"
+          "schema":
+            "type": "string"
+            "enum":
+              - "thinkpixelag.harness-guidance/v1"
+            "default": "thinkpixelag.harness-guidance/v1"
+        -
+          "name": "run_id"
+          "in": "query"
+          "schema":
+            "$ref": "#/components/schemas/Identifier"
+        -
+          "name": "If-None-Match"
+          "in": "header"
+          "schema":
+            "type": "string"
+            "maxLength": 128
+      "responses":
+        "200":
+          "description": "Successful administration operation"
+          "content":
+            "text/markdown":
+              "schema":
+                "type": "string"
+                "maxLength": 32768
+          "headers":
+            "ETag":
+              "schema":
+                "type": "string"
+            "X-AG-Capability-Revision":
+              "schema":
+                "$ref": "#/components/schemas/Digest"
+            "X-AG-Guidance-Expires":
+              "schema":
+                "$ref": "#/components/schemas/Timestamp"
+            "Cache-Control":
+              "schema":
+                "type": "string"
+                "const": "private, no-cache"
+        "default":
+          "$ref": "#/components/responses/Problem"
+        "304":
+          "description": "Unchanged unexpired representation after current authorization checks"
+          "headers":
+            "ETag":
+              "schema":
+                "type": "string"
+            "X-AG-Capability-Revision":
+              "schema":
+                "$ref": "#/components/schemas/Digest"
+            "X-AG-Guidance-Expires":
+              "schema":
+                "$ref": "#/components/schemas/Timestamp"
+            "Cache-Control":
+              "schema":
+                "type": "string"
+                "const": "private, no-cache"
 components:
   securitySchemes:
     bearerAuth:
@@ -2245,3 +2376,91 @@ components:
         "next_cursor":
           "type": "string"
           "maxLength": 512
+
+    "HarnessScope":
+      "type": "object"
+      "additionalProperties": false
+      "required":
+        - "tenant_id"
+        - "principal_id"
+      "properties":
+        "tenant_id":
+          "$ref": "#/components/schemas/Identifier"
+        "principal_id":
+          "$ref": "#/components/schemas/Identifier"
+        "run_id":
+          "$ref": "#/components/schemas/Identifier"
+    "HarnessOperation":
+      "type": "object"
+      "additionalProperties": false
+      "required":
+        - "id"
+        - "method"
+        - "path"
+        - "prerequisite"
+        - "authorization"
+      "properties":
+        "id":
+          "type": "string"
+          "enum":
+            - "agents.list"
+            - "agents.describe"
+            - "runs.admit"
+            - "runs.list"
+            - "runs.read"
+            - "runs.events"
+            - "runs.cancel"
+            - "runs.signal"
+        "method":
+          "type": "string"
+          "enum":
+            - "GET"
+            - "POST"
+        "path":
+          "type": "string"
+          "maxLength": 128
+        "prerequisite":
+          "type": "string"
+          "maxLength": 128
+        "authorization":
+          "type": "string"
+          "const": "checked_per_request"
+    "HarnessGuidance":
+      "type": "object"
+      "additionalProperties": false
+      "required":
+        - "contract_version"
+        - "revision"
+        - "scope"
+        - "issued_at"
+        - "expires_at"
+        - "governance"
+        - "execution"
+        - "operations"
+        - "markdown"
+      "properties":
+        "contract_version":
+          "type": "string"
+          "const": "thinkpixelag.harness-guidance/v1"
+        "revision":
+          "$ref": "#/components/schemas/Digest"
+        "scope":
+          "$ref": "#/components/schemas/HarnessScope"
+        "issued_at":
+          "$ref": "#/components/schemas/Timestamp"
+        "expires_at":
+          "$ref": "#/components/schemas/Timestamp"
+        "governance":
+          "type": "string"
+          "const": "ready"
+        "execution":
+          "type": "string"
+          "const": "unsupported"
+        "operations":
+          "type": "array"
+          "maxItems": 8
+          "items":
+            "$ref": "#/components/schemas/HarnessOperation"
+        "markdown":
+          "type": "string"
+          "maxLength": 32768
