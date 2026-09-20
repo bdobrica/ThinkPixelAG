@@ -23,11 +23,13 @@ Production capacity and unavailable AR/gateway/HA scenarios are
 [measured operating envelope](docs/operations/capacity.md) is separate
 from production targets. AG does not yet expose a versioned AR worker API;
 registration/policy-management runtime composition and production provider
-ceremonies are also outside the current executable's configured surface.
+ceremonies are also outside the current executable's configured surface. The
+[capability guide](docs/operations/integrations.md) distinguishes the working
+governance API from the still-missing complete harness integration.
 
 ## Quick start
 
-Follow the [quick start](docs/quickstart.md) to test governance workflows locally.
+Follow the [quick start](docs/quickstart.md) to install AG and use its HTTP API locally.
 Choose the [local sandbox or team Kubernetes PoC](docs/examples/README.md), then
 use the [operations guide](docs/operations/README.md) to configure and run AG.
 The [changelog](CHANGELOG.md) records the current candidate and changes.
@@ -57,7 +59,7 @@ The [changelog](CHANGELOG.md) records the current candidate and changes.
 - [Resource accounting contract](docs/contracts/resource-accounting.md)
 - [Revocation and freshness contract](docs/contracts/revocation.md)
 - [Threat model](docs/security/threat-model.md)
-- [Configuration reference](docs/operations/configuration.md)
+- [Configuration reference](docs/configuration.md)
 - [Deployment guidance](deploy/README.md)
 
 ## Repository layout

@@ -30,3 +30,5 @@ ADRs record consequential decisions that should remain understandable after the 
 The [supported-version matrix](../operations/supported-versions.md) is a maintained
 operator reference. Deployment/release policy is recorded in ADR-0011; the
 matrix records tested versions without rewriting accepted decisions.
+
+- [ADR-0013: AG-provided dynamic harness instructions (proposed)](0013-dynamic-harness-instructions.md) — future capability discovery and harness guidance; not implemented.

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Replace test-only quick-start steps with a persistent local installation and
+  authenticated discovery/admission/replay/read/cancel examples; add a complete
+  staged Kubernetes evaluation renderer and restore `docs/configuration.md`.
+- Propose AG-provided dynamic harness instructions in ADR-0013; clarify AG as
+  the harness entry point and distinguish current API support from missing integration.
+
 - Reorganize documentation into quick start, runnable local evaluation, team
   Kubernetes PoC, operator/security/contract guides and focused RC qualification evidence.
 - Remove redundant phase reports, copied planning snapshots and diagnostic histories;

@@ -18,7 +18,7 @@ Start with the [quick start](../quickstart.md) for an isolated test or the
 
 ## References and rehearsals
 
-- [Configuration](configuration.md), [HTTP lifecycle](http-server.md),
+- [Configuration](../configuration.md), [HTTP lifecycle](http-server.md),
   [metrics and tracing reference](observability.md), [logging](logging.md).
 - [Developer commands](development.md).
 - [Recovery rehearsals](testing/recovery-testing.md),

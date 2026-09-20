@@ -39,7 +39,7 @@ an authenticated evidence sink. Supply `OPS_SINK_TOKEN` through secret delivery
 and `OPS_RECEIPTS_FILE` on persistent storage. The sink fsyncs deliveries and
 receipts before acknowledging them and checks replay hashes and chain sequence.
 
-Deploy the governed runtime described in [configuration](../configuration.md),
+Deploy the governed runtime described in [configuration](../../configuration.md),
 with the fixture issuer/CA and the generated workload bindings. Preserve PVCs,
 identities and deployment resources between scenarios; there is no automatic
 cluster teardown in either executable.

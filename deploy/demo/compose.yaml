@@ -1,0 +1,110 @@
+name: thinkpixelag-demo
+
+x-support: &support
+  image: thinkpixelag-demo-support:local
+  user: "65532:65532"
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+
+services:
+  postgres:
+    image: postgres:18.4-alpine3.23@sha256:996d0920e4ff9df1fc19dacb904492f3c1ec0ec1cc338f0ad7123be7731c5f5e
+    environment:
+      POSTGRES_USER: thinkpixelag
+      POSTGRES_DB: thinkpixelag
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Run ./ag up to create private configuration}
+    volumes:
+      - database:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U thinkpixelag -d thinkpixelag"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    security_opt: [no-new-privileges:true]
+
+  provision:
+    <<: *support
+    build:
+      context: ../..
+      dockerfile: deploy/demo/Dockerfile
+    entrypoint: [/bin/sh, /provision.sh]
+    environment:
+      THINKPIXELAG_DATABASE_URL: postgresql://thinkpixelag:${DATABASE_PASSWORD}@postgres:5432/thinkpixelag?sslmode=disable
+      OPS_DATABASE_URL: postgresql://thinkpixelag:${DATABASE_PASSWORD}@postgres:5432/thinkpixelag?sslmode=disable
+      OPS_ISSUER: https://identity:8443
+      OPS_AUDIENCE: thinkpixelag-demo
+      OPS_GATEWAY_COUNT: "1"
+      OPS_RETAIN_SIGNING_KEY: "1"
+    volumes:
+      - identity:/state
+      - trust:/trust
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  identity:
+    <<: *support
+    pull_policy: never
+    command: [serve, /state]
+    environment:
+      OPS_SINK_TOKEN: ${EVIDENCE_TOKEN:?Run ./ag up}
+      OPS_RECEIPTS_FILE: /state/receipts.jsonl
+    volumes:
+      - identity:/state
+    healthcheck:
+      test: [CMD, /bootstrap, health, /state]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      provision: {condition: service_completed_successfully}
+
+  opa:
+    image: openpolicyagent/opa:1.19.0-debug@sha256:ec3c7a29a21ce96d71231cb4befa2561205fe84e5a2dc3cc46ac7bc8bd21b3a4
+    command: [run, --server, --addr=0.0.0.0:8181, --log-level=error, /trust/authorization.rego]
+    volumes:
+      - trust:/trust:ro
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD, /opa, eval, --fail, 'http.send({"method":"get","url":"http://127.0.0.1:8181/health"}).status_code == 200']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      provision: {condition: service_completed_successfully}
+
+  api:
+    image: quay.io/bdobrica/thinkpixelag@sha256:82ad793f6b19460e58aeb43203bfd2f8a3563bc2d8bf53a120e92dbafa78a53a
+    environment:
+      THINKPIXELAG_ENVIRONMENT: local
+      THINKPIXELAG_HTTP_ADDRESS: :8080
+      THINKPIXELAG_DATABASE_URL: postgresql://thinkpixelag:${DATABASE_PASSWORD}@postgres:5432/thinkpixelag?sslmode=disable
+      THINKPIXELAG_OPA_URL: http://opa:8181
+      THINKPIXELAG_OIDC_ISSUER_URL: https://identity:8443
+      THINKPIXELAG_OIDC_AUDIENCE: thinkpixelag-demo
+      THINKPIXELAG_OIDC_ROLE_MAPPINGS: invoker=agent-invoker,revoker=revocation-admin
+      THINKPIXELAG_RUNTIME_FILE: /config/runtime.json
+      THINKPIXELAG_CURSOR_HMAC_KEY: ${CURSOR_KEY:?Run ./ag up}
+      THINKPIXELAG_EVIDENCE_SINK_ID: demo-receiver
+      THINKPIXELAG_EVIDENCE_ENDPOINT: https://identity:8443/evidence
+      THINKPIXELAG_EVIDENCE_BEARER_TOKEN: ${EVIDENCE_TOKEN}
+      SSL_CERT_FILE: /trust/ca.crt
+    volumes:
+      - ./runtime.json:/config/runtime.json:ro
+      - trust:/trust:ro
+    ports:
+      - "127.0.0.1:${AG_PORT:-18080}:8080"
+    user: "65532:65532"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      identity: {condition: service_healthy}
+      opa: {condition: service_healthy}
+
+volumes:
+  database:
+  identity:
+  trust:

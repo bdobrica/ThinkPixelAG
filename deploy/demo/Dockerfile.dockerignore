@@ -1,0 +1,14 @@
+*
+!go.mod
+!go.sum
+!internal/
+!internal/**
+!test/
+!test/operations/
+!test/operations/fixture/
+!test/operations/fixture/*.go
+!policies/
+!policies/authorization.rego
+!deploy/
+!deploy/demo/
+!deploy/demo/provision.sh

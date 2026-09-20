@@ -1,46 +1,76 @@
-# Local sandbox
+# Local installation
 
-Follow the [quick start](../../quickstart.md) in the same shell first. It starts
-an isolated Compose project, exercises the end-to-end workflows and builds AG.
-The dependency containers and database remain available between runs.
+The [quick start](../../quickstart.md) installs AG and walks through authenticated
+agent discovery, Run admission, replay, read and cancellation. This page explains
+what is running and how to operate or adapt it.
 
-## Start and inspect the process
+## Components and configuration
+
+| Component | Purpose | Configuration / storage |
+|---|---|---|
+| `api` | Published AG image, governed HTTP routes on loopback port 18080 | [Runtime JSON](../../../deploy/demo/runtime.json), generated environment, read-only CA volume |
+| `postgres` | Authoritative governance state | Persistent `thinkpixelag-demo_database` volume; no host port |
+| `opa` | Executes the approved example policy | Copy of the initially provisioned policy in the persistent trust volume |
+| `identity` | Sample OIDC discovery/JWKS and durable evidence receiver | Private `thinkpixelag-demo_identity` volume; no host port |
+| `provision` | Explicit migration and one-time sample setup | Completed container retained; subsequent launches preserve existing identities and activation |
+
+[compose.yaml](../../../deploy/demo/compose.yaml) is the actual installation.
+The [helper](../../../deploy/demo/ag) creates private configuration, invokes
+Compose and waits for real AG readiness. AG cannot access the issuer's private
+key volume. The separate example support image reuses the repository's existing
+fixture provisioner; it is not included in the AG release image.
+
+The sample issuer authenticates actual HTTP requests with signed JWTs. It does
+not provide login screens or your company's SSO. The provisioner creates one
+approved illustrative agent version and synthetic users. It does not execute
+that agent or provide a supported production administration API.
+
+## Change settings
+
+Edit `AG_PORT` in the file reported by `./deploy/demo/ag config-path` to change the loopback port, then
+run `./deploy/demo/ag up`. Keep your `AG_URL` consistent. Do not change the
+initialized database password only in the environment file: PostgreSQL does not rotate its
+stored password when a container environment changes.
+
+Edit [runtime.json](../../../deploy/demo/runtime.json) to change admission
+ceilings. These are deployment maxima, not grants to callers. Restart AG after
+changing the file:
 
 ```sh
-export THINKPIXELAG_ENVIRONMENT=local
-export THINKPIXELAG_HTTP_ADDRESS=127.0.0.1:18080
-export THINKPIXELAG_DATABASE_URL='postgresql://thinkpixelag_local:thinkpixelag_local_only_change_me@127.0.0.1:15432/thinkpixelag_local?sslmode=disable'
-export THINKPIXELAG_OPA_URL=http://127.0.0.1:18181
-export THINKPIXELAG_OIDC_ISSUER_URL=http://127.0.0.1:15556
-export THINKPIXELAG_OIDC_AUDIENCE=thinkpixelag-example
-.cache/bin/thinkpixelag
+docker compose --project-name thinkpixelag-demo --env-file "$(./deploy/demo/ag config-path)" -f deploy/demo/compose.yaml restart api
 ```
 
-The issuer address is a configuration placeholder; this example does not start
-an IdP. Leave `THINKPIXELAG_RUNTIME_FILE` unset for this operational-endpoint
-walkthrough. In another terminal:
+All settings, including OIDC, evidence, database pools and optional Valkey, are
+in the restored [configuration reference](../../configuration.md). Replacing
+the sample issuer also requires matching verified tenant/principal identities
+and approved data in AG. Merely pointing the issuer URL at a company IdP does
+not create those records; see [installation boundaries](../../operations/installation.md).
 
-```sh
-curl --fail http://127.0.0.1:18080/livez
-curl --silent --output /dev/null --write-out '%{http_code}\n' http://127.0.0.1:18080/readyz
-curl --fail http://127.0.0.1:18080/metrics
-```
+## Persistence and credentials
 
-Liveness should succeed. Readiness is expected to return **503** because this
-process has no verified active policy composition; the OPA dependency being
-healthy does not establish authorization readiness. Governed `/v1` routes are
-not enabled in this mode. Ctrl-C stops the process gracefully.
+Keep the private environment file and all three named volumes together. The database holds Run and
+policy authority; identity storage holds sample keys and durable receipt history;
+trust storage holds the CA and the exact provisioned policy. The helper does
+not regenerate keys or reset a database on restart.
 
-## Exercise governance
+`./deploy/demo/ag token` issues a fresh 15-minute caller token without changing
+its principal or signing key. Certificate lifetime is 14 days; this installation
+is for short evaluations. For a longer evaluation, plan certificate renewal
+without resetting authoritative state, or use managed identity infrastructure.
+Do not use deletion/re-provisioning as credential rotation.
 
-Rerun `make test-e2e` with the quick-start database URL to exercise the mounted
-HTTP boundaries with controlled fixtures. The tests cover admission, exact
-replay, lifecycle, resources and revocation without relying on a real harness.
-For a persistent governed API, use the [runtime configuration](../../operations/configuration.md#governed-runtime-composition)
-and [integration prerequisites](../../operations/integrations.md); approved
-provisioning is additional integration work in this RC.
+## Troubleshoot
 
-Use `make dev-status` to inspect dependencies. `make dev-down` stops the example
-project and preserves its database volume. Keep the same Compose project name
-and port variables when restarting with `make dev-up`. This stack is bound to
-loopback and uses local-only credentials; do not expose it to other machines.
+| Symptom | Check |
+|---|---|
+| Port already in use | Set a free `AG_PORT` and use the same port in `AG_URL` |
+| Provisioning exits unsuccessfully | `./deploy/demo/ag logs`; check PostgreSQL health and the explicit migration/setup result |
+| Readiness remains unavailable | Check issuer/OPA health, policy activation and certificate validity; do not bypass readiness |
+| API returns 401 | Refresh the caller token; verify URL, issuer/audience and clock |
+| Agent list is empty | Confirm the provisioner succeeded and the request uses the sample caller's identity |
+| API returns 409 | Inspect the current Run/state version and the original idempotent request |
+| A Run remains ADMITTED | Expected without the still-missing harness-execution integration; AG has not launched the objective |
+
+Use [Run API examples](../../api/run-lifecycle.md) for signals and event streams.
+Use [backup/recovery](../../operations/backup-recovery.md) before keeping valuable
+state. There is intentionally no automatic reset command in the helper.

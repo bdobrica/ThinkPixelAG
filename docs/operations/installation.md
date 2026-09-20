@@ -1,7 +1,7 @@
 # Install and accept a deployment
 
-For a first test, use the [local sandbox](../examples/local-sandbox/README.md).
-For Kubernetes, start from the [team PoC overlay](../examples/team-poc/README.md).
+For a working local service and real API calls, use the [local installation](../examples/local-sandbox/README.md).
+For Kubernetes, start from the [team PoC installation](../examples/team-poc/README.md).
 The base manifests deliberately require environment-specific configuration.
 
 ## Prepare dependencies and trust
@@ -18,14 +18,15 @@ of a selected provider is separate from the RC's component tests.
 
 Prepare a validated, signed, approved policy activation and approved agent
 version through controlled provisioning. **The current executable does not
-compose registration or policy-management routes.** The local automated tests
-provide synthetic setup; there is no supported production bootstrap CLI to
-substitute here. Do not use direct cross-component SQL as an integration API.
+compose registration or policy-management routes.** The examples provide
+one-time sample provisioning for an evaluation; there is no supported production
+bootstrap CLI to substitute here. Do not use direct cross-component SQL as an
+integration API.
 
 ## Configure and migrate
 
 Set issuer, audience, role mappings, database/OPA endpoints and bounded pools
-using the [configuration reference](configuration.md). Mount a runtime JSON
+using the [configuration reference](../configuration.md). Mount a runtime JSON
 file and set `THINKPIXELAG_RUNTIME_FILE` to enable governed routes. Deliver a
 shared `THINKPIXELAG_CURSOR_HMAC_KEY` separately. Trusted APIs require the
 additional mTLS listener, certificates and workload bindings.

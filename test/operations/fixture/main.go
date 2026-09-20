@@ -12,6 +12,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/base64"
@@ -43,13 +44,14 @@ import (
 type identity struct {
 	Tenant, ForeignTenant, Principal, ForeignPrincipal, Admin, Agent, Version, Gateway string
 	Issuer                                                                             string
+	Audience                                                                           string
 	JWKS                                                                               any
 	Gateways                                                                           []string
 }
 
 func main() {
 	if len(os.Args) != 3 {
-		fmt.Fprintln(os.Stderr, "usage: fixture prepare|seed|serve DIRECTORY")
+		fmt.Fprintln(os.Stderr, "usage: fixture prepare|seed|serve|token|health DIRECTORY")
 		os.Exit(2)
 	}
 	var err error
@@ -60,6 +62,10 @@ func main() {
 		err = seed(os.Args[2])
 	case "serve":
 		err = serve(os.Args[2])
+	case "health":
+		err = health(os.Args[2])
+	case "token":
+		err = refreshCallerToken(os.Args[2], os.Stdout)
 	default:
 		err = errors.New("unknown mode")
 	}
@@ -85,6 +91,10 @@ func load(dir string) (identity, error) {
 	return i, e
 }
 func prepare(dir string) error {
+	count, err := gatewayCount(os.Getenv("OPS_GATEWAY_COUNT"))
+	if err != nil {
+		return err
+	}
 	if _, err := os.Stat(filepath.Join(dir, "identity.json")); err == nil {
 		return errors.New("fixture already exists; reuse it instead of replacing keys")
 	}
@@ -101,20 +111,19 @@ func prepare(dir string) error {
 		return err
 	}
 	i.JWKS = map[string]any{"keys": []any{map[string]any{"kty": "RSA", "kid": "ops010", "alg": "RS256", "use": "sig", "n": base64.RawURLEncoding.EncodeToString(key.N.Bytes()), "e": base64.RawURLEncoding.EncodeToString(big.NewInt(int64(key.E)).Bytes())}}}
-	for name, claims := range map[string]map[string]any{"caller.token": {"sub": i.Principal, "tenant_id": i.Tenant, "roles": []string{"invoker"}}, "foreign.token": {"sub": i.ForeignPrincipal, "tenant_id": i.ForeignTenant, "roles": []string{"invoker"}}, "admin.token": {"sub": i.Admin, "tenant_id": i.Tenant, "roles": []string{"revoker"}}} {
-		claims["iss"] = issuer
-		claims["aud"] = "ops010"
-		claims["iat"] = time.Now().Unix()
-		claims["exp"] = time.Now().Add(23 * time.Hour).Unix()
-		head, _ := json.Marshal(map[string]string{"alg": "RS256", "kid": "ops010"})
-		body, _ := json.Marshal(claims)
-		msg := base64.RawURLEncoding.EncodeToString(head) + "." + base64.RawURLEncoding.EncodeToString(body)
-		hash := sha256.Sum256([]byte(msg))
-		sig, e := rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA256, hash[:])
+	i.Audience = os.Getenv("OPS_AUDIENCE")
+	if i.Audience == "" {
+		i.Audience = "ops010"
+	}
+	if err = writeTokens(dir, i, key, 23*time.Hour); err != nil {
+		return err
+	}
+	if os.Getenv("OPS_RETAIN_SIGNING_KEY") == "1" {
+		der, e := x509.MarshalPKCS8PrivateKey(key)
 		if e != nil {
 			return e
 		}
-		if e = write(dir, name, []byte(msg+"."+base64.RawURLEncoding.EncodeToString(sig))); e != nil {
+		if e = write(dir, "issuer.key", pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der})); e != nil {
 			return e
 		}
 	}
@@ -165,7 +174,7 @@ func prepare(dir string) error {
 		return e
 	}
 	bindings := []any{}
-	for n := 0; n < 5000; n++ {
+	for n := 0; n < count; n++ {
 		id := newID()
 		if n == 0 {
 			id = i.Gateway
@@ -185,8 +194,77 @@ func prepare(dir string) error {
 	if e = write(dir, "identity.json", b); e != nil {
 		return e
 	}
-	fmt.Println("Prepared isolated identities, TLS certificates, and 5000 gateway bindings; key material retained locally")
+	fmt.Printf("Prepared isolated identities, TLS certificates, and %d gateway bindings; key material retained locally\n", count)
 	return nil
+}
+
+func gatewayCount(value string) (int, error) {
+	if value == "" {
+		return 5000, nil
+	}
+	n, err := strconv.Atoi(value)
+	if err != nil || n < 1 || n > 5000 {
+		return 0, errors.New("OPS_GATEWAY_COUNT must be between 1 and 5000")
+	}
+	return n, nil
+}
+
+func writeTokens(dir string, i identity, key *rsa.PrivateKey, lifetime time.Duration) error {
+	for name, claims := range map[string]map[string]any{"caller.token": {"sub": i.Principal, "tenant_id": i.Tenant, "roles": []string{"invoker"}}, "foreign.token": {"sub": i.ForeignPrincipal, "tenant_id": i.ForeignTenant, "roles": []string{"invoker"}}, "admin.token": {"sub": i.Admin, "tenant_id": i.Tenant, "roles": []string{"revoker"}}} {
+		claims["iss"] = i.Issuer
+		claims["aud"] = i.Audience
+		claims["iat"] = time.Now().Unix()
+		claims["exp"] = time.Now().Add(lifetime).Unix()
+		head, _ := json.Marshal(map[string]string{"alg": "RS256", "kid": "ops010"})
+		body, _ := json.Marshal(claims)
+		msg := base64.RawURLEncoding.EncodeToString(head) + "." + base64.RawURLEncoding.EncodeToString(body)
+		hash := sha256.Sum256([]byte(msg))
+		sig, e := rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA256, hash[:])
+		if e != nil {
+			return e
+		}
+		if e = write(dir, name, []byte(msg+"."+base64.RawURLEncoding.EncodeToString(sig))); e != nil {
+			return e
+		}
+	}
+	return nil
+}
+
+// Token issuance is an operator-only CLI operation, never an HTTP endpoint.
+// Persisting the sample issuer key is opt-in and confined to the private volume.
+func refreshCallerToken(dir string, out io.Writer) error {
+	i, err := load(dir)
+	if err != nil {
+		return errors.New("load sample identity")
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "issuer.key"))
+	if err != nil {
+		return errors.New("sample issuer key unavailable; token refresh requires opt-in key retention at setup")
+	}
+	block, _ := pem.Decode(data)
+	if block == nil {
+		return errors.New("invalid sample issuer key")
+	}
+	parsed, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return errors.New("invalid sample issuer key")
+	}
+	key, ok := parsed.(*rsa.PrivateKey)
+	if !ok {
+		return errors.New("invalid sample issuer key type")
+	}
+	if i.Audience == "" {
+		i.Audience = "ops010"
+	}
+	if err := writeTokens(dir, i, key, 15*time.Minute); err != nil {
+		return err
+	}
+	token, err := os.ReadFile(filepath.Join(dir, "caller.token"))
+	if err != nil {
+		return errors.New("read sample caller token")
+	}
+	_, err = fmt.Fprintln(out, string(token))
+	return err
 }
 
 type signatureVerifier struct{ key ed25519.PublicKey }
@@ -413,4 +491,29 @@ func serve(dir string) error {
 	})
 	server := &http.Server{Addr: ":8443", Handler: mux, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: time.Minute, MaxHeaderBytes: 1 << 20}
 	return server.ListenAndServeTLS(filepath.Join(dir, "server.crt"), filepath.Join(dir, "server.key"))
+}
+
+func health(dir string) error {
+	i, err := load(dir)
+	if err != nil {
+		return errors.New("load sample issuer")
+	}
+	ca, err := os.ReadFile(filepath.Join(dir, "ca.crt"))
+	if err != nil {
+		return errors.New("load sample CA")
+	}
+	roots := x509.NewCertPool()
+	if !roots.AppendCertsFromPEM(ca) {
+		return errors.New("invalid sample CA")
+	}
+	client := &http.Client{Timeout: 2 * time.Second, Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}}}
+	resp, err := client.Get(i.Issuer + "/.well-known/openid-configuration")
+	if err != nil {
+		return errors.New("sample issuer unavailable")
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("sample issuer not ready")
+	}
+	return nil
 }
