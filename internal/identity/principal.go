@@ -7,4 +7,5 @@ package identity
 type Principal struct {
 	ID, TenantID, Issuer string
 	Roles                []string
+	MappingRevision      int64
 }

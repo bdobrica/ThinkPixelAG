@@ -75,6 +75,7 @@ type Dependencies struct {
 	Readiness              ReadinessProbe
 	NewID                  IDGenerator
 	PolicyAdministration   http.Handler
+	RoleMappings           http.Handler
 	PolicyEditor           http.Handler
 	AgentApprovals         http.Handler
 	AgentDiscovery         http.Handler
@@ -161,6 +162,11 @@ func newHandler(httpConfig config.HTTPConfig, dependencies Dependencies, readine
 		}
 		dependencies.Metrics.Handler().ServeHTTP(writer, request)
 	}))
+	if dependencies.RoleMappings != nil {
+		for _, route := range []string{"GET /v1/admin/role-mappings", "PUT /v1/admin/role-mappings", "POST /v1/admin/role-mappings/approvals"} {
+			mount(route, dependencies.RoleMappings)
+		}
+	}
 	if dependencies.PolicyEditor != nil {
 		for _, route := range []string{"GET /v1/admin/policies", "GET /v1/admin/policies/{policy_digest}", "GET /v1/admin/policies/{policy_digest}/source", "GET /v1/admin/policy-activations", "GET /v1/admin/policy-activations/current", "GET /v1/admin/policy-drafts", "POST /v1/admin/policy-drafts", "GET /v1/admin/policy-drafts/{draft_id}", "PUT /v1/admin/policy-drafts/{draft_id}", "POST /v1/admin/policy-drafts/{draft_id}/validation", "POST /v1/admin/policy-drafts/{draft_id}/promotions", "POST /v1/admin/policies/{policy_digest}/rollback-approvals", "GET /v1/admin/approvals/{approval_id}", "POST /v1/admin/approvals/{approval_id}/decisions"} {
 			mount(route, dependencies.PolicyEditor)

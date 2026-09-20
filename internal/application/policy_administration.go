@@ -27,6 +27,8 @@ type PolicyAdministration struct {
 	Clock            domain.Clock
 }
 type AdminCaller struct {
+	Issuer                           string
+	MappingRevision                  int64
 	TenantID, PrincipalID, RequestID domain.ID
 	Roles                            []string
 	Key                              string
@@ -58,7 +60,7 @@ func (s *PolicyAdministration) Authorize(ctx context.Context, c AdminCaller, act
 	if err != nil {
 		return ports.AdministrationOperation{}, err
 	}
-	in := policy.Input{ContractVersion: policy.ContractVersion, DecisionID: id.String(), RequestTime: s.Clock.Now(), Subject: policy.Subject{PrincipalID: c.PrincipalID.String(), TenantID: c.TenantID.String(), PrincipalType: "human", Roles: c.Roles}, Action: action, Resource: policy.Resource{Type: "policy", ID: resource, TenantID: c.TenantID.String(), Attributes: map[string]any{}}, RequestedConstraints: map[string]any{}, AuthorityConstraints: map[string]any{}, SecurityState: policy.SecurityState{Authoritative: true}, Context: policy.RequestContext{RequestID: c.RequestID.String()}}
+	in := policy.Input{ContractVersion: policy.ContractVersion, DecisionID: id.String(), RequestTime: s.Clock.Now(), Subject: policy.Subject{PrincipalID: c.PrincipalID.String(), TenantID: c.TenantID.String(), PrincipalType: "human", Roles: c.Roles}, Action: action, Resource: policy.Resource{Type: "policy", ID: resource, TenantID: c.TenantID.String(), Attributes: map[string]any{"mapping_revision": c.MappingRevision}}, RequestedConstraints: map[string]any{}, AuthorityConstraints: map[string]any{}, SecurityState: policy.SecurityState{Authoritative: true}, Context: policy.RequestContext{RequestID: c.RequestID.String()}}
 	result, err := s.Evaluator.Decide(ctx, in)
 	if err != nil {
 		return ports.AdministrationOperation{}, domain.NewError(domain.CodeUnavailable, "administration policy unavailable").WithRetryable()
@@ -74,7 +76,7 @@ func (s *PolicyAdministration) Authorize(ctx context.Context, c AdminCaller, act
 		return ports.AdministrationOperation{}, err
 	}
 	sum := sha256.Sum256(raw)
-	return ports.AdministrationOperation{TenantID: c.TenantID, ActorID: c.PrincipalID, RequestID: c.RequestID, DecisionID: id, Action: action, Resource: resource, Channel: s.Channel, Key: c.Key, RequestHash: "sha256:" + hex.EncodeToString(sum[:]), PolicyDigest: result.Metadata.PolicyDigest, PolicyVersion: result.Metadata.PolicyVersion, At: s.Clock.Now()}, nil
+	return ports.AdministrationOperation{MappingIssuer: c.Issuer, MappingRevision: c.MappingRevision, TenantID: c.TenantID, ActorID: c.PrincipalID, RequestID: c.RequestID, DecisionID: id, Action: action, Resource: resource, Channel: s.Channel, Key: c.Key, RequestHash: "sha256:" + hex.EncodeToString(sum[:]), PolicyDigest: result.Metadata.PolicyDigest, PolicyVersion: result.Metadata.PolicyVersion, At: s.Clock.Now()}, nil
 }
 func (s *PolicyAdministration) Upload(ctx context.Context, c AdminCaller, b PolicyUpload) (ports.PolicyArtifact, error) {
 	op, err := s.Authorize(ctx, c, "policies.manage", b.Digest, b)

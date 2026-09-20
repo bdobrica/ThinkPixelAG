@@ -57,6 +57,15 @@ func (r *TenantRepository) administrationTransaction(ctx context.Context, op por
 		if _, err := tx.db.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, r.tenantID.String()); err != nil {
 			return err
 		}
+		if op.MappingRevision > 0 {
+			current, err := tx.RoleMappings(ctx, op.MappingIssuer)
+			if err != nil {
+				return err
+			}
+			if current.Revision != op.MappingRevision {
+				return domain.NewError(domain.CodeConflict, "role mappings changed; authenticate again")
+			}
+		}
 		acquisition, err := tx.AcquireIdempotency(ctx, ports.IdempotencyRequest{PrincipalID: op.ActorID, Route: op.Action + ":" + op.Resource, Key: op.Key, RequestHash: op.RequestHash, Lease: time.Minute, TTL: 24 * time.Hour}, op.At)
 		if errors.Is(err, ErrIdempotencyConflict) || errors.Is(err, ErrIdempotencyInFlight) {
 			return domain.NewError(domain.CodeConflict, "idempotency conflict")

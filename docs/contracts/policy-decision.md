@@ -176,3 +176,9 @@ Persist or export decision ID, time, principal/tenant opaque IDs, action, resour
 ## Required policy tests
 
 Golden tests cover every action's positive and negative path, tenant isolation, invisible resource, principal/agent/version/skill/tool/policy/global revocation, every freshness class, risk escalation, approval requirement, caller constraint narrowing, parent non-expansion, missing/unknown/malformed fields, output ID mismatch, unknown obligation, timeout, stale bundle, and deterministic decisions for normalized equivalent input.
+
+The managed-configuration actions `role_mappings.read/manage` and
+`integrations.read/manage` are explicitly assigned to policy-admin by the RC
+baseline. Their decisions require live authority; read actions are sensitive
+reads and management actions privileged writes. API-managed mapping revisions
+are included in administration resource attributes alongside effective roles.

@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/bdobrica/ThinkPixelAG/internal/adapters/httpserver"
@@ -33,6 +34,7 @@ import (
 // runtimeSettings is deployment configuration, never a request-supplied grant.
 // Secrets are supplied separately through Secret or mounted TLS files.
 type runtimeSettings struct {
+	RoleMappingsMode     string         `json:"role_mappings_mode,omitempty"`
 	LocalPolicyKey       string         `json:"local_policy_key,omitempty"`
 	PolicyChannel        string         `json:"policy_channel"`
 	AuthorityConstraints map[string]any `json:"authority_constraints"`
@@ -47,6 +49,15 @@ func readRuntimeSettings(path string) (runtimeSettings, error) {
 	var c runtimeSettings
 	if err := readRuntimeJSON(path, &c); err != nil {
 		return c, err
+	}
+	if c.RoleMappingsMode == "" {
+		c.RoleMappingsMode = "file"
+	}
+	if c.RoleMappingsMode != "file" && c.RoleMappingsMode != "api" {
+		return c, errors.New("invalid role mappings mode")
+	}
+	if c.RoleMappingsMode == "api" && c.LocalPolicyKey == "" {
+		return c, errors.New("API role mappings require signed administration profile")
 	}
 	if c.PolicyChannel == "" || len(c.PolicyChannel) > 128 || len(c.AuthorityConstraints) == 0 {
 		return c, errors.New("runtime policy channel and admission ceilings are required")
@@ -163,6 +174,7 @@ func (r *runtimeRoutes) mount(d *httpserver.Dependencies, trusted bool) {
 	} else {
 		if r.localKey != nil {
 			d.PolicyAdministration = r.route("policy-admin", false)
+			d.RoleMappings = r.route("role-mappings", false)
 			d.PolicyEditor = r.route("policy-editor", false)
 		}
 		d.AgentDiscovery = r.route("discovery", false)
@@ -240,8 +252,15 @@ func (r *runtimeRoutes) handler(name string, tenant domain.ID, repo *postgres.Te
 		return m.Sum(nil)
 	}
 	switch name {
-	case "policy-admin", "policy-editor":
+	case "policy-admin", "policy-editor", "role-mappings":
 		s := &application.PolicyAdministration{Store: repo, Evaluator: evaluator, Modules: modules, Verifier: r.localKey, Signer: r.localKey, SigningKeyID: r.localKey.ID(), ApprovalProvider: &localapprovals.Provider{Store: repo}, Channel: r.runtime.PolicyChannel, Clock: r.clock}
+		if name == "role-mappings" {
+			mode := r.runtime.RoleMappingsMode
+			if mode == "" {
+				mode = "file"
+			}
+			return httpserver.RoleMappingsHandler(r.verifier, &application.RoleMappingAdministration{Policy: s, Store: repo, Mode: mode, Issuer: strings.TrimSuffix(r.settings.OIDC.IssuerURL, "/"), File: oidc.FileMappings(r.settings.OIDC.RoleMappings)}), nil
+		}
 		if name == "policy-admin" {
 			return httpserver.PolicyAdministrationHandler(r.verifier, s), nil
 		}

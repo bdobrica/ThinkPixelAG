@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add live tenant-scoped OIDC role mappings, independent approval for administrative
+  expansion, file/API ownership and immutable schema 21 revisions.
+
 - Add policy draft editing, validation, exact promotion, paginated history and
   independent OIDC-operator rollback approvals (schema 20).
 

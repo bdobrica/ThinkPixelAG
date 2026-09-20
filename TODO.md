@@ -63,7 +63,7 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   (schema 20), exact promotion and transactional rollback. HTTP/PostgreSQL/OPA
   workflow, expiry/replay/isolation checks, focused tests and OpenAPI lint passed.
 
-- [ ] **RC-105 — Implement managed external role mappings.** Depends on RC-101.
+- [x] **RC-105 — Implement managed external role mappings.** Depends on RC-101.
   Add tenant-scoped revisioned storage, read/update API and the selected narrow
   authorization rule. Preserve the closed internal roles and explicit OIDC
   verification. Resolve mappings under the verified tenant before authorization;
@@ -72,7 +72,10 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   allowed operators can change mappings without restarting API-managed instances;
   no IdP user/group CRUD or custom role hierarchy is introduced. Check: self-
   escalation, service-role assignment, cross-tenant claims, concurrent updates,
-  last-admin lockout and removed-role denial across replicas.
+  last-admin lockout and removed-role denial across replicas. Implemented live
+  verified-tenant mappings, schema 21 revisions, file-mode rejection and atomic
+  approval-bound edits. OIDC replica/removal and PostgreSQL approval/conflict/
+  isolation checks passed. Protected provisioning/recovery commands follow in RC-107.
 
 - [ ] **RC-106 — Implement bounded integration configuration and status.** Depends
   on RC-101. Inventory actually supported adapters; publish an explicit field/

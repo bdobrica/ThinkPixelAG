@@ -140,6 +140,20 @@ func run(ctx context.Context, args []string) error {
 		if err != nil {
 			return err
 		}
+		if runtime.RoleMappingsMode == "api" {
+			verifier.Resolver = func(ctx context.Context, tenant, issuer string) (map[string]string, int64, error) {
+				id, e := domain.ParseID(tenant)
+				if e != nil {
+					return nil, 0, e
+				}
+				repo, e := repositories.ForTenant(id)
+				if e != nil {
+					return nil, 0, e
+				}
+				m, e := repo.RoleMappings(ctx, issuer)
+				return m.Mappings, m.Revision, e
+			}
+		}
 		routes := &runtimeRoutes{settings: settings, runtime: runtime, repositories: repositories, policies: policyFreshness, verifier: verifier, clock: clock, metrics: metricSet, client: policyHTTPClient(settings.OPA.Timeout), readiness: securityReadiness}
 		if runtime.LocalPolicyKey != "" {
 			if settings.Environment != config.EnvironmentLocal && settings.Environment != config.EnvironmentTest {

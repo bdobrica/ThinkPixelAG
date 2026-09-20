@@ -19,7 +19,7 @@ func ClassifyAction(action, agentRisk string) ActionRisk {
 	switch strings.ToLower(strings.TrimSpace(action)) {
 	case "agents.list":
 		return ActionRiskLowRead
-	case "agents.describe", "runs.read", "runs.events.read":
+	case "agents.describe", "runs.read", "runs.events.read", "role_mappings.read", "integrations.read":
 		return ActionRiskSensitiveRead
 	case "runs.signal", "runs.cancel":
 		return ActionRiskNormalWrite
@@ -30,7 +30,7 @@ func ClassifyAction(action, agentRisk string) ActionRisk {
 		return ActionRiskPrivilegedWrite
 	case "resources.meter", "resources.settle", "resources.extend",
 		"agents.manage", "versions.approve", "versions.pin", "versions.rollback",
-		"policies.manage", "policies.activate",
+		"policies.manage", "policies.activate", "role_mappings.manage", "integrations.manage",
 		"revocations.manage", "revocations.create", "revocations.lift", "revocations.reconcile":
 		return ActionRiskPrivilegedWrite
 	default:

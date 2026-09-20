@@ -27,6 +27,8 @@ type PolicyActivation struct {
 	ActivatedAt time.Time `json:"activated_at"`
 }
 type AdministrationOperation struct {
+	MappingIssuer                                             string
+	MappingRevision                                           int64
 	TenantID, ActorID, RequestID, DecisionID                  domain.ID
 	Action, Resource, Channel, Key, RequestHash, PolicyDigest string
 	PolicyVersion                                             int64

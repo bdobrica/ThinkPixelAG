@@ -184,3 +184,61 @@ func TestDiscoveryPinsIssuerAndJWKSOrigin(t *testing.T) {
 		t.Fatal("New accepted cross-origin JWKS")
 	}
 }
+
+func TestLiveMappingsRemapExistingTokensAcrossVerifiers(t *testing.T) {
+	server, state := newProvider(t)
+	ctx := context.Background()
+	tenant, _ := domain.NewID()
+	calls := 0
+	revision := int64(1)
+	failed := false
+	resolver := func(_ context.Context, gotTenant, issuer string) (map[string]string, int64, error) {
+		calls++
+		if gotTenant != tenant.String() || issuer != server.URL {
+			t.Fatal("unverified mapping scope")
+		}
+		if failed {
+			return nil, 0, fmt.Errorf("storage unavailable")
+		}
+		m := map[string]string{"invoke": "agent-invoker"}
+		if revision == 1 {
+			m["external-admin"] = "policy-admin"
+		}
+		return m, revision, nil
+	}
+	a, e := New(ctx, testConfig(server.URL), server.Client())
+	if e != nil {
+		t.Fatal(e)
+	}
+	b, e := New(ctx, testConfig(server.URL), server.Client())
+	if e != nil {
+		t.Fatal(e)
+	}
+	a.Resolver = resolver
+	b.Resolver = resolver
+	c := claims(server.URL, time.Now())
+	c["tenant_id"] = tenant.String()
+	token := signToken(t, state.key, state.kid, "RS256", c)
+	for _, v := range []*TokenVerifier{a, b} {
+		p, e := v.Verify(ctx, token)
+		if e != nil || fmt.Sprint(p.Roles) != "[agent-invoker policy-admin]" || p.MappingRevision != 1 {
+			t.Fatal(p, e)
+		}
+	}
+	revision = 2
+	for _, v := range []*TokenVerifier{a, b} {
+		p, e := v.Verify(ctx, token)
+		if e != nil || fmt.Sprint(p.Roles) != "[agent-invoker]" || p.MappingRevision != 2 {
+			t.Fatal(p, e)
+		}
+	}
+	failed = true
+	if _, e = a.Verify(ctx, token); domain.ErrorCodeOf(e) != domain.CodeUnavailable {
+		t.Fatal(e)
+	}
+	before := calls
+	c["aud"] = "wrong"
+	if _, e = a.Verify(ctx, signToken(t, state.key, state.kid, "RS256", c)); e == nil || calls != before {
+		t.Fatal("invalid token reached mapping source")
+	}
+}

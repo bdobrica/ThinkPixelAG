@@ -41,7 +41,11 @@ type keyEntry struct {
 	alg string
 }
 
+// MappingResolver receives only identity claims already verified by this adapter.
+type MappingResolver func(context.Context, string, string) (map[string]string, int64, error)
+
 type TokenVerifier struct {
+	Resolver           MappingResolver
 	config             config.OIDCConfig
 	client             *http.Client
 	now                func() time.Time
@@ -90,7 +94,29 @@ func (v *TokenVerifier) Verify(ctx context.Context, token string) (Principal, er
 	if err := decodePart(parts[1], &claims); err != nil {
 		return Principal{}, unauth("access token claims are invalid", err)
 	}
-	return v.mapClaims(claims)
+	p, err := v.mapClaims(claims)
+	if err != nil || v.Resolver == nil {
+		return p, err
+	}
+	if _, err = domain.ParseID(p.TenantID); err != nil {
+		return Principal{}, unauth("invalid verified tenant", nil)
+	}
+	mappings, revision, err := v.Resolver(ctx, p.TenantID, p.Issuer)
+	if err != nil || revision < 1 {
+		return Principal{}, domain.NewError(domain.CodeUnavailable, "authoritative role mappings unavailable")
+	}
+	values, _ := stringSlice(claims[v.config.RolesClaim])
+	p.Roles = nil
+	seen := map[string]bool{}
+	for _, external := range values {
+		if role, ok := mappings[external]; ok && !seen[role] {
+			p.Roles = append(p.Roles, role)
+			seen[role] = true
+		}
+	}
+	sort.Strings(p.Roles)
+	p.MappingRevision = revision
+	return p, nil
 }
 
 func (v *TokenVerifier) key(ctx context.Context, kid, alg string) (keyEntry, error) {
@@ -382,3 +408,6 @@ func sameSecureOrigin(issuer, target string) bool {
 }
 
 func isLoopbackHost(host string) bool { ip := net.ParseIP(host); return ip != nil && ip.IsLoopback() }
+
+// FileMappings parses the already validated deployment setting.
+func FileMappings(value string) map[string]string { return mappings(value) }

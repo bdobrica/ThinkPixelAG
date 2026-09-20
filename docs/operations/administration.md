@@ -90,3 +90,19 @@ activation, it fails closed and can be retried.
 Use the same idempotency key and identical body when retrying an uncertain
 write. Generate a new key for a genuinely new operation. An approval does not
 survive a change to the action/epoch it approved; request another approval.
+
+## External role mappings
+
+With provisioned `role_mappings_mode: "api"`, read
+`GET /v1/admin/role-mappings`. Save the complete desired mapping with its current
+`expected_revision` to a private JSON file. PUT that file to the same endpoint
+with a new Idempotency-Key. Non-expanding edits use
+`"approval_reference":"not-required"`. To add administrative authority, POST
+the proposed body to `/v1/admin/role-mappings/approvals`, have a second operator
+approve its ID through `/v1/admin/approvals/{id}/decisions`, then PUT the unchanged
+mapping/revision with that approval ID. Concurrent changes require a new review.
+Removed bindings stop working on the next verified request on every replica.
+
+File-managed mappings remain readable but reject writes. Initial provisioning
+and protected lockout recovery are the next operator-bootstrap deliverable;
+keep the current deployment mode until that command is available.

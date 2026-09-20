@@ -70,3 +70,8 @@ operations. Existing upload/activation request and response schemas are retained
 The policy wire identifier is unchanged. The OpenAPI fingerprint was explicitly
 regenerated for the new paths and schemas; schemas 19/20 only add policy history
 protection and draft/receipt storage. No existing signed artifact is rewritten.
+
+The next candidate adds tenant role-mapping read/update and bound expansion
+approval requests. Existing token wire formats and closed roles are unchanged;
+API mode remaps existing verified claims live. Schema 21 stores immutable mapping
+revisions. See [managed configuration](managed-configuration.md).

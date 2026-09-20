@@ -974,6 +974,68 @@ paths:
                 "$ref": "#/components/schemas/LocalApprovalView"
         "default":
           "$ref": "#/components/responses/Problem"
+  "/v1/admin/role-mappings":
+    "get":
+      "tags":
+        - "Policy administration"
+      "operationId": "getRoleMappings"
+      "summary": "Read tenant role mappings"
+      "responses":
+        "200":
+          "description": "Successful administration operation"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/RoleMappings"
+        "default":
+          "$ref": "#/components/responses/Problem"
+    "put":
+      "tags":
+        - "Policy administration"
+      "operationId": "updateRoleMappings"
+      "summary": "Replace tenant mappings after independent expansion approval"
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/RoleMappingUpdate"
+      "parameters":
+        -
+          "$ref": "#/components/parameters/IdempotencyKey"
+      "responses":
+        "201":
+          "description": "Successful administration operation"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/RoleMappings"
+        "default":
+          "$ref": "#/components/responses/Problem"
+  "/v1/admin/role-mappings/approvals":
+    "post":
+      "tags":
+        - "Policy administration"
+      "operationId": "requestRoleMappingApproval"
+      "summary": "Request independent approval for exact administrative expansion"
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/RoleMappingUpdate"
+      "parameters":
+        -
+          "$ref": "#/components/parameters/IdempotencyKey"
+      "responses":
+        "201":
+          "description": "Successful administration operation"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/LocalApprovalView"
+        "default":
+          "$ref": "#/components/responses/Problem"
 components:
   securitySchemes:
     bearerAuth:
@@ -1949,3 +2011,67 @@ components:
         "next_cursor":
           "type": "string"
           "maxLength": 512
+
+    "RoleMappings":
+      "type": "object"
+      "additionalProperties": false
+      "required":
+        - "mode"
+        - "issuer"
+        - "revision"
+        - "mappings"
+      "properties":
+        "mode":
+          "type": "string"
+          "enum":
+            - "file"
+            - "api"
+        "issuer":
+          "type": "string"
+          "format": "uri"
+        "revision":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 0
+        "mappings":
+          "type": "object"
+          "minProperties": 1
+          "maxProperties": 256
+          "additionalProperties":
+            "type": "string"
+            "enum":
+              - "agent-invoker"
+              - "registry-admin"
+              - "resource-admin"
+              - "policy-admin"
+              - "revocation-admin"
+        "updated_at":
+          "$ref": "#/components/schemas/Timestamp"
+    "RoleMappingUpdate":
+      "type": "object"
+      "additionalProperties": false
+      "required":
+        - "expected_revision"
+        - "mappings"
+        - "approval_reference"
+      "properties":
+        "expected_revision":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "mappings":
+          "type": "object"
+          "minProperties": 1
+          "maxProperties": 256
+          "additionalProperties":
+            "type": "string"
+            "enum":
+              - "agent-invoker"
+              - "registry-admin"
+              - "resource-admin"
+              - "policy-admin"
+              - "revocation-admin"
+        "approval_reference":
+          "type": "string"
+          "minLength": 1
+          "maxLength": 128

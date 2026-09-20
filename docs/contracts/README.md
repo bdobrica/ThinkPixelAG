@@ -34,3 +34,5 @@ marketplace metadata and harness output cannot grant Run authority. See
 
 [Policy administration](policy-administration.md) explains signed upload,
 activation, replay and exact-artifact OPA selection in the local development profile.
+
+[Managed configuration](managed-configuration.md) specifies role-mapping ownership, live refresh and approval-bound changes.

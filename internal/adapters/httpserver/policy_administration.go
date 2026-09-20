@@ -18,7 +18,7 @@ func administrationCaller(r *http.Request) (application.AdminCaller, error) {
 	if e1 != nil || e2 != nil || e3 != nil {
 		return application.AdminCaller{}, domain.NewError(domain.CodeUnauthenticated, "valid caller identifiers required")
 	}
-	return application.AdminCaller{TenantID: tenant, PrincipalID: actor, RequestID: request, Roles: p.Roles, Key: r.Header.Get("Idempotency-Key")}, nil
+	return application.AdminCaller{Issuer: p.Issuer, MappingRevision: p.MappingRevision, TenantID: tenant, PrincipalID: actor, RequestID: request, Roles: p.Roles, Key: r.Header.Get("Idempotency-Key")}, nil
 }
 func PolicyAdministrationHandler(verifier oidc.Verifier, service *application.PolicyAdministration) http.Handler {
 	return AuthenticateBearer(verifier, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

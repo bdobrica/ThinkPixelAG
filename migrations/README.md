@@ -77,3 +77,5 @@ database triggers to reject direct updates or deletes.
   closing the current activation interval remains permitted.
 - `020` adds immutable policy draft revisions and authenticated local approval
   receipts, with tenant-bound foreign keys to governance approval requests.
+
+Migration 021 adds tenant/issuer-scoped immutable external-role mapping revisions.
