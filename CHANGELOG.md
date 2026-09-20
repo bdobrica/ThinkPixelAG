@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add console policy editing, source diffs, exact-revision promotion and
+  approval-aware activation/rollback through reviewed API requests.
+
 - Add an optional console image with OIDC/PKCE login, protected transient
   operator sessions and authorized governance read views through AG APIs.
 

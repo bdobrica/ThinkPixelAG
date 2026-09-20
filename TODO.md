@@ -163,13 +163,16 @@ API promises. Keep accepted ADRs and existing security contracts authoritative.
   Eight focused tests, real Chromium login/list/logout, independent image and
   console-stop/AG-available checks passed. [Evidence](docs/evidence/results/optional-console.json).
 
-- [ ] **RC-112 — Add policy editing and promotion screens.** Depends on RC-104
+- [x] **RC-112 — Add policy editing and promotion screens.** Depends on RC-104
   and RC-111. Implement source editor, validation feedback, draft diff/history,
   promotion, activation and approval-aware rollback using only AG APIs. Display
   exact digest/revision and distinguish draft/validated/active status. Done:
   an operator completes the same policy workflow available through CLI. Check
   one browser success flow plus invalid Rego, stale edits, unauthorized writes,
   unsafe source rendering and approval failure. No private signing keys in BFF.
+  Implemented escaped editor/diff, exact reviewed requests, separate validation/
+  promotion/activation and independent approval screens. Thirteen focused tests
+  and real Chromium edit-to-rollback, invalid/stale/denied checks passed.
 
 - [ ] **RC-113 — Add mappings and integration screens.** Depends on RC-105,
   RC-106 and RC-111. Provide bounded forms, current revision, change review,

@@ -199,4 +199,7 @@ def create_app(settings=None, transport=None):
         data = await c.api(session, "/v1/" + kind + "/" + uuid7(identifier))
         return c.page(request, "detail.html", "Agent" if kind == "agents" else "Run", session, data=data)
 
+    from . import workflows, policies
+    workflows.install(app, c)
+    policies.install(app, c)
     return app

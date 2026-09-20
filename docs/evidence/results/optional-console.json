@@ -1,12 +1,16 @@
 {
-  "scope": "RC-111",
+  "scope": "RC-111 and RC-112",
   "date": "2026-09-20",
   "checks": {
     "authentication_and_boundary_tests": "8 passed",
     "independent_image_build": "passed",
     "console_shutdown_AG_stays_usable": "passed",
     "browser_login_agents_logout": "passed",
-    "nonroot_readonly_image": "passed"
+    "nonroot_readonly_image": "passed",
+    "focused_console_tests": "13 passed",
+    "browser_policy_edit_validate_promote_activate": "passed",
+    "browser_two_operator_rollback": "passed; original policy restored",
+    "browser_invalid_rego_stale_edit_unauthorized_read": "passed"
   },
   "limits": [
     "Local OIDC acceptance issuer; no external IdP qualification",

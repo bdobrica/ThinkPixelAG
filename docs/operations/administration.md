@@ -133,3 +133,6 @@ current signed policy at the destination before saving revision 2. Other replica
 read the new record on their next request; a bad candidate leaves revision 1
 unchanged. `GET /v1/admin/integrations/opa/status` reports the bounded active-policy
 check result. See the [field catalog and recovery limits](../contracts/managed-configuration.md#supported-integration-catalog).
+
+For a browser workflow, install the [optional console](../../console/README.md#policy-editing-and-approvals).
+It uses these same APIs and independent approval requirements.

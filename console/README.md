@@ -111,3 +111,35 @@ hashes. Update using `pip-tools==7.6.1` on Python 3.13:
 pip-compile --generate-hashes --strip-extras --output-file console/requirements.txt console/requirements.in
 pip-compile --generate-hashes --strip-extras --output-file console/requirements-test.txt console/requirements-test.in
 ```
+
+## Policy editing and approvals
+
+Open **Policies**, inspect an artifact's immutable source, and choose **Create
+draft from source**. Edit Rego, review the diff and save. The editor is limited
+to 64 KiB; larger policies remain usable through the API. Saved drafts are inert.
+The draft page has separate controls for validating the saved revision and
+promoting its exact digest with a deliberate artifact revision. Unsaved text is
+never included in validation/promotion. Validation success is shown for that
+exact revision; AG compiles again when promoting.
+
+Open the signed artifact and choose **Activate artifact**. A first activation
+can use `not-required`; rolling back to a previously active artifact requires an
+independent approval. Choose **Request rollback approval** on the target artifact,
+review its current policy epoch, and share the resulting approval ID and exact
+proposed change through your review process. A different authorized operator
+opens **Approvals**, inspects the request and approves or rejects it. Return to
+activation with that approval ID and the intended reason code. AG decides whether
+the receipt is still valid and consumes it atomically; the console cannot bypass
+self-approval, expiry, replay or stale-epoch checks. **Activation history** shows
+the appended policy epochs; rollback never deletes history.
+
+All writes use a session-owned review page before submission. That page retains
+the exact body and request key for ten minutes, bounded to ten reviews per session
+and one hundred in the process. No automatic mutation retry is made. For an
+uncertain response, retry from the same review page. For a revision conflict,
+reload the object and review a new request. Keep the request key/body when doing
+operator recovery; a console restart discards reviews as well as sessions, and
+a new form cannot safely resolve an earlier uncertain mutation. Inspect AG state
+and use its original idempotency key/body through the API if replay is needed.
+Source, results and review bodies stay in transient session memory and escaped
+HTML, never console logs or a second governance database.
