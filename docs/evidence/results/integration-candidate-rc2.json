@@ -1,0 +1,168 @@
+{
+  "date": "2026-09-20",
+  "revision": "0008dc0bf8c3883558f282c0d8a7d6fb06fb04ba",
+  "version": "0.1.0-rc.2",
+  "created": "2026-09-20T16:30:58+03:00",
+  "source_date_epoch": 1789911058,
+  "components": {
+    "ag": {
+      "image_index": "quay.io/bdobrica/thinkpixelag@sha256:4d6784edc05a1c0873bb1fe1f8d88b66ac6705e7c4e5d67d4e26786d7fe3cb21",
+      "platforms": {
+        "amd64": {
+          "manifest_digest": "sha256:1f056dd659256ff62cca6c7fe944838df71fb774210039a547a8141a432d3127",
+          "image_config_digest": "sha256:f410cecef11361758095b5f94473e4e7599229e8e50e9ec8944cab71653cb01c",
+          "labels_platform_user_match": true,
+          "buildkit_source_arguments_match": true,
+          "attestation_manifests": [
+            "sha256:4583af159474eee6dd9c10d85aa20bf2077625112806b28cd18192d3faf3acc4"
+          ],
+          "vulnerability_occurrences_by_severity": {
+            "MEDIUM": 6,
+            "UNKNOWN": 3
+          },
+          "bundle": {
+            "filename": "thinkpixelag-0.1.0-rc.2-amd64.tar.gz",
+            "sha256": "77e7727d77ce35ba223b97468430bf9d5532abf6cb4fd99d34fee1be2817a200"
+          }
+        },
+        "arm64": {
+          "manifest_digest": "sha256:096fc8ab1f07c7e196dfad9f0072205dc68e213be16e093d107209b6218dcb13",
+          "image_config_digest": "sha256:14a6d45ab8793d9765c1455dad037be60abb74d990b9c9635182987163392021",
+          "labels_platform_user_match": true,
+          "buildkit_source_arguments_match": true,
+          "attestation_manifests": [
+            "sha256:f8862182320df7b962b392b93e0c192597f982c6d48db671724d993969f806f5"
+          ],
+          "vulnerability_occurrences_by_severity": {
+            "MEDIUM": 6,
+            "UNKNOWN": 3
+          },
+          "bundle": {
+            "filename": "thinkpixelag-0.1.0-rc.2-arm64.tar.gz",
+            "sha256": "e66ed9622dc7b455c134c59d5a4e292c04b3e06120a757ade452e25c03f50478"
+          }
+        }
+      }
+    },
+    "console": {
+      "image_index": "quay.io/bdobrica/thinkpixelag@sha256:86d4d3730f4f76f9b16b92d2f7e508373b56937315973d2bbe2ac39b44d554fd",
+      "platforms": {
+        "amd64": {
+          "manifest_digest": "sha256:736249bb41eb901362f4109317c6fab8148cea8945e9df525ab8ebd5e924c761",
+          "image_config_digest": "sha256:4a409434e660dce2911a45e494ca096cfe8cf691e01a81e88e7ab323b7679334",
+          "labels_platform_user_match": true,
+          "buildkit_source_arguments_match": true,
+          "attestation_manifests": [
+            "sha256:cdc100702f16254919157639793cd2085ef48f0f24ef9cc63fbb80cce8c0a0d6"
+          ],
+          "vulnerability_occurrences_by_severity": {},
+          "bundle": {
+            "filename": "thinkpixelag-console-0.1.0-rc.2-amd64.tar.gz",
+            "sha256": "9d1ce6c238c61d627446ec0035d25c951a019c01dd9a3595c0a3d33a1cb911ad"
+          }
+        },
+        "arm64": {
+          "manifest_digest": "sha256:00c753d5c9f55df886db0f3ababc445cf2998f4b6f3f9ced8f49317a61bb5cfc",
+          "image_config_digest": "sha256:2d629b19c737734f619f958c76dc5a60bdf903b03cf74d3764c81f6fcb0fc9fe",
+          "labels_platform_user_match": true,
+          "buildkit_source_arguments_match": true,
+          "attestation_manifests": [
+            "sha256:3fc8345c09b053542e0a896b5d85fc04b266f7216132eb310e470d55c6061a4a"
+          ],
+          "vulnerability_occurrences_by_severity": {},
+          "bundle": {
+            "filename": "thinkpixelag-console-0.1.0-rc.2-arm64.tar.gz",
+            "sha256": "b050edca87040b21809dc1d3a91bd1727e8cd8ac29bd710f22c1fa7ebcd97bc0"
+          }
+        }
+      }
+    }
+  },
+  "publication": {
+    "registry": "Quay; independent AG and console images in the existing public repository",
+    "oci_images_and_buildkit_attachments": "published",
+    "local_artifact_archives": "generated and checksum verified; not uploaded as GitHub assets",
+    "semantic_git_tag": false,
+    "github_release": false,
+    "cosign_signature": false,
+    "github_oidc_attestation": false,
+    "authentication": "BuildKit/unsigned inventories checked for consistency; not authenticated remote-builder provenance"
+  },
+  "compatibility": {
+    "baseline": "a64d323d5c3bfa667e063b5f9dcd69f3cb89258f",
+    "old_path_count": 22,
+    "new_path_count": 40,
+    "existing_operations_and_components": "unchanged",
+    "existing_json_schemas_and_sql_migrations": "byte-identical",
+    "database_schema": {
+      "from": 18,
+      "to": 23
+    },
+    "new_migrations": [
+      "019 immutable policy artifacts",
+      "020 policy drafts and approval receipts",
+      "021 role mapping revisions",
+      "022 integration revisions",
+      "023 operator bootstrap receipts"
+    ],
+    "wire_versions": "Existing OpenAPI info.version and policy wire identifier retained; additive harness-guidance/v1 contract"
+  },
+  "verification": {
+    "make_verify": "passed on staged source committed as 0008dc0bf8c3883558f282c0d8a7d6fb06fb04ba",
+    "make_verify_console": "18 tests and non-root/read-only image factory smoke passed",
+    "generate_contract_lint_race_rego_integration_security_container_gates": "passed; real PostgreSQL 18.4 and OPA 1.19.0",
+    "rego_cases": 29,
+    "versions": {
+      "go": "1.26.6",
+      "console_image_python": "3.13.15",
+      "console_image_os": "Alpine 3.24.2",
+      "trivy": "Version: 0.69.3"
+    },
+    "gate_log_sha256": {
+      "verify.log": "b5c96c89f3f0529cd132694b2bbcd3523f01a803f96cda56b2ee0727a0537a60",
+      "verify-console.log": "a70198e10e17559643b08e85bf9b4ece9655573afe3cfae093f50ad6e4d13f92"
+    },
+    "release_workflow_followup": "Pinned ARM64 binfmt setup added after artifact-source commit; emulator exercised locally, YAML and focused release contract check passed; GitHub workflow not executed"
+  },
+  "runtime_walkthrough": {
+    "scope": "Packaged AG binaries and immutable published console image on AMD64; local development OIDC and software signing",
+    "operator_browser_workflows": "passed: login/read/logout, edit/validate/promote/activate/independent rollback, mapping approval, OPA update and discovery refresh; denied/invalid/stale changes remain denied",
+    "harness": "passed: discovery, objective-only admission, Run read and cancellation through installed helper",
+    "restart": "policy, history, mapping and OPA snapshots unchanged after API restart; existing Run still readable",
+    "console_disabled": "published console container stopped; API/helper remained usable",
+    "backup": "logical dump plus protected SSD-host copy of keys/configuration retained; no host-loss or production HA claim",
+    "resources": "retained; console container running again",
+    "api_version_revision_match": true,
+    "console_runtime_custody_checked": true
+  },
+  "native_arm64_runtime": {
+    "platform": "linux/arm64",
+    "kubernetes": "v1.36.4+k3s1",
+    "scope": "Native restricted container startup and HTTP liveness/console health; synthetic unavailable dependencies, not a team installation or AR execution",
+    "pods": [
+      {
+        "name": "ag-runtime",
+        "phase": "Running",
+        "ready": true,
+        "image_id": "quay.io/bdobrica/thinkpixelag@sha256:4d6784edc05a1c0873bb1fe1f8d88b66ac6705e7c4e5d67d4e26786d7fe3cb21",
+        "restart_count": 0
+      },
+      {
+        "name": "console-runtime",
+        "phase": "Running",
+        "ready": true,
+        "image_id": "quay.io/bdobrica/thinkpixelag@sha256:86d4d3730f4f76f9b16b92d2f7e508373b56937315973d2bbe2ac39b44d554fd",
+        "restart_count": 0
+      }
+    ],
+    "ag_readiness_without_dependencies": 503,
+    "operator_binary_native_execution": "passed: rejects use without explicit local/test profile",
+    "image_ids_match_published_indexes": true
+  },
+  "limits": [
+    "ADR-0016 local-development issuer/software signing and same-host identities; no enterprise provider/key-custody qualification",
+    "Kubernetes team manifests server-side validated; full company SSO/ingress/storage deployment not claimed",
+    "Independent evidence receiver not configured in the new local walkthrough; historical evidence-delivery qualification is separate",
+    "No AR execution, gateway execution/accounting, production capacity/p99 or HA qualification; ADR-0012 deferrals unchanged"
+  ]
+}

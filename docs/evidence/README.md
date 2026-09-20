@@ -1,10 +1,49 @@
 # Integration-RC qualification evidence
 
-This is the evidence retained to substantiate `0.1.0-rc.1`, not an implementation
+This index substantiates the scoped integration candidates, not an implementation
 log. Decisions belong in [ADRs](../adr/README.md), version changes in the
 [changelog](../../CHANGELOG.md), and operating guidance in
 [operations](../operations/README.md). Results below are dated observations,
 not a live cluster status or a new production qualification.
+
+<a id="candidate-rc2"></a>
+## 0.1.0-rc.2: administration and harness guidance
+
+Qualified on **2026-09-20**, from source `0008dc0bf8c3883558f282c0d8a7d6fb06fb04ba`,
+with schema **23**. The [candidate inventory](results/integration-candidate-rc2.json)
+records platform digests, bundle checksums, compatibility and runtime scope.
+
+| Component | Published immutable image index |
+|---|---|
+| AG | `quay.io/bdobrica/thinkpixelag@sha256:4d6784edc05a1c0873bb1fe1f8d88b66ac6705e7c4e5d67d4e26786d7fe3cb21` |
+| Optional console | `quay.io/bdobrica/thinkpixelag@sha256:86d4d3730f4f76f9b16b92d2f7e508373b56937315973d2bbe2ac39b44d554fd` |
+
+Both components passed AMD64 and ARM64 image gates with zero HIGH/CRITICAL
+findings. `make verify` and `make verify-console` passed; the latter ran 18 tests.
+The real local-development OIDC/software-signing walkthrough exercised policy
+editing through independently approved rollback, role mappings, OPA updates,
+dynamic guidance, admission/read/cancellation, restart persistence and API
+operation with the published console stopped. Native ARM64 restricted-container
+startup passed on K3s; this is not full enterprise installation or AR execution.
+The [installation checks](results/candidate-installation.json) separately record
+real bootstrap and server-side validation of the staged team manifests.
+
+Versioned images and BuildKit attachments are published to Quay. Four local
+platform bundles contain binaries (AG), matching source/installers/helper,
+API/deployment assets, SBOM, scan and checksum inventories. No semantic Git tag,
+GitHub release/assets, cosign signature or GitHub OIDC attestation was produced.
+Unsigned metadata and BuildKit source checks do not authenticate a remote builder.
+The release workflow follow-up adds the ARM emulation prerequisite exercised by
+the local publication; it does not change the image's application source.
+
+Local key custody, same-host development identities, the absent independent
+receiver in this new local walkthrough, and unqualified enterprise SSO/HA remain
+explicit limits. [Production capacity and cross-component deferrals](../adr/0012-integration-rc-qualification-deferrals.md)
+are unchanged. Use the [current quick start](../quickstart.md) and
+[packaging guide](../operations/releasing.md); bundled source documentation is
+its pre-publication snapshot.
+
+## Historical 0.1.0-rc.1
 
 ## Artifacts
 
@@ -45,7 +84,7 @@ not authenticate a trusted remote builder.
 - [Fuzz results](results/fuzz.json): bounded RC verification rehearsals;
   original clean-checkout source `79d2ac9`, not final-image capacity evidence.
 
-## Unreleased correctness checks
+## Subsequent correctness checks
 
 [RC-102 constraint inheritance](results/admission-constraint-inheritance.json)
 records focused admission/policy tests, persisted PostgreSQL grants and the

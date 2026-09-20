@@ -1,9 +1,10 @@
-# Provision a source-built administration candidate
+# Provision the administration candidate
 
 This is the local-development administration path in
 [ADR-0016](../adr/0016-local-development-policy-promotion.md). It creates real
-persistent AG state through application services. The published `0.1.0-rc.1`
-image predates these commands and APIs; build this checkout. No console is needed.
+persistent AG state through application services. Use `0.1.0-rc.2`
+[packaged binaries/images](../evidence/README.md#candidate-rc2) or build this checkout;
+the older rc.1 image predates these APIs. No console is needed.
 
 ## Prepare the deployment
 

@@ -6,8 +6,10 @@ The BFF has no database, OPA, signing-key or downstream provider access.
 
 ## Install and sign in
 
-Install the current source candidate using [operator bootstrap](../docs/operations/bootstrap.md).
-The published `0.1.0-rc.1` image predates these administration APIs. Supply HTTPS
+Install `0.1.0-rc.2` using the [local guide](../docs/examples/local-sandbox/README.md)
+or [operator bootstrap](../docs/operations/bootstrap.md). The
+[candidate inventory](../docs/evidence/README.md#candidate-rc2) identifies the separate
+AG and console images; rc.1 predates these administration APIs. Supply HTTPS
 origins for AG, the console and your OIDC issuer; a locally trusted development
 CA is supported. Never disable TLS verification.
 

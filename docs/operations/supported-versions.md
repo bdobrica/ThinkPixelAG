@@ -58,9 +58,9 @@ clean clone of `147cbf4` on `linux/amd64`; see
 [`phase-1-evidence.md`](https://github.com/bdobrica/ThinkPixelAG/blob/130fbd21ae27e72912174ce6d2c42fa0318a6989/docs/evidence/implementation/phase-1-evidence.md) for the environment, commands,
 artifact identity, and declared later-phase qualifications.
 
-The next console candidate replaces Python 3.13.12/Debian 12 with pinned
+The rc.2 console candidate replaces Python 3.13.12/Debian 12 with pinned
 Python 3.13.15/Alpine 3.24. Runtime packaging tools are removed after dependency
 assembly; application metadata remains for scanning. The old base failed the
-HIGH/CRITICAL threshold; the updated AMD64 image passed preflight. Final
-platform scan results belong in the candidate inventory. This affects no AG
+HIGH/CRITICAL threshold; the updated AMD64 image passed preflight. Both final
+platform image gates passed; exact results are in the [candidate inventory](../evidence/results/integration-candidate-rc2.json). This affects no AG
 database migration or governance wire format; console restart requires login.

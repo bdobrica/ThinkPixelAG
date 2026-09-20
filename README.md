@@ -13,7 +13,7 @@ ownership and integration boundaries.
 
 ## Status
 
-The integration candidate targets development with ThinkPixelAR and a real
+The `0.1.0-rc.2` integration candidate targets development with ThinkPixelAR and a real
 harness. Its frozen contracts are OpenAPI `0.1.0-rc.1` and policy
 `thinkpixelag.authorization/v1alpha1`. The [qualification index](docs/evidence/README.md)
 records tested source/images, runtime checks, recovery scope and publication status.
@@ -21,9 +21,10 @@ records tested source/images, runtime checks, recovery scope and publication sta
 Production capacity and unavailable AR/gateway/HA scenarios are
 [explicitly deferred](docs/adr/0012-integration-rc-qualification-deferrals.md). The
 [measured operating envelope](docs/operations/capacity.md) is separate
-from production targets. AG does not yet expose a versioned AR worker API;
-registration/policy-management runtime composition and production provider
-ceremonies are also outside the current executable's configured surface. The
+from production targets. AG does not yet expose a versioned AR worker API.
+The candidate includes operator bootstrap, policy/role/OPA management, dynamic
+harness guidance and an optional console. Production provider ceremonies remain
+outside the qualified scope. The
 [capability guide](docs/operations/integrations.md) distinguishes the working
 governance API from the still-missing complete harness integration.
 

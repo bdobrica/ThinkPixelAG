@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-rc.2 — administration and harness-guidance candidate
+
+Published as independent AMD64/ARM64 AG and console OCI images on 2026-09-20.
+[Artifact identity and scoped qualification](docs/evidence/README.md#candidate-rc2)
+record source, digests, checks and the absence of a formal GitHub release/signature.
+
+- Ship versioned operator/service/migration binaries, matching source and separate
+  per-platform image inventories; update the optional console runtime to pinned
+  Python 3.13.15/Alpine with no HIGH/CRITICAL image findings.
 
 - Package a retained real-bootstrap local installer and staged Kubernetes PoC,
   each with an optional console; document actual operator/harness use and recovery.

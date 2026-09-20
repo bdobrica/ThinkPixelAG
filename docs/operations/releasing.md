@@ -29,7 +29,10 @@ bash scripts/release-artifacts.sh
 (cd "$OUTPUT_DIR" && sha256sum --check SHA256SUMS)
 ```
 
-Use the Go toolchain pinned in `go.mod` and Trivy pinned in the workflow. AG
+Use the Go toolchain pinned in `go.mod` and Trivy pinned in the workflow.
+Cross-platform console builds require ARM64 emulation or a native ARM64 builder;
+the workflow installs digest-pinned binfmt/QEMU before Buildx. The local rc.2
+publication used that same emulator setup. AG
 bundles include static `thinkpixelag`, `thinkpixelag-migrate` and
 `thinkpixelag-operator` binaries in `binaries/linux-ARCH`. Both component bundles
 include exact committed source (helper, console, evaluation installers, guides,

@@ -1,10 +1,10 @@
 # Install the harness helper
 
 This Python 3.11+ standard-library helper connects an existing harness to a
-source-built AG with the [v1 guidance API](../../docs/contracts/harness-guidance.md).
-The published `0.1.0-rc.1` image predates this API. Follow
-[operator bootstrap](../../docs/operations/bootstrap.md) to install the current
-source candidate and provision an approved agent first.
+`0.1.0-rc.2` AG with the [v1 guidance API](../../docs/contracts/harness-guidance.md).
+Follow the [local installation](../../docs/examples/local-sandbox/README.md) or
+[operator bootstrap](../../docs/operations/bootstrap.md) to provision an approved
+agent first. The older rc.1 image predates this API.
 
 ## Trusted host setup
 

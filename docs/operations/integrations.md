@@ -49,8 +49,8 @@ Install the [trusted helper and appendable AGENTS.md snippet](../../integrations
 It retrieves caller/Run-scoped guidance from AG, keeps bearer credentials in host
 storage, revalidates online before each operation and refreshes after admission
 or context changes. Existing project instructions remain intact. The source
-candidate supports a real discovery/admission/read/cancel workflow; the published
-`0.1.0-rc.1` image predates this helper/API.
+candidate and published `0.1.0-rc.2` support a real discovery/admission/read/cancel
+workflow; the older rc.1 image predates this helper/API.
 
 Capability descriptions do not grant authority. A trusted integration must
 handle authentication, refresh, Run context and service/gateway enforcement.
