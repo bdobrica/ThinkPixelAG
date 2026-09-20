@@ -69,8 +69,8 @@ Formal publication and signing must be distinguished from local artifact builds.
 
 ## References and evidence
 
-- [Runbooks](../operations/runbooks.md), [supported versions](../supported-versions.md)
-- [Phase 8 closeout](../operations/phase-8-closeout.md), [deferrals](../operations/deferred-qualification.md)
-- [RC verification](../releases/verification.md), [capacity](../releases/capacity-envelope.md), [risks](../releases/risk-review.md)
-- [Historical plan](../releases/history/PLAN.md), sections 7–13; OPS and RC entries in the [ledger](../releases/history/TODO.md)
+- [Runbooks](../operations/runbooks.md), [supported versions](../operations/supported-versions.md)
+- [Phase 8 closeout](../evidence/homelab/phase-8-closeout.md), [deferrals](0012-integration-rc-qualification-deferrals.md)
+- [RC verification](../evidence/rc/verification.md), [capacity](../operations/capacity.md), [risks](../evidence/rc/risk-review.md)
+- [Historical plan](../evidence/rc/history/PLAN.md), sections 7–13; OPS and RC entries in the [ledger](../evidence/rc/history/TODO.md)
 - Commits `967165a`, `fa04a0c`, `3da7230`, `72715e1`, `79d2ac9`, `af620d1`

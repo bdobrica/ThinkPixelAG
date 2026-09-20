@@ -62,6 +62,6 @@ detect drift but do not prove semantic compatibility.
 ## References and evidence
 
 - [Alignment](../../ALIGNMENT.md), [architecture](../architecture/system.md)
-- [Primitive contract](../contracts/primitives.md), [contract freeze](../releases/contract-freeze.md)
-- [Historical plan](../releases/history/PLAN.md), sections 2–5; ENG-001–012 in the [ledger](../releases/history/TODO.md)
+- [Primitive contract](../contracts/primitives.md), [contract freeze](../contracts/compatibility.md)
+- [Historical plan](../evidence/rc/history/PLAN.md), sections 2–5; ENG-001–012 in the [ledger](../evidence/rc/history/TODO.md)
 - Commits `5287791`, `8ff8f77`, `72319f1`, `7e03c72`, `562cc4d`, `79d2ac9`

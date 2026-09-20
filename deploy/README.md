@@ -23,8 +23,8 @@ PostgreSQL initialization values requires `make dev-reset`; that command
 irreversibly removes the local database volume, but does not target other
 Compose projects.
 
-The OPA server intentionally starts without policies until Phase 3. A healthy
-OPA process is not evidence that an application policy is loaded.
+The OPA server intentionally starts without policies; approved bundle
+provisioning is separate. A healthy OPA process is not evidence that an application policy is loaded.
 
 Production Kubernetes assets live under `deploy/kubernetes`. The base is a
 secure template, not a deployable environment: it uses a digest placeholder,

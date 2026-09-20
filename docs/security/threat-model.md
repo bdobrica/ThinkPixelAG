@@ -1,6 +1,6 @@
 # Threat Model
 
-Current release disposition: [integration-RC risk review](../releases/risk-review.md). The Phase 7 assessment below remains historical evidence.
+Current release disposition: [integration-RC risk review](../evidence/rc/risk-review.md). The Phase 7 assessment below remains historical evidence.
 
 ## Scope and assets
 
@@ -54,7 +54,7 @@ We assume enterprise identity, Kubernetes control plane, PostgreSQL, and managed
 The Phase 7 exit review on 2026-09-01 assessed every abuse case against the
 implemented control and its executable evidence. The detailed traceability and
 residual-risk register are recorded in
-[Phase 7 governance self-protection evidence](../phase-7-evidence.md).
+[Phase 7 governance self-protection evidence](../evidence/implementation/phase-7-evidence.md).
 
 - **Critical findings:** none open.
 - **High findings:** none open.

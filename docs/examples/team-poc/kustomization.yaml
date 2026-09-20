@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: thinkpixelag-poc
+resources:
+  - ../../../deploy/kubernetes/base
+  - migration-network.yaml
+images:
+  - name: ghcr.io/bdobrica/thinkpixelag
+    newName: quay.io/bdobrica/thinkpixelag
+    digest: sha256:82ad793f6b19460e58aeb43203bfd2f8a3563bc2d8bf53a120e92dbafa78a53a
+configMapGenerator:
+  - name: thinkpixelag-governed-runtime
+    files:
+      - runtime.json
+patches:
+  - path: runtime-patch.yaml

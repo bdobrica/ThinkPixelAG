@@ -1,7 +1,7 @@
 # Dependency and Build-Tool Policy
 
 This policy applies to runtime, test, generator, scanner, and build dependencies.
-It complements `docs/supported-versions.md` and the supply-chain controls in the
+It complements `docs/operations/supported-versions.md` and the supply-chain controls in the
 threat model.
 
 ## Selection and review

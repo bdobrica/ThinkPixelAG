@@ -1,4 +1,4 @@
-# Production runbooks
+# Operational runbooks
 
 These procedures preserve PostgreSQL as the sole governance authority and keep
 authorization fail closed. Commands are templates: select one namespace,
@@ -86,9 +86,8 @@ windows before resolving the incident.
 
 OPA outage/malformed output is an authorization outage: restore the last
 verified bundle and dependency; never bypass policy. Valkey is disposable and
-non-authoritative. Disable or flush it, allow evaluation to bypass to OPA, and
-investigate latency; cached ALLOW never substitutes for high-risk authoritative
-checks.
+non-authoritative. Disable or flush it and let trusted usage fall back to PostgreSQL. The current
+runtime does not cache policy decisions; live OPA and revocation checks continue.
 
 ## Outbox backlog
 
@@ -121,10 +120,10 @@ Revoke immediately after recovery and investigate any unused or expired grant.
 Identify the affected bounded route, policy latency, PostgreSQL saturation,
 outbox/revocation lag, and Go runtime pressure. Preserve security timeouts and
 freshness bounds. Scale replicas only within DB and external-dependency budgets;
-use the last Phase 8 load report to distinguish CPU, DB contention, OPA, and SSE
+use the [measured capacity guide](capacity.md) to distinguish CPU, DB contention, OPA, and SSE
 fanout limits.
 
 For an existing isolated cluster that must retain its resources, use the
-[retained-cluster resilience workflow](resilience-testing.md). Its promotion
+[retained-cluster resilience workflow](testing/resilience-testing.md). Its promotion
 drill fences the old writer and preserves both volumes; inspect the recorded
 roles before any subsequent database restart.

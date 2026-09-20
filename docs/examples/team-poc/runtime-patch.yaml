@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thinkpixelag
+spec:
+  template:
+    spec:
+      containers:
+        - name: thinkpixelag
+          env:
+            - name: THINKPIXELAG_RUNTIME_FILE
+              value: /etc/thinkpixelag/runtime.json
+          volumeMounts:
+            - name: governed-runtime
+              mountPath: /etc/thinkpixelag
+              readOnly: true
+      volumes:
+        - name: governed-runtime
+          configMap:
+            name: thinkpixelag-governed-runtime

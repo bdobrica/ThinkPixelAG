@@ -31,7 +31,7 @@ removed after the rehearsal; the command never uses the developer database.
 stream/cursor component baselines. These benchmarks catch local regressions but
 do not constitute OPS-010 evidence; the production-shaped qualification must use
 the deployed API composition and topology described in
-`docs/operations/load-testing.md`.
+`docs/operations/testing/load-testing.md`.
 
 `make test-resilience` runs the provider-neutral OPS-011 fault matrix for OPA,
 cache, revocation stream, worker fencing, and evidence delivery behavior.

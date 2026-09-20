@@ -149,7 +149,7 @@ The Phase 6 single-connected-gateway measurement includes database commit,
 polling, SSE encoding/delivery, and client decoding. Production fanout to the
 capacity target, reconnect storms, and cross-zone behavior remain Phase 8 load
 qualification. Results and the complete consumer sequence are recorded in
-`docs/phase-6-evidence.md`.
+`docs/evidence/implementation/phase-6-evidence.md`.
 
 ## Required scenarios
 

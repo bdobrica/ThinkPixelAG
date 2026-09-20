@@ -69,6 +69,6 @@ configuration/replica restart rather than caller input.
 
 - [Managed signing](../contracts/managed-signing.md), [signed artifacts](../contracts/signed-artifacts.md)
 - [Workload identity](../contracts/workload-identity.md), [break glass](../contracts/break-glass.md)
-- [Phase 7 review](../phase-7-evidence.md), [game days](../releases/game-days.md)
-- [Historical plan](../releases/history/PLAN.md), Phase 7; SEC-001–011 in the [ledger](../releases/history/TODO.md)
+- [Phase 7 review](../evidence/implementation/phase-7-evidence.md), [game days](../evidence/rc/game-days.md)
+- [Historical plan](../evidence/rc/history/PLAN.md), Phase 7; SEC-001–011 in the [ledger](../evidence/rc/history/TODO.md)
 - Commits `1386a2f`, `63d8b8f`, `a509a04`, `4d7507b`, `acc08c6`, `6d7771a`, `85ba0e7`

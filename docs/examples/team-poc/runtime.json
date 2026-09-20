@@ -1,0 +1,11 @@
+{
+  "policy_channel": "stable",
+  "authority_constraints": {
+    "max_execution_time_seconds": 3600,
+    "max_llm_tokens": 10000,
+    "max_tool_calls": 1000,
+    "max_active_children": 10,
+    "max_total_children": 100,
+    "max_delegation_depth": 3
+  }
+}

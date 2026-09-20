@@ -24,3 +24,9 @@ ADRs record consequential decisions that should remain understandable after the 
 - [ADR-0009: Transactional evidence and replay-safe independent delivery](0009-transactional-and-independent-evidence.md)
 - [ADR-0010: Narrow privileged authority and managed key boundaries](0010-privileged-authority-and-managed-keys.md)
 - [ADR-0011: Restricted deployment and evidence-bound integration releases](0011-restricted-deployment-and-release-evidence.md)
+
+- [ADR-0012: Integration-RC qualification deferrals](0012-integration-rc-qualification-deferrals.md)
+
+The [supported-version matrix](../operations/supported-versions.md) is a maintained
+operator reference. Deployment/release policy is recorded in ADR-0011; the
+matrix records tested versions without rewriting accepted decisions.

@@ -2,8 +2,8 @@
 
 `cmd/thinkpixelag` is the runnable governance-plane process. Startup strictly
 loads configuration, creates the redacting JSON logger, private Prometheus
-registry, isolated OpenTelemetry provider, and bounded HTTP server, then marks
-the instance ready. `SIGINT` or `SIGTERM` clears readiness before draining HTTP
+registry, isolated OpenTelemetry provider, database pool and bounded HTTP server.
+Readiness additionally checks authoritative database and security freshness. `SIGINT` or `SIGTERM` clears readiness before draining HTTP
 requests within `THINKPIXELAG_HTTP_SHUTDOWN_TIMEOUT` and closing tracing.
 
 ## Middleware contract
@@ -38,14 +38,13 @@ causes or recovered values. Problems and all other responses carry
 
 - `GET`/`HEAD /livez` reports process liveness and never depends on an upstream
   service.
-- `GET`/`HEAD /readyz` initially reports completion of local process startup.
-  Phase 2 adds PostgreSQL state; later phases add loaded-policy and revocation
-  freshness gates. Readiness is cleared before shutdown.
+- `GET`/`HEAD /readyz` checks PostgreSQL, active-policy and revocation
+  freshness. Readiness is cleared before shutdown.
 - `GET`/`HEAD /metrics` exposes the private registry. Disabling metrics leaves a
   valid empty registry response.
 
 These endpoints are intentionally unauthenticated for Kubernetes probes and
 Prometheus scraping. They expose no tenant or secret data and must be restricted
 to cluster monitoring paths through ingress and NetworkPolicy. Governance API
-authentication is implemented separately in Phase 3; a VPC/VPN is not treated
-as an identity boundary.
+authentication uses OIDC on public routes and mTLS on the separate trusted
+listener; a VPC/VPN is not an identity boundary.

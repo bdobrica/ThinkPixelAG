@@ -4,7 +4,7 @@ ThinkPixelAG initializes Prometheus metrics and OpenTelemetry tracing through
 isolated providers under `internal/observability`. The packages do not register
 global Prometheus collectors or mutate OpenTelemetry global providers, keeping
 tests and multiple process components deterministic. The process entry point
-created in ENG-007 owns provider wiring and shutdown.
+owns provider wiring and shutdown.
 
 ## Prometheus metrics
 
@@ -36,7 +36,7 @@ Only stable route templates such as `/v1/runs/{run_id}` may be passed as
 other user-controlled values are prohibited. Route labels must match the
 versioned OpenAPI templates or operational endpoints; everything else becomes
 `unknown`. Methods are reduced to the normal HTTP vocabulary or `OTHER`, and
-statuses to `1xx`–`5xx` or `unknown`. Feature phases add their SLO metrics with
+statuses to `1xx`–`5xx` or `unknown`. Additional SLO metrics follow
 the same bounded-label rule.
 
 ## OpenTelemetry tracing

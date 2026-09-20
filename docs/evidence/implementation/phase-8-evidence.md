@@ -1,0 +1,155 @@
+# Phase 8 production operations evidence
+
+- Status: complete for the integration-RC scope; production/cross-component qualification explicitly deferred
+- Review date: 2026-09-19
+- Foundation implementation commit: `967165a`; follow-up revisions are linked below
+- Initial host: Linux/amd64, Docker, kind v0.30.0 (Kubernetes v1.34.0), kubectl v1.35.0, PostgreSQL 18.4
+- Current closeout: [Phase 8 integration-RC evidence](../homelab/phase-8-closeout.md) and [accepted deferrals](../../adr/0012-integration-rc-qualification-deferrals.md). The earlier [checkpoint](../homelab/phase-8-checkpoint.md) remains historical evidence.
+
+## Implemented controls
+
+The OCI build now produces the API and explicit forward-only migration binary
+for `linux/amd64` and `linux/arm64` from digest-pinned builder/runtime images.
+The runtime remains shell-free UID/GID 65532, contains CA roots, supports a
+read-only root, carries deterministic build labels, and drains on SIGTERM.
+
+The Kubernetes base provides Deployment, Service, ServiceAccount without token
+mounting, non-secret ConfigMap, managed Secret references, pre-deploy migration
+Job, restricted security contexts, default-deny networking, resource bounds,
+topology spreading, and PDB. Process-only startup/liveness use `/livez`;
+governed readiness uses `/readyz`; the probe abstraction supports PostgreSQL and
+composed security-freshness checks without making disposable Valkey authoritative.
+The production command reconciles currently valid active policy metadata and
+the matching authoritative revocation sequence/epoch heads from PostgreSQL in
+one bounded query. `/readyz` requires that loaded policy state and revocation
+state within the 30-second normal-write bound; empty, stale, invalid, lagging,
+gapped, or failed reconciliation remains unready while `/livez` stays independent.
+Optional HPA, ServiceMonitor, dashboard, SLO alerts, bounded metric definitions,
+and operator runbooks are separate from the base. Production now refreshes
+bounded outbox count/age and terminal settlement lag every 15 seconds and
+exports pgx pool saturation at scrape time. HTTP, database, revocation, Go, and
+process collectors are live; closed policy/allocation/admission/cache outcome
+series exist at zero before their first event without synthetic observations.
+The alert resource contains 27 bounded-label rules: separate fast/slow
+availability-budget burn for public reads, run mutations, and admin/trusted
+traffic; p95/p99 API and OPA latency; database, policy, and cache health;
+revocation propagation/freshness/gaps; allocation and admission failures; and
+warning/critical outbox and settlement lag. Every alert has an anti-noise
+window, severity, owner, summary, and a response runbook link.
+
+Release automation builds and pushes an immutable multi-platform image, emits
+BuildKit SBOM/provenance attestations, generates CycloneDX SBOM, JSON
+vulnerability report, deterministic manifest/API archives and SHA-256 checksums,
+provides cosign sign/attest/verify hooks, enforces zero fixable critical/high
+image vulnerabilities, and creates draft release notes. GitHub Actions and
+container dependencies are immutable-pinned; release authority is limited to
+the tag workflow.
+
+## Executed evidence
+
+- OPS-011 repository-local qualification at `4fff867` passed
+  `make test-resilience` and `test/cluster_resilience.sh`. The deterministic
+  matrix rejected OPA timeout/malformed/adversarial output, bypassed failed or
+  poisoned cache state conservatively, failed closed across a revocation stream
+  partition until snapshot reconciliation, rejected expired worker leases, and
+  released failed evidence claims for retry. A disposable kind v0.30.0 / Kubernetes
+  v1.34.0 cluster then returned readiness 503 while a five-second PostgreSQL
+  pre-authentication delay exceeded the two-second health bound, kept liveness
+  200, recovered after reset, and recovered from PostgreSQL process crash, API
+  pod crash, and rolling restart. Subsequent ARM64 quiesced replica promotion
+  passed at `8e3a1de`; production-composed Valkey/worker and intended-topology
+  qualification remain open (see the OPS-011 report below).
+- OPS-012 disposable-cluster qualification at `4fff867` passed
+  `test/cluster_smoke.sh`: clean install, explicit migration to schema 18,
+  UID/GID 65532 restricted runtime with read-only root/no escalation/dropped
+  capabilities, policy/revocation readiness, metrics, declared HPA 2–4 replicas
+  at 70% CPU, PDB-blocked drain, pod replacement, rolling configuration change
+  and rollback, deletion, and absence of managed workloads after uninstall.
+  The remaining governed HTTP workflow, observed metrics-driven scaling and
+  two-digest upgrade/rollback were subsequently exercised on retained ARM64
+  hardware; see [OPS-012 evidence](../homelab/ops012-evidence.md).
+- A clean isolated-database `make verify` passed after these changes, including
+  generation/lint/OpenAPI, unit/coverage/race, 26/26 Rego, PostgreSQL integration,
+  end-to-end and security suites, Kubernetes rendering, dependency/vulnerability/
+  license checks, static build, image build, and hardened-container smoke.
+
+- `make kubernetes-check`: contract checks and Kustomize render passed with
+  digest-pinned kubectl v1.35.0.
+- A Buildx OCI export for `linux/amd64,linux/arm64` passed; manifest-list digest
+  was `sha256:b6fc5c9712f1b27ba2046a1fa8bcbdedf5bbb307d782a50035203b42491d7d16`.
+- `scripts/release-artifacts.sh` generated the SBOM, vulnerability JSON,
+  provenance, API/Kubernetes archives, and checksums under `/tmp`. Trivy 0.69.3
+  reported zero vulnerabilities in the Debian runtime and both Go binaries
+  after updating `x/crypto` to 0.55.0 and gRPC to 1.83.1. The signing hook was
+  intentionally not invoked because no private signing authority was supplied.
+- `make test-backup-restore` made a custom-format backup of PostgreSQL 18.4,
+  restored it into an isolated temporary database, and passed schema,
+  epoch/checkpoint, outbox/evidence-link, and extension-aware allocation checks.
+- `test/cluster_smoke.sh` passed on a disposable kind cluster: Secret creation,
+  install, default-deny network policy, explicit migration completion, restricted
+  API runtime, live/ready/metrics probes, HPA presence, PDB-blocked voluntary
+  drain, pod replacement, rolling configuration upgrade, rollback, uninstall,
+  and automatic cluster cleanup.
+- Clean-tree `make verify` passed at `967165a`, including generation drift,
+  lint/OpenAPI, unit/coverage, race, 26/26 Rego, PostgreSQL integration/e2e and
+  security tests, Kubernetes rendering, dependency policy, govulncheck, license,
+  static build, image build, and hardened container smoke.
+- OPS-005 focused unit/race and PostgreSQL integration checks passed at
+  `e528009`/`01135d6`. Clean-tree `make verify` then passed against an isolated
+  PostgreSQL database, including process liveness/fail-closed readiness in the
+  hardened container smoke. The disposable-cluster fixture now promotes an
+  explicit test-only active policy before awaiting `/readyz`.
+- OPS-006 focused unit/race and PostgreSQL integration checks passed at
+  `41ab200`. Clean-tree `make verify` passed against an isolated PostgreSQL
+  database, including optional monitoring resource/dashboard contracts and the
+  hardened image smoke. The temporary database was removed after verification.
+- OPS-007 alert and metrics unit/race checks passed at `bd203e5`; the optional
+  resources rendered with the pinned kubectl image and Prometheus 3.5
+  `promtool` parsed all 27 rules successfully. Clean-tree `make verify` passed
+  against an isolated PostgreSQL database, including all integration/e2e,
+  security, Kubernetes, supply-chain, image, and hardened-container gates.
+- `make test-postgres-pitr` at `fa04a0c` created a pinned PostgreSQL 18.4
+  primary with continuous WAL archiving, encrypted a physical base backup with
+  ephemeral AES-256 key material, and recovered independently to named points
+  immediately before and after one atomic governance transaction. The targets
+  reproduced exact global/tenant/agent epochs, audit and outbox counts, and
+  allocation consumption; both then migrated forward from schema 17 to 18 and
+  passed `scripts/check-restored-invariants.sql`. Observed local target RTO was
+  3 and 4 seconds, selected-target RPO was zero transactions, and encrypted
+  backup SHA-256 was
+  `f7bfb405de9d4a3a4d2ce1517234887f67cf43d04e98ceb4630f126c6b77fd32`.
+  These measurements qualify the repository rehearsal, not a production
+  provider SLA. Clean-tree `make verify` subsequently passed against an
+  isolated PostgreSQL database.
+- `go test -run '^$' -bench . ./test/operations` at `0710e5c` executed the
+  deterministic policy contract, run/revocation cursor, and 5,000-client
+  revocation freshness baselines. Focused unit and race checks passed. This
+  repairs the previously documented local command but deliberately does not
+  qualify production capacity or close OPS-010.
+
+## Remaining exit qualifications
+
+The evidence above does not qualify production-shaped capacity or the complete
+fault matrix. Before Phase 8 can close:
+
+- OPS-010 must run the documented full API/policy/admission/allocation/SSE/outbox/
+  revocation workloads against the intended production topology and report
+  percentiles, saturation, and tuned limits.
+- OPS-011 retained ARM64 qualification now covers quiesced replica promotion,
+  DB latency, deployed OPA faults, eviction and rolling restart. Real-adapter
+  cache/worker/stream probes passed, but production-composed Valkey/worker and
+  intended-topology partition/failover qualification remain open. See
+  [OPS-011 evidence](../homelab/ops011-evidence.md) for the exact scope.
+- OPS-012 lifecycle qualification is complete using the earlier disposable
+  install/uninstall evidence and the retained ARM64 workflow/scaling/image
+  transition evidence. Hardware-diagnostic HPA behavior does not qualify
+  production scaling capacity; that remains under OPS-010.
+
+These are release blockers, not accepted residual risks. OPS-014 and the Phase
+8 checkbox remain open until the remaining gates are executed and the full clean-tree gate
+passes.
+
+The 2026-09-18 OPS-010 diagnostic deployment and failed capacity measurements
+are recorded in [OPS-010 evidence](../homelab/ops010-evidence.md).
+
+Hardware-limited follow-up: [homelab operating envelope and recovery](../homelab/homelab-qualification.md). Production OPS-010 targets remain unchanged. The [wired retry](../homelab/wired-qualification.md) fixes and verifies admission replay atomicity, demonstrates 200 reads/s, and records the remaining flash-limited write and production qualification gaps.

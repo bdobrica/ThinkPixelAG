@@ -52,8 +52,8 @@ or complete header maps by default.
 
 - `request_id` identifies one inbound request and is propagated to safe outbound
   calls where the protocol permits it.
-- `trace_id` is the active distributed trace identifier once tracing is added in
-  ENG-005; until then it may be absent.
+- `trace_id` is the active distributed trace identifier; it is omitted when
+  there is no valid active trace context.
 - IDs are operational metadata, never identity or authorization evidence.
 - Only trusted middleware writes correlation context. Request headers are
   validated before use and never logged as a substitute for the context value.

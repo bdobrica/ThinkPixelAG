@@ -110,8 +110,8 @@ and grants are delivered with deployment hardening.
 
 ## References and evidence
 
-- [historical plan](../releases/history/PLAN.md), sections 3.2, 6, 8, and 13
-- [historical checklist](../releases/history/TODO.md), DATA-008 and DATA-012
+- [historical plan](../evidence/rc/history/PLAN.md), sections 3.2, 6, 8, and 13
+- [historical checklist](../evidence/rc/history/TODO.md), DATA-008 and DATA-012
 - `docs/architecture/database-schema.md`
 - `internal/adapters/postgres/repository.go`
 - `internal/adapters/postgres/repository_integration_test.go`

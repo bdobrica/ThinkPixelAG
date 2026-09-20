@@ -18,7 +18,7 @@ clean results.
 | `make lint` | require formatting, vet both Go modules, verify checksums/read-only package loading, and validate OpenAPI with Redocly CLI 2.3.0 |
 | `make test` | test the service and nested tools module with coverage |
 | `make test-race` | race-test both Go modules |
-| `make test-policy` | run `opa test policies` once tracked Rego sources exist; until Phase 3 it reports their absence explicitly |
+| `make test-policy` | run `opa test policies` with the pinned OPA version |
 | `make test-integration` | run integration-tagged tests against real PostgreSQL; defaults to the loopback development database and accepts `TEST_DATABASE_URL` |
 | `make test-e2e` | run composed workflow tests against real PostgreSQL with the `e2e` build tag; defaults to `TEST_DATABASE_URL` |
 | `make build` | create a static, trimmed `.cache/bin/thinkpixelag` with version/revision metadata |

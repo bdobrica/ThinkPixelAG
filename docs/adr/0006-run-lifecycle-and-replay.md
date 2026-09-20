@@ -61,6 +61,6 @@ bugs and their regression evidence remain part of the release record.
 ## References and evidence
 
 - [Lifecycle contract](../contracts/domain-model.md), [API examples](../api/run-lifecycle.md)
-- [Phase 4 evidence](../phase-4-evidence.md), [SSD qualification](../operations/ssd-qualification.md)
-- [Historical plan](../releases/history/PLAN.md), sections 3.5/5; RUN entries in the [ledger](../releases/history/TODO.md)
+- [Phase 4 evidence](../evidence/implementation/phase-4-evidence.md), [SSD qualification](../evidence/homelab/ssd-qualification.md)
+- [Historical plan](../evidence/rc/history/PLAN.md), sections 3.5/5; RUN entries in the [ledger](../evidence/rc/history/TODO.md)
 - Commits `1b31cbe`, `406db54`, `bd148a9`; `internal/application/run_worker.go`, `internal/adapters/postgres/run_admission.go`

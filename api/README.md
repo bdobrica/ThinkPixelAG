@@ -8,5 +8,5 @@ Transport implementations belong under `internal/adapters`; domain and
 application packages must not depend on generated HTTP types.
 
 The integration-RC boundary is frozen in [contract-freeze.json](contract-freeze.json).
-See the [freeze and compatibility record](../docs/releases/contract-freeze.md);
+See the [freeze and compatibility record](../docs/contracts/compatibility.md);
 `make contract-check` rejects unreviewed drift.

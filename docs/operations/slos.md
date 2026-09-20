@@ -1,6 +1,6 @@
 # Service-Level Objectives and Capacity Targets
 
-These are unchanged production qualification targets for a single region. The first integration RC uses the separately recorded [measured operating envelope](../releases/capacity-envelope.md) and [accepted qualification deferrals](deferred-qualification.md). Short homelab samples do not establish production capacity or 30-day availability. Security invariants are not traded against availability SLOs.
+These are unchanged production qualification targets for a single region. The first integration RC uses the separately recorded [measured operating envelope](capacity.md) and [accepted qualification deferrals](../adr/0012-integration-rc-qualification-deferrals.md). Short homelab samples do not establish production capacity or 30-day availability. Security invariants are not traded against availability SLOs.
 
 ## Measurement rules
 
@@ -59,4 +59,4 @@ Critical security invariant failure, evidence loss, cross-tenant exposure, resou
 
 Record request count/status/latency by bounded route/action, authn/authz outcomes, OPA latency/error/bundle age, PostgreSQL pool/transaction conflict/deadlock, allocation conflicts/invariant checks, run state and settlement lag, revocation sequence/age/gap/reconciliation, outbox backlog/age/retry/dead letter, SSE clients/lag/drops, cache hit/error, runtime saturation, and rollout/build version.
 
-Phase 8 reports the environment, dataset, policy size, topology, test commands, percentiles, saturation point, bottleneck, failure behavior, and artifact commit/digest.
+Qualification reports record the environment, dataset, policy size, topology, test commands, percentiles, saturation point, bottleneck, failure behavior, and artifact commit/digest. See the [measured capacity and evidence](capacity.md); failed or deferred targets remain distinct from demonstrated operating points.

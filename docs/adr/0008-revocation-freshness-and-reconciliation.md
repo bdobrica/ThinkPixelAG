@@ -60,7 +60,7 @@ not qualify 5,000-client production fanout or network failure domains.
 
 ## References and evidence
 
-- [Revocation contract](../contracts/revocation.md), [Phase 6 evidence](../phase-6-evidence.md)
-- [ADR-0004](0004-policy-evaluation-and-activation.md), [deferrals](../operations/deferred-qualification.md)
-- [Historical plan](../releases/history/PLAN.md), section 3.7; REV-001–011 in the [ledger](../releases/history/TODO.md)
+- [Revocation contract](../contracts/revocation.md), [Phase 6 evidence](../evidence/implementation/phase-6-evidence.md)
+- [ADR-0004](0004-policy-evaluation-and-activation.md), [deferrals](0012-integration-rc-qualification-deferrals.md)
+- [Historical plan](../evidence/rc/history/PLAN.md), section 3.7; REV-001–011 in the [ledger](../evidence/rc/history/TODO.md)
 - Commits `72ff9de`, `8409b99`, `2398385`, `c7856ff`, `90f913a`, `bf8eae1`, `57888c2`

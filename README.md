@@ -15,43 +15,24 @@ ownership and integration boundaries.
 
 The integration candidate targets development with ThinkPixelAR and a real
 harness. Its frozen contracts are OpenAPI `0.1.0-rc.1` and policy
-`thinkpixelag.authorization/v1alpha1`. [Verification](docs/releases/verification.md)
-and [game-day evidence](docs/releases/game-days.md) cover the implemented AG
-component. See [release status](docs/releases/status.md) for exact-source artifact
+`thinkpixelag.authorization/v1alpha1`. [Verification](docs/evidence/rc/verification.md)
+and [game-day evidence](docs/evidence/rc/game-days.md) cover the implemented AG
+component. See [release status](docs/evidence/rc/status.md) for exact-source artifact
 qualification and publication status.
 
 Production capacity and unavailable AR/gateway/HA scenarios are
-[explicitly deferred](docs/operations/deferred-qualification.md). The
-[measured operating envelope](docs/releases/capacity-envelope.md) is separate
+[explicitly deferred](docs/adr/0012-integration-rc-qualification-deferrals.md). The
+[measured operating envelope](docs/operations/capacity.md) is separate
 from production targets. AG does not yet expose a versioned AR worker API;
 registration/policy-management runtime composition and production provider
 ceremonies are also outside the current executable's configured surface.
 
 ## Quick start
 
-Prerequisites and supported versions are documented in
-[docs/supported-versions.md](docs/supported-versions.md).
-
-```sh
-make tools
-make dev-up
-make dev-smoke
-make test
-make test-integration
-make test-policy
-make build
-```
-
-These commands prepare dependencies, run tests and build AG. To serve governed
-APIs, configure OIDC, an approved agent/policy fixture, authoritative PostgreSQL,
-`THINKPIXELAG_RUNTIME_FILE` and separately delivered cursor secrets as described
-in [runtime configuration](docs/configuration.md#governed-runtime-composition).
-Trusted APIs additionally require the mTLS listener and workload bindings.
-
-Use `make dev-up-valkey` to include the optional cache. `make verify` is the
-aggregate developer and CI gate; it also requires the documented container
-tooling. See [development and verification](docs/operations/development.md) for
-the complete workflow and safe test-database requirements.
+Follow the [quick start](docs/quickstart.md) to test governance workflows locally.
+Choose the [local sandbox or team Kubernetes PoC](docs/examples/README.md), then
+use the [operations guide](docs/operations/README.md) to configure and run AG.
+The [changelog](CHANGELOG.md) records the current candidate and changes.
 
 ## Key concepts
 
@@ -78,7 +59,7 @@ the complete workflow and safe test-database requirements.
 - [Resource accounting contract](docs/contracts/resource-accounting.md)
 - [Revocation and freshness contract](docs/contracts/revocation.md)
 - [Threat model](docs/security/threat-model.md)
-- [Configuration reference](docs/configuration.md)
+- [Configuration reference](docs/operations/configuration.md)
 - [Deployment guidance](deploy/README.md)
 
 ## Repository layout
@@ -102,7 +83,7 @@ ownership. This is a development/integration candidate with best-effort
 maintainer support; it does not carry a production availability SLA. Report
 non-sensitive, reproducible defects through the repository issue tracker.
 Security assumptions and outstanding qualification are recorded in the
-[threat model](docs/security/threat-model.md) and [release risk review](docs/releases/risk-review.md).
+[threat model](docs/security/threat-model.md) and [release risk review](docs/evidence/rc/risk-review.md).
 
 ## License
 
